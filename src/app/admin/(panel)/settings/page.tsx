@@ -30,7 +30,7 @@ async function Settings() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Settings</h1>
+      <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
 
       <section className="card p-6">
         <h2 className="font-semibold">Business details</h2>

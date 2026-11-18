@@ -23,9 +23,9 @@ async function Demo({ params }: { params: PageProps<"/demo/[slug]">["params"] })
 
   return (
     <div style={{ "--site-top": "2.5rem" } as CSSProperties}>
-      <div className="sticky top-0 z-30 flex h-10 items-center justify-between gap-3 bg-ink px-4 text-xs text-paper sm:text-sm">
+      <div className="sticky top-0 z-30 flex h-10 items-center justify-between gap-3 bg-void px-4 t-fine text-white/85">
         <span>Example preview · fictional business</span>
-        <Link href="/#start" className="rounded-full bg-sun px-3 py-1 font-semibold text-ink">
+        <Link href="/#start" className="rounded-full bg-action px-3.5 py-1 text-[13px] text-white transition-transform active:scale-95">
           Get yours free
         </Link>
       </div>

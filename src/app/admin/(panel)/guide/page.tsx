@@ -22,7 +22,7 @@ async function Guide() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">30-din ka playbook</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">30-din ka playbook</h1>
         <p className="mt-2 text-muted">
           Goal: pehle 30 din mein $100. Har step complete karke tick karo — dashboard par progress dikhegi.
         </p>
@@ -34,7 +34,7 @@ async function Guide() {
           {FUNNEL_MATH.map((row) => (
             <div key={row.label} className="rounded-xl bg-paper p-3">
               <dt className="text-xs text-muted">{row.label}</dt>
-              <dd className="mt-1 font-display text-lg font-bold">{row.value}</dd>
+              <dd className="mt-1 font-display text-lg font-semibold">{row.value}</dd>
             </div>
           ))}
         </dl>
@@ -49,7 +49,7 @@ async function Guide() {
         return (
           <section key={phase.id}>
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-display text-xl font-bold">
+              <h2 className="font-display text-xl font-semibold">
                 {index + 1}. {phase.title} <span className="text-sm font-medium text-muted">· {phase.days}</span>
               </h2>
               <span className="text-sm text-muted">

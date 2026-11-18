@@ -35,17 +35,17 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
 
   return (
     <>
-      <div className="sticky top-0 z-40 flex h-11 items-center justify-between gap-3 bg-ink px-3 text-paper sm:px-4">
+      <div className="sticky top-0 z-40 flex h-11 items-center justify-between gap-3 bg-void px-3 text-white sm:px-4">
         <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
-          <LogoMark className="size-6 shrink-0" />
-          <span className="truncate">
+          <LogoMark className="size-5 shrink-0" />
+          <span className="truncate text-white/85">
             Free preview for <strong>{businessName}</strong> · made by Brightyard
           </span>
         </div>
         {!done ? (
           <button
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-full bg-sun px-3 py-1 text-xs font-bold text-ink sm:text-sm"
+            className="shrink-0 rounded-full bg-action px-3.5 py-1 text-[13px] text-white transition-transform active:scale-95"
           >
             Make it live
           </button>
@@ -53,17 +53,17 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
       </div>
 
       {/* Bottom bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.08] bg-parchment/80 text-graphite backdrop-blur-xl backdrop-saturate-[180%]">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 px-4 py-3 sm:flex-row">
           {done ? (
-            <p className="text-sm font-medium text-ink">
+            <p className="t-caption font-medium">
               🎉 Thanks! We&apos;ve got your request and will email you shortly to put this live.
             </p>
           ) : optedOut ? (
-            <p className="text-sm text-muted">Got it — we won&apos;t contact you again.</p>
+            <p className="t-caption text-graphite-48">Got it — we won&apos;t contact you again.</p>
           ) : (
             <>
-              <p className="text-center text-sm text-ink sm:text-left">
+              <p className="t-caption text-center sm:text-left">
                 <strong>Like it?</strong> Pay what you think it&apos;s worth and we&apos;ll put it live on your domain.
               </p>
               <div className="flex shrink-0 items-center gap-2">
@@ -75,11 +75,11 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
                       setOptedOut(true);
                     })
                   }
-                  className="btn text-muted hover:text-ink"
+                  className="btn text-graphite-48 hover:text-graphite"
                 >
                   Not for me
                 </button>
-                <button onClick={() => setOpen(true)} className="btn-primary">
+                <button onClick={() => setOpen(true)} className="pill-primary px-5 py-2 text-[15px]">
                   Make it live
                 </button>
               </div>
@@ -94,11 +94,11 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
           <form
             action={action}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-t-3xl bg-card p-6 text-ink shadow-2xl sm:rounded-3xl"
+            className="w-full max-w-md rounded-t-[18px] bg-canvas p-6 text-graphite sm:rounded-[18px]"
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-display text-2xl font-bold">Put it live</p>
+                <p className="t-section">Put it live.</p>
                 <p className="mt-1 text-sm text-muted">
                   Choose what it&apos;s worth to you. You pay only after we confirm the details by email.
                 </p>
@@ -117,8 +117,8 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
                     setAmount(p);
                     setCustom("");
                   }}
-                  className={`rounded-xl border py-3 text-sm font-bold transition ${
-                    amount === p && !custom ? "border-brand bg-brand-soft text-brand" : "border-line"
+                  className={`rounded-full border py-2.5 text-[15px] font-semibold transition ${
+                    amount === p && !custom ? "border-2 border-action-focus text-action" : "border-hairline"
                   }`}
                 >
                   ${p}
@@ -140,7 +140,7 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
             <textarea id="note" name="note" rows={3} className="input" />
 
             {state?.message ? <p className="mt-3 text-sm text-danger">{state.message}</p> : null}
-            <button className="btn-primary mt-5 w-full py-3 text-base" disabled={pending}>
+            <button className="pill-primary mt-6 w-full" disabled={pending}>
               {pending ? "Sending…" : `Yes, put it live for $${custom || amount}`}
             </button>
           </form>
@@ -148,9 +148,9 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
       ) : null}
 
       {state?.ok && state.paypalLink ? (
-        <div className="fixed inset-x-0 bottom-20 z-40 mx-auto w-fit rounded-full bg-ink px-4 py-2 text-sm text-paper shadow-lg">
+        <div className="fixed inset-x-0 bottom-24 z-40 mx-auto w-fit rounded-full bg-graphite px-4 py-2 t-caption text-white">
           Prefer to pay now?{" "}
-          <a href={`${state.paypalLink.replace(/\/$/, "")}/${state.amount}`} className="font-semibold text-sun underline">
+          <a href={`${state.paypalLink.replace(/\/$/, "")}/${state.amount}`} className="font-semibold text-action-on-dark underline">
             PayPal ${state.amount}
           </a>
         </div>

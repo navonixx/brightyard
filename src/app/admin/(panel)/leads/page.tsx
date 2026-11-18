@@ -37,7 +37,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Leads</h1>
+      <h1 className="font-display text-3xl font-semibold tracking-tight">Leads</h1>
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Find via Google Places */}
@@ -164,7 +164,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`font-display font-bold ${lead.score >= 60 ? "text-brand" : "text-muted"}`}>
+                      <span className={`font-display font-semibold ${lead.score >= 60 ? "text-brand" : "text-muted"}`}>
                         {lead.score}
                       </span>
                     </td>

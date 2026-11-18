@@ -1,50 +1,56 @@
 @import "tailwindcss";
 
-/* Brightyard — warm paper, deep yard green, sunrise amber. */
+/*
+ * Brightyard design system — gallery-quiet UI.
+ * One interactive blue, white / parchment / near-black surfaces, pill actions,
+ * tight display type, no gradients, one shadow reserved for "product" renders.
+ */
+
 :root {
-  --paper: #faf7f0;
+  /* Mode-aware tokens (admin + shared components) */
+  --paper: #f5f5f7;
   --card: #ffffff;
-  --ink: #13201a;
-  --muted: #5e6b63;
-  --line: #e6e0d2;
-  --brand: #1e6b47;
-  --brand-strong: #154d33;
-  --brand-soft: #e3f0e8;
-  --sun: #f2a93b;
-  --sun-soft: #fdf0d9;
-  --danger: #b42318;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #e0e0e0;
+  --brand: #0066cc;
+  --brand-strong: #0058b0;
+  --brand-soft: #e8f1fb;
+  --sun: #f5a623; /* status highlight only — never a brand accent */
+  --sun-soft: #fdf2df;
+  --danger: #d70015;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0f1613;
-    --card: #16201b;
-    --ink: #ecefe9;
-    --muted: #9aa79f;
-    --line: #26332c;
-    --brand: #3fa172;
-    --brand-strong: #5cbf8f;
-    --brand-soft: #1b2e24;
-    --sun: #f5b95a;
-    --sun-soft: #33281a;
-    --danger: #f97066;
+    --paper: #000000;
+    --card: #1c1c1e;
+    --ink: #f5f5f7;
+    --muted: #a1a1a6;
+    --line: #38383a;
+    --brand: #2997ff;
+    --brand-strong: #5eb0ff;
+    --brand-soft: #0b2540;
+    --sun: #ffb340;
+    --sun-soft: #3a2a10;
+    --danger: #ff453a;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #0f1613;
-  --card: #16201b;
-  --ink: #ecefe9;
-  --muted: #9aa79f;
-  --line: #26332c;
-  --brand: #3fa172;
-  --brand-strong: #5cbf8f;
-  --brand-soft: #1b2e24;
-  --sun: #f5b95a;
-  --sun-soft: #33281a;
-  --danger: #f97066;
+  --paper: #000000;
+  --card: #1c1c1e;
+  --ink: #f5f5f7;
+  --muted: #a1a1a6;
+  --line: #38383a;
+  --brand: #2997ff;
+  --brand-strong: #5eb0ff;
+  --brand-soft: #0b2540;
+  --sun: #ffb340;
+  --sun-soft: #3a2a10;
+  --danger: #ff453a;
   color-scheme: dark;
 }
 
@@ -60,31 +66,129 @@
   --color-sun: var(--sun);
   --color-sun-soft: var(--sun-soft);
   --color-danger: var(--danger);
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-bricolage);
+
+  /* Fixed marketing surfaces — the public site is light-dominant by design */
+  --color-canvas: #ffffff;
+  --color-parchment: #f5f5f7;
+  --color-pearl: #fafafc;
+  --color-tile: #272729;
+  --color-tile-2: #2a2a2c;
+  --color-tile-3: #252527;
+  --color-void: #000000;
+  --color-graphite: #1d1d1f;
+  --color-graphite-80: #333333;
+  --color-graphite-48: #6e6e73;
+  --color-on-dark-muted: #cccccc;
+  --color-hairline: #e0e0e0;
+  --color-action: #0066cc;
+  --color-action-focus: #0071e3;
+  --color-action-on-dark: #2997ff;
+
+  /* Apple devices resolve -apple-system to SF Pro; everything else gets Inter. */
+  --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, var(--font-inter), system-ui, sans-serif;
+
+  --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "ss03";
 }
 
+/* ─── Type scale ─────────────────────────────────────────────── */
+@utility t-hero {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  @media (width >= 420px) { font-size: 34px; }
+  @media (width >= 640px) { font-size: 40px; line-height: 1.08; }
+  @media (width >= 1068px) { font-size: 56px; line-height: 1.07; letter-spacing: -0.015em; }
+}
+@utility t-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  @media (width >= 734px) { font-size: 40px; }
+}
+@utility t-section {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.374px;
+  @media (width >= 734px) { font-size: 34px; }
+}
+@utility t-lead {
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.19;
+  letter-spacing: 0.011em;
+  @media (width >= 734px) { font-size: 28px; line-height: 1.14; }
+}
+@utility t-tagline {
+  font-weight: 600;
+  font-size: 21px;
+  line-height: 1.19;
+  letter-spacing: 0.011em;
+}
+@utility t-body {
+  font-size: 17px;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+@utility t-caption {
+  font-size: 14px;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+}
+@utility t-fine {
+  font-size: 12px;
+  line-height: 1.33;
+  letter-spacing: -0.12px;
+}
+
+/* ─── Actions ─────────────────────────────────────────────────── */
+@utility pill {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full px-[22px] py-[11px] text-[17px] leading-none tracking-[-0.374px] transition-transform duration-150 select-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  &:focus-visible { outline: 2px solid var(--color-action-focus); outline-offset: 2px; }
+}
+@utility pill-primary {
+  @apply pill bg-action text-white;
+}
+@utility pill-ghost {
+  @apply pill border border-action text-action;
+}
+@utility pill-ghost-dark {
+  @apply pill border border-action-on-dark text-action-on-dark;
+}
+@utility text-link {
+  @apply text-action hover:underline;
+}
+
+/* Shared app controls (admin + forms) */
 @utility input {
-  @apply w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink outline-none placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/20;
+  @apply w-full rounded-xl border border-line bg-card px-3.5 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted/70 focus:border-brand focus:ring-4 focus:ring-brand/15;
 }
 @utility label {
-  @apply mb-1 block text-xs font-medium text-muted;
+  @apply mb-1.5 block text-[13px] font-medium text-muted;
 }
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-transform duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  &:focus-visible { outline: 2px solid var(--color-action-focus); outline-offset: 2px; }
 }
 @utility btn-primary {
-  @apply btn bg-brand text-white hover:bg-brand-strong;
+  @apply btn bg-brand text-white;
 }
 @utility btn-ghost {
-  @apply btn border border-line bg-card text-ink hover:border-brand/50;
+  @apply btn border border-line bg-card text-ink hover:border-brand/60;
 }
 @utility card {
-  @apply rounded-2xl border border-line bg-card;
+  @apply rounded-[18px] border border-line bg-card;
 }

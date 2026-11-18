@@ -25,7 +25,7 @@ async function Outreach() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Outreach</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Outreach</h1>
         <p className="mt-1 text-sm text-muted">
           Ready leads ko CSV mein export karo → Instantly/Smartlead mein import → sequence chalao → yahan &quot;Mark as emailed&quot;.
         </p>
@@ -34,7 +34,7 @@ async function Outreach() {
       <section className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="font-display text-4xl font-bold">{sendable.length}</p>
+            <p className="font-display text-4xl font-semibold">{sendable.length}</p>
             <p className="text-sm text-muted">leads ready to send (preview + email + draft)</p>
           </div>
           <div className="flex flex-wrap gap-2">

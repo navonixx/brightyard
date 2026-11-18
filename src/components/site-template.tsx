@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element -- previews use arbitrary ImageKit / external URLs */
-import type { CSSProperties } from "react";
+import type { AnchorHTMLAttributes, CSSProperties } from "react";
 import { Check, Droplets, Hammer, MapPin, PaintRoller, Phone, Sparkles, Star, Trees, House } from "lucide-react";
 import type { LeadImage, SampleContent, Trade } from "@/lib/db/schema";
 import { TRADE_META } from "@/lib/brand";
@@ -30,8 +30,13 @@ function telHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
+/** A link that becomes a plain <span> in static renders (which may sit inside another link). */
+function Anchor({ isStatic, href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { isStatic: boolean }) {
+  return isStatic ? <span {...rest} /> : <a href={href} {...rest} />;
+}
+
 /** The mini website a prospect sees at /p/[token] (and the public demos). */
-export function SiteTemplate({ data }: { data: SiteData }) {
+export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isStatic?: boolean }) {
   const meta = TRADE_META[data.trade];
   const Icon = ICONS[data.trade];
   const { sample } = data;
@@ -51,18 +56,19 @@ export function SiteTemplate({ data }: { data: SiteData }) {
             <span className="font-display text-lg font-bold leading-tight">{data.businessName}</span>
           </div>
           {data.phone ? (
-            <a
+            <Anchor
+              isStatic={isStatic}
               href={telHref(data.phone)}
               className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
             >
               <Phone className="size-4" />
               <span className="hidden sm:inline">{data.phone}</span>
               <span className="sm:hidden">Call</span>
-            </a>
+            </Anchor>
           ) : (
-            <a href="#quote" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
+            <Anchor isStatic={isStatic} href="#quote" className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
               {sample.cta}
-            </a>
+            </Anchor>
           )}
         </div>
       </header>
@@ -83,19 +89,21 @@ export function SiteTemplate({ data }: { data: SiteData }) {
             </h1>
             <p className="mt-5 max-w-lg text-lg text-slate-600">{sample.subheadline}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
+              <Anchor
+                isStatic={isStatic}
                 href={quoteHref}
                 className="rounded-full bg-[var(--accent)] px-6 py-3 font-semibold text-white shadow-lg shadow-black/10"
               >
                 {sample.cta}
-              </a>
+              </Anchor>
               {data.phone ? (
-                <a
+                <Anchor
+                  isStatic={isStatic}
                   href={telHref(data.phone)}
                   className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 font-semibold"
                 >
                   <Phone className="size-4" /> {data.phone}
-                </a>
+                </Anchor>
               ) : null}
             </div>
           </div>
@@ -191,12 +199,13 @@ export function SiteTemplate({ data }: { data: SiteData }) {
             <h2 className="font-display text-3xl font-bold tracking-tight">Ready for a free quote?</h2>
             <p className="mt-2 text-white/80">Tell us what you need — we usually reply the same day.</p>
           </div>
-          <a
+          <Anchor
+            isStatic={isStatic}
             href={quoteHref}
             className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-[var(--accent)]"
           >
             <Phone className="size-4" /> {data.phone ?? sample.cta}
-          </a>
+          </Anchor>
         </div>
       </section>
 

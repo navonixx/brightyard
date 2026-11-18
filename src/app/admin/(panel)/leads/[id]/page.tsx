@@ -77,7 +77,7 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-3xl font-bold tracking-tight">{lead.businessName}</h1>
+            <h1 className="font-display text-3xl font-semibold tracking-tight">{lead.businessName}</h1>
             <StatusBadge status={lead.status} />
             <span className="inline-flex items-center gap-1 text-sm text-muted">
               <Eye className="size-4" /> {lead.viewCount} views
@@ -236,7 +236,7 @@ function ImagesSection({ lead }: { lead: Lead }) {
             <div key={image.url + i} className="group relative">
               <img src={image.url} alt={image.alt} className="aspect-square w-full rounded-xl object-cover" />
               {i === 0 ? (
-                <span className="absolute left-1.5 top-1.5 rounded bg-ink/80 px-1.5 py-0.5 text-[10px] font-bold text-paper">HERO</span>
+                <span className="absolute left-1.5 top-1.5 rounded bg-ink/80 px-1.5 py-0.5 text-[10px] font-semibold text-paper">HERO</span>
               ) : null}
               <div className="absolute inset-x-1.5 bottom-1.5 flex justify-between opacity-0 transition group-hover:opacity-100">
                 {i > 0 ? (

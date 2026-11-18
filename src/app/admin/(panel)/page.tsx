@@ -58,7 +58,7 @@ async function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">Dashboard</h1>
           <p className="mt-1 text-sm text-muted">
             {day ? `Day ${day} of 30` : "Set your start date in Settings to track the 30-day sprint."}
           </p>
@@ -76,11 +76,11 @@ async function Dashboard() {
             ${stats.promised} promised by interested leads
           </p>
         </div>
-        <p className="mt-2 font-display text-4xl font-bold">
+        <p className="mt-2 font-display text-4xl font-semibold">
           ${stats.earned} <span className="text-lg font-medium text-muted">/ ${goal}</span>
         </p>
         <div className="mt-4 h-3 overflow-hidden rounded-full bg-line/60">
-          <div className="h-full rounded-full bg-gradient-to-r from-brand to-sun" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
         </div>
       </section>
 
@@ -89,7 +89,7 @@ async function Dashboard() {
         {funnel.map((item) => (
           <div key={item.label} className="card p-4">
             <p className="text-xs font-medium text-muted">{item.label}</p>
-            <p className="mt-1 font-display text-2xl font-bold">{item.value}</p>
+            <p className="mt-1 font-display text-2xl font-semibold">{item.value}</p>
           </div>
         ))}
       </section>
