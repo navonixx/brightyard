@@ -55,6 +55,7 @@ const EMAIL_SYSTEM_PROMPT = `You are drafting a first email for me. I am one per
 
 How to write it:
 - Open with one concrete thing about their business taken from the facts or research notes — ideally their own phrase quoted, or how long they have been around. Never open with a greeting formula or a compliment that could fit any business.
+- Introduce me in one short sentence using the literal placeholder {me} for my name, for example: I'm {me}. I build websites for small service businesses. Write {me} exactly as shown; it is replaced with my real name later.
 - Then one honest, specific observation about why I built this (what their current site hides or lacks, or that they have none). Be kind about it; they may have built the site themselves.
 - Then say I built a new version and give the preview link alone on its own line, exactly once.
 - Say plainly that the photos are placeholders until theirs go in.

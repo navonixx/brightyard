@@ -97,7 +97,7 @@ export function templateEmail(input: {
     subject: `made a homepage for ${input.businessName}`,
     body: `${hi}
 
-I came across ${input.businessName}${input.city ? ` while looking at ${input.city} businesses` : ""} and ${observation}, so I went ahead and built you a homepage preview:
+I'm {me}. I build websites for small service businesses. I came across ${input.businessName}${input.city ? ` while looking at ${input.city} businesses` : ""} and ${observation}, so I went ahead and built you a homepage preview:
 
 ${input.link}
 

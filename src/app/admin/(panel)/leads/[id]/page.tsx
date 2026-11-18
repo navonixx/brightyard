@@ -99,7 +99,12 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
         <div className="space-y-6">
           <SampleSection lead={lead} />
           <ImagesSection lead={lead} />
-          <EmailSection lead={lead} footer={composeEmail("", settings).trim()} account={settings.senderEmail} />
+          <EmailSection
+            lead={lead}
+            footer={composeEmail("", settings)}
+            full={lead.emailBody ? composeEmail(lead.emailBody, settings) : ""}
+            account={settings.senderEmail}
+          />
           <DetailsSection lead={lead} />
         </div>
 
@@ -269,8 +274,7 @@ function ImagesSection({ lead }: { lead: Lead }) {
   );
 }
 
-function EmailSection({ lead, footer, account }: { lead: Lead; footer: string; account: string }) {
-  const full = lead.emailBody ? `${lead.emailBody}\n\n${footer}` : "";
+function EmailSection({ lead, footer, full, account }: { lead: Lead; footer: string; full: string; account: string }) {
   const gmail =
     lead.email && lead.emailBody
       ? gmailComposeUrl({ to: lead.email, subject: lead.emailSubject ?? "", body: full, account: account || undefined })
@@ -291,7 +295,7 @@ function EmailSection({ lead, footer, account }: { lead: Lead; footer: string; a
 <div key={lead.updatedAt.getTime()} className="space-y-3">
             <Field label="Subject" name="subject" defaultValue={lead.emailSubject} />
             <div>
-              <label className="label" htmlFor="body">Body</label>
+              <label className="label" htmlFor="body">Body — {"{me}"} ki jagah Settings ka sender name (pehla shabd) aata hai</label>
               <textarea id="body" name="body" rows={9} defaultValue={lead.emailBody} className="input" />
             </div>
             <pre className="whitespace-pre-wrap rounded-lg bg-paper p-3 text-xs text-muted">{footer}</pre>
