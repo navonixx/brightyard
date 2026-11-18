@@ -146,6 +146,10 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
   const hero = data.images[0];
   const gallery = data.images.length >= 3 ? data.images.slice(1) : data.images.length === 2 ? data.images : [];
   const quoteHref = data.phone ? telHref(data.phone) : "#contact";
+  // Static renders sit inside another page (the studio homepage): no competing headings there.
+  const H1Tag = isStatic ? "p" : "h1";
+  const H2Tag = isStatic ? "p" : "h2";
+  const H3Tag = isStatic ? "p" : "h3";
 
   const style = {
     "--bg": v.bg,
@@ -235,7 +239,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
               {industry}
               {place ? ` · ${place}` : ""}
             </p>
-            <h1 className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</h1>
+            <H1Tag className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
             <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.5] text-white/85 @3xl:text-[20px]">{sample.subheadline}</p>
             <div className="mt-8">{ctas(true)}</div>
           </div>
@@ -247,7 +251,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
               {industry}
               {place ? ` · ${place}` : ""}
             </p>
-            <h1 className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</h1>
+            <H1Tag className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
             <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.5] text-[var(--muted)] @3xl:text-[19px]">{sample.subheadline}</p>
             <div className="mt-8">{ctas(false)}</div>
           </div>
@@ -266,7 +270,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
             {industry}
             {place ? ` · ${place}` : ""}
           </p>
-          <h1 className={`mx-auto max-w-[16ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</h1>
+          <H1Tag className={`mx-auto max-w-[16ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
           <p className="mx-auto mt-6 max-w-[52ch] text-[17px] leading-[1.5] text-[var(--muted)] @3xl:text-[20px]">{sample.subheadline}</p>
           <div className="mt-8 flex justify-center">{ctas(false)}</div>
           {hero ? (
@@ -305,7 +309,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
         <div className="flex flex-col gap-3 @3xl:flex-row @3xl:items-end @3xl:justify-between">
           <div>
             <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Services</p>
-            <h2 className={`mt-2 ${H2[theme.font]} ${display}`}>What we do</h2>
+            <H2Tag className={`mt-2 ${H2[theme.font]} ${display}`}>What we do</H2Tag>
           </div>
           <A isStatic={isStatic} href={quoteHref} className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--accent)]">
             Get a quote <ArrowRight className="size-4" />
@@ -315,7 +319,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
           {sample.services.slice(0, 4).map((service, i) => (
             <div key={service.title} className="rounded-[var(--radius)] bg-[var(--surface)] p-6">
               <p className={`text-[13px] font-semibold text-[var(--accent)] ${DISPLAY_FONT[theme.font]}`}>0{i + 1}</p>
-              <h3 className="mt-5 text-[18px] font-semibold tracking-[-0.01em]">{service.title}</h3>
+              <H3Tag className="mt-5 text-[18px] font-semibold tracking-[-0.01em]">{service.title}</H3Tag>
               <p className="mt-2 text-[15px] leading-[1.5] text-[var(--muted)]">{service.description}</p>
             </div>
           ))}
@@ -327,7 +331,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
         <section className="bg-[var(--surface)] py-16 @3xl:py-24">
           <div className="mx-auto max-w-[1200px] px-5 @3xl:px-8">
             <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Work</p>
-            <h2 className={`mt-2 ${H2[theme.font]} ${display}`}>Recent projects</h2>
+            <H2Tag className={`mt-2 ${H2[theme.font]} ${display}`}>Recent projects</H2Tag>
             <div className={`mt-10 grid grid-cols-2 gap-3 @3xl:gap-4 ${gallery.length >= 3 ? "@3xl:grid-cols-3" : ""}`}>
               {gallery.slice(0, 5).map((image, i) => (
                 <img
@@ -360,12 +364,12 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
       <section className="mx-auto grid max-w-[1200px] gap-12 px-5 py-16 @3xl:grid-cols-[1.1fr_1fr] @3xl:gap-20 @3xl:px-8 @3xl:py-24">
         <div>
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">About</p>
-          <h2 className={`mt-2 ${H2[theme.font]} ${display}`}>About {data.businessName}</h2>
+          <H2Tag className={`mt-2 ${H2[theme.font]} ${display}`}>About {data.businessName}</H2Tag>
           <p className="mt-6 text-[18px] leading-[1.55] text-[var(--muted)] @3xl:text-[20px]">{sample.about}</p>
           {ratingBadge ? <div className="mt-8">{ratingBadge}</div> : null}
         </div>
         <div className="rounded-[var(--radius)] bg-[var(--accent-soft)] p-7 @3xl:p-9">
-          <h3 className="text-[20px] font-semibold tracking-[-0.01em]">Why neighbors choose us</h3>
+          <H3Tag className="text-[20px] font-semibold tracking-[-0.01em]">Why neighbors choose us</H3Tag>
           <ul className="mt-6 space-y-4">
             {sample.whyUs.map((reason) => (
               <li key={reason} className="flex items-start gap-3 text-[16px] leading-[1.45]">
@@ -383,7 +387,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
       <section id="contact" className="bg-[var(--accent)] text-[var(--accent-ink)]">
         <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-7 px-5 py-16 @3xl:flex-row @3xl:items-center @3xl:px-8 @3xl:py-20">
           <div>
-            <h2 className={`${H2[theme.font]} ${display}`}>Ready for a free quote?</h2>
+            <H2Tag className={`${H2[theme.font]} ${display}`}>Ready for a free quote?</H2Tag>
             <p className="mt-3 max-w-[44ch] text-[17px] opacity-85">Tell us what you need — we usually reply the same day.</p>
           </div>
           <A
