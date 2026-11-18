@@ -220,3 +220,32 @@ export async function saveSettings(values: Partial<Record<keyof AppSettings, str
       .onConflictDoUpdate({ target: settings.key, set: { value } });
   }
 }
+
+// ─── Follow-ups ────────────────────────────────────────────────────────
+
+export type FollowUp = { lead: Lead; step: 1 | 2; daysSince: number };
+
+/** Leads emailed 3+ days ago (step 1) or 7+ days ago (step 2) that haven't replied. */
+export async function followUpsDue(now: number): Promise<FollowUp[]> {
+  const db = await getDb();
+  const waiting = await db
+    .select()
+    .from(leads)
+    .where(sql`${leads.emailedAt} is not null and ${leads.status} in ('emailed', 'viewed')`);
+  if (!waiting.length) return [];
+  const sent = await db
+    .select({ leadId: events.leadId, n: sql<number>`count(*)::int` })
+    .from(events)
+    .where(eq(events.type, "followup"))
+    .groupBy(events.leadId);
+  const count = new Map(sent.map((r) => [r.leadId, r.n]));
+
+  const due: FollowUp[] = [];
+  for (const lead of waiting) {
+    const daysSince = Math.floor((now - lead.emailedAt!.getTime()) / 86_400_000);
+    const done = count.get(lead.id) ?? 0;
+    if (done === 0 && daysSince >= 3) due.push({ lead, step: 1, daysSince });
+    else if (done === 1 && daysSince >= 7) due.push({ lead, step: 2, daysSince });
+  }
+  return due.sort((a, b) => b.lead.viewCount - a.lead.viewCount);
+}

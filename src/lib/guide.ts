@@ -61,19 +61,19 @@ export const GUIDE: GuidePhase[] = [
       },
       {
         id: "build-find",
-        title: "Leads → Find leads se businesses nikalo",
-        body: "Search: trade \"Landscaping\", location \"Spokane, WA\". List mein woh chuno jinki website hai par purani hai. Unki site kholo aur dekho: Wix/Weebly/GoDaddy builder, ek-do chhote page, phone par padhna mushkil, saal purana design. Aise hi log redesign se sabse zyada impress hote hain. Bahut badi, modern site wali company chhod do.",
+        title: "Leads → \"Find & build\" dabao",
+        body: "Trade aur city daalo (jaise Landscaping, Spokane, WA), 3 ya 5 leads chuno. App khud website wale businesses dhundhta hai, unki site padhta hai, aur har ek ke liye nayi site, theme, photos aur email draft bana deta hai. 30–60 second lagte hain. Kisi purani lead par yahi kaam uske page ke \"Auto-build\" button se hota hai.",
         link: { label: "Leads", href: "/admin/leads" },
       },
       {
         id: "build-email",
-        title: "Unki site se 5 cheezein note karo",
-        body: "Lead ke Details aur Notes mein bharo: 1) owner ka naam (About page), 2) email (Contact page ya footer; na mile to contact form ka link notes mein), 3) kab se kaam kar rahe hain, 4) unki apni koi khaas line ya vaada (jaise \"We love to mow\", \"reply within 24 hours\"), 5) ek cheez jo unki current site par kamzor hai. Point 4 aur 5 hi email ko personal banate hain.",
+        title: "Har lead kholo aur research check karo",
+        body: "Notes mein \"Auto-research\" likha milega: Hook (unki khaas baat) aur Weak spot (unki site ki kamzori). Unki asli site khol kar 1 minute mein milao: owner ka naam sahi hai? saal sahi hai? Email nahi mila to notes mein contact form ka link hoga. AI galti kar sakta hai, aur galat fact client ke saamne sabse bura lagta hai.",
       },
       {
         id: "build-sample",
-        title: "Workspace mein nayi site banao",
-        body: "\"Generate copy\" dabao, phir copy ko unki asli site se milao: services, saal, city sahi hone chahiye. Koi fact apni taraf se mat jodo (award, license, guarantee, review). Details mein \"Design theme\" chuno — har client ko alag look do. 3–4 photos lagao: pehli photo hero banti hai. Google rating 4.5 se kam ho to rating khaali chhod do.",
+        title: "Copy aur look theek karo",
+        body: "Headline, services aur About padho; jo galat ya bana-banaya lage use badal do aur \"Save copy\". Theme pasand na aaye to Details mein \"Design theme\" badlo. Photos sample hain: client ki apni photos mil jayein to unhe upload karke pehli ko hero banao. Google rating 4.5 se kam ho to app use site par nahi dikhata.",
       },
       {
         id: "build-100",
@@ -90,8 +90,8 @@ export const GUIDE: GuidePhase[] = [
     steps: [
       {
         id: "out-first",
-        title: "Draft banao, phir apne shabdon mein theek karo",
-        body: "\"Write draft\" se pehla draft aata hai. Use bina padhe mat bhejo. Achhe email ke 5 hisse: 1) Pehli line mein unki site ki ek asli cheez (unki apni line quote karo). 2) Ek imaandar observation: site par kya kamzor hai. 3) \"Maine aapke liye naya version bana diya\" + link, akela ek line par. 4) Sach batao: photos abhi sample hain, unki apni lagengi. 5) Ek chhota sawaal. 110 shabdon se kam. Har email ka subject aur shuruaat alag ho.",
+        title: "Email draft padho aur apna banao",
+        body: "Auto-build email draft bhi likh deta hai: unki khaas baat se shuruaat, ek imaandar observation, link akeli line par, \"photos placeholder hain\", aur ek sawaal. Aapka kaam: padhna, jo line aapke bolne jaisi na lage use badalna, aur check karna ki koi galat daava nahi hai. {me} ki jagah aapka naam apne aap aata hai. 110 shabdon se kam rakho.",
         link: { label: "Outreach", href: "/admin/outreach" },
       },
       {
@@ -107,8 +107,8 @@ export const GUIDE: GuidePhase[] = [
       },
       {
         id: "out-reply",
-        title: "Follow-up: Day 3 aur Day 7, usi thread mein",
-        body: "Dashboard dekho: kisne link khola. Khola par reply nahi: \"Hi {name}, saw you had a look at the redesign. Anything you'd want different? Happy to change it.\" Nahi khola (Day 3): \"Hi {name}, just making sure this didn't get buried — the new version of your site is here: {link}\". Day 7, aakhri: \"Last note from me. The preview stays up for another week if you want a look. Either way, good luck with the season.\" Uske baad chhod do. Koi \"no\" kahe to lead ka status Opted out karo aur dobara mat likho.",
+        title: "Follow-up: Outreach → \"Follow-ups due\"",
+        body: "Day 3 aur Day 7 par jinhone reply nahi kiya wo apne aap is list mein aa jate hain, text ke saath (link khola ya nahi, us hisaab se alag). Sabse achha: Gmail mein apne pehle email par Reply karke wahi text bhejo, phir yahan \"Sent\" dabao. 2 follow-up ke baad chhod do. Koi \"no\" kahe to lead ka status Opted out karo.",
         link: { label: "Dashboard", href: "/admin" },
       },
     ],

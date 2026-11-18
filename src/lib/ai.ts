@@ -60,7 +60,7 @@ How to write it:
 - Then say I built a new version and give the preview link alone on its own line, exactly once.
 - Say plainly that the photos are placeholders until theirs go in.
 - State the deal in one sentence: free to look at; if they want it they pay what they think it is worth and it goes live on their domain.
-- End with one short question.
+- End with one short question about the redesign itself (what they would change, whether it is worth a look). The link is already in the email, so never offer to "send it over" or ask permission to share it.
 
 Voice: first person singular, plain American English, the way a thoughtful tradesperson would write to another. 70 to 110 words. Vary sentence length. No exclamation marks, no emoji, no bullet points, no marketing words (leading, premium, solutions, boost, skyrocket, stunning), no "I hope this finds you well", no fake urgency, no promised results.
 
@@ -171,5 +171,93 @@ export async function generateEmail(
   } catch (error) {
     console.error("generateEmail failed", error);
     return { ...fallback, source: "template" };
+  }
+}
+
+// ─── Auto-build: one call that turns a business's own website into a redesign + email ───
+
+const THEME_GUIDE = `fresh = full-photo hero, green, friendly (lawn care, mowing)
+clean = split hero, blue, crisp and trustworthy (painters, general services)
+airy = split hero, teal, light and soft (cleaning, family-run services)
+workshop = full-photo hero, warm orange on cream (handyman, trades)
+blue = full-photo hero, blue (pressure washing, pools, water)
+warm = split hero, brown on cream, cozy (cafés, small shops)
+editorial = centered serif headline, cream and terracotta (organic, artisan, heritage)
+noir = centered serif headline, black and gold (premium design/build, high-end)
+bold = huge condensed type, black and red (gyms, bold brands)`;
+
+const BuildSchema = z.object({
+  ownerFirstName: z.string().nullable().describe("Owner's first name if the site states it, else null"),
+  contactEmail: z.string().nullable().describe("One of the candidate emails that is the business's own contact address, else null"),
+  hook: z.string().describe("The single most distinctive true thing on their site, ideally their own phrase quoted"),
+  weakness: z.string().describe("One honest content-based weakness of their current site, one sentence"),
+  theme: z.enum(["fresh", "clean", "airy", "workshop", "blue", "warm", "editorial", "noir", "bold"]),
+  photos: z.array(z.string()).describe("Exactly 4 photo keys from the library; the first is the hero"),
+  sample: SampleSchema,
+  emailSubject: z.string(),
+  emailBody: z.string(),
+});
+
+export type BuildResult = z.infer<typeof BuildSchema>;
+
+/** Returns null when no AI provider is configured or the call fails. */
+export async function buildFromResearch(input: {
+  lead: Lead;
+  siteText: string;
+  emails: string[];
+  builder: string | null;
+  photoLibrary: Record<string, { alt: string }>;
+  link: string;
+}): Promise<BuildResult | null> {
+  if (!aiEnabled()) return null;
+  const { lead, siteText, emails, builder, photoLibrary, link } = input;
+
+  const system = `You help me, a solo web designer, prepare a redesign of a small local business's website and the first email I send its owner. You are given the text of their current website. Work only from that text and the facts provided: never invent awards, licenses, years, prices, guarantees, reviews or names.
+
+PART 1 — research
+- ownerFirstName: only if the site names the owner. contactEmail: choose from the candidate list only; ignore web-designer, platform or placeholder addresses.
+- hook: the most distinctive true thing about them (their slogan, a promise, how long they have operated, the owner's story).
+- weakness: something about the CONTENT of their current site that I can say honestly and kindly — for example a key service or promise is buried, text repeats, there is very little information, no clear way to get a quote. You cannot see the design, so do not comment on colors, layout, speed or mobile behavior.
+
+PART 2 — the redesigned site copy ("sample")
+Write as the business ("we", or "I" if it is clearly a one-person company) speaking to customers. Concrete, short sentences, American English. headline 4-8 words built on the hook. Exactly 4 services drawn from what they actually offer, each with a one-sentence description. Exactly 3 whyUs points that are stated on their site. about: 2-3 sentences in their voice using their real story. cta: 2-4 words matching how they take work (free estimate, free quote, book, schedule a consultation).
+
+PART 3 — look
+theme: pick the best fit.
+${THEME_GUIDE}
+photos: pick exactly 4 keys from the photo library that match their real services; the first is the hero.
+
+PART 4 — the email
+${EMAIL_SYSTEM_PROMPT}
+The email's opening should use the hook, and its observation should be the weakness. If the redesign gives a specific service or promise its own place, say so in one sentence.`;
+
+  const user = `Business: ${lead.businessName}
+Trade: ${TRADE_META[lead.trade].label}
+Location: ${[lead.city, lead.state].filter(Boolean).join(", ") || "unknown"}
+Phone: ${lead.phone ?? "unknown"}
+Current website: ${lead.website}
+Website platform: ${builder ?? "unknown"}
+Candidate emails: ${emails.join(", ") || "none found"}
+${lead.notes ? `My notes: ${lead.notes}\n` : ""}
+Photo library (key: what it shows):
+${Object.entries(photoLibrary).map(([key, photo]) => `${key}: ${photo.alt}`).join("\n")}
+
+Preview link for the email: ${link}
+
+Text of their current website:
+"""
+${siteText}
+"""`;
+
+  try {
+    const result = await parse(BuildSchema, "site_build", system, user);
+    if (!result) return null;
+    return {
+      ...result,
+      sample: { ...result.sample, services: result.sample.services.slice(0, 4), whyUs: result.sample.whyUs.slice(0, 3) },
+    };
+  } catch (error) {
+    console.error("buildFromResearch failed", error);
+    return null;
   }
 }

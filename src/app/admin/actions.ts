@@ -19,6 +19,7 @@ import { scoreLead, searchPlaces } from "@/lib/places";
 import { aiLabel, generateEmail, generateSample } from "@/lib/ai";
 import { uploadImage } from "@/lib/imagekit";
 import { siteUrl } from "@/lib/brand";
+import { autoBuildLead } from "@/lib/autobuild";
 
 export type ActionState = { ok?: boolean; message?: string } | null;
 
@@ -335,5 +336,67 @@ export async function markEmailedAction(ids: string[]): Promise<void> {
     });
     await logEvent(id, "emailed");
   }
+  refresh();
+}
+
+// ─── Automation ────────────────────────────────────────────────────────
+
+export async function autoBuildAction(id: string): Promise<ActionState> {
+  await requireAdmin();
+  const result = await autoBuildLead(id);
+  refresh();
+  return result;
+}
+
+/** Finds businesses that already have a website and prepares a redesign + email for each. */
+export async function findAndBuildAction(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const what = str(form, "trade");
+  const where = str(form, "location");
+  const limit = Math.min(5, Math.max(1, num(form, "count") ?? 3));
+  if (!what || !where) return { message: "Pick a trade and a city." };
+
+  try {
+    const results = await searchPlaces(`${what.replace("_", " ")} in ${where}`);
+    // Small local businesses with their own site: skip social-only pages and big-review chains.
+    const candidates = results.filter(
+      (p) => p.website && !/facebook\.com|instagram\.com|yelp\.com/i.test(p.website) && (p.reviewCount ?? 0) <= 400,
+    );
+
+    const created: string[] = [];
+    for (const place of candidates) {
+      if (created.length >= limit) break;
+      const fields = {
+        businessName: place.name,
+        trade: trade(what),
+        phone: place.phone,
+        website: place.website,
+        // Ratings below 4.5 stay off the redesigned site.
+        rating: (place.rating ?? 0) >= 4.5 ? place.rating : null,
+        reviewCount: (place.rating ?? 0) >= 4.5 ? place.reviewCount : null,
+        city: place.city,
+        state: place.state,
+        placeId: place.placeId,
+        notes: place.rating ? `Google: ${place.rating}★ (${place.reviewCount ?? 0} reviews)` : null,
+      };
+      const id = await createLead({ ...fields, source: "places", score: scoreLead(fields) });
+      if (id) created.push(id);
+    }
+
+    const built = await Promise.allSettled(created.map((id) => autoBuildLead(id)));
+    const ok = built.filter((r) => r.status === "fulfilled" && r.value.ok).length;
+    refresh();
+    return {
+      ok: true,
+      message: `Found ${results.length}, added ${created.length} new, built ${ok} redesign(s). ${created.length - ok ? `${created.length - ok} need a manual build. ` : ""}Open each lead and read it before sending.`,
+    };
+  } catch (error) {
+    return { message: error instanceof Error ? error.message : "Search failed." };
+  }
+}
+
+export async function markFollowUpAction(id: string, step: number): Promise<void> {
+  await requireAdmin();
+  await logEvent(id, "followup", { step });
   refresh();
 }

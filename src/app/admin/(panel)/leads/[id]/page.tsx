@@ -12,6 +12,7 @@ import { aiEnabled, aiLabel } from "@/lib/ai";
 import { imagekitEnabled } from "@/lib/imagekit";
 import { composeEmail, gmailComposeUrl } from "@/lib/email";
 import {
+  autoBuildAction,
   deleteLeadAction,
   generateEmailAction,
   generateSampleAction,
@@ -27,6 +28,8 @@ import {
 import { ActionButton, ActionForm, CopyButton, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { STATUS_META, StatusBadge, timeAgo } from "@/components/admin/status";
+
+export const maxDuration = 60;
 
 export default function LeadPage({ params }: PageProps<"/admin/leads/[id]">) {
   return (
@@ -97,6 +100,23 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* ── Left: work ── */}
         <div className="space-y-6">
+          {lead.website ? (
+            <section className="card flex flex-wrap items-center justify-between gap-3 p-5">
+              <div className="min-w-0">
+                <h2 className="font-semibold">Auto-build from their website</h2>
+                <p className="mt-0.5 text-sm text-muted">
+                  Unki site padh kar copy, theme, photos aur email ek saath banata hai (purana content badal jayega).
+                </p>
+              </div>
+              <ActionButton
+                action={autoBuildAction.bind(null, lead.id)}
+                pendingText="Reading their site…"
+                confirm={lead.sample ? "Is lead ki copy, photos aur email draft dobara ban jayenge. Chalu karein?" : undefined}
+              >
+                {lead.sample ? "Rebuild" : "Auto-build"}
+              </ActionButton>
+            </section>
+          ) : null}
           <SampleSection lead={lead} />
           <ImagesSection lead={lead} />
           <EmailSection

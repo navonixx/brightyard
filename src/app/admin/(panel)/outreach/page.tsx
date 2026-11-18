@@ -2,9 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Download, ExternalLink } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
-import { emailedToday, getSettings, listLeads } from "@/lib/data";
-import { composeEmail, gmailComposeUrl } from "@/lib/email";
-import { markEmailedAction } from "../../actions";
+import { emailedToday, followUpsDue, getSettings, listLeads } from "@/lib/data";
+import { siteUrl } from "@/lib/brand";
+import { composeEmail, followUpBody, gmailComposeUrl } from "@/lib/email";
+import { markEmailedAction, markFollowUpAction } from "../../actions";
 import { ActionButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 
@@ -26,6 +27,8 @@ async function Outreach() {
   const missingEmail = ready.filter((l) => !l.email);
   const missingDraft = ready.filter((l) => l.email && !l.emailBody);
   const left = Math.max(0, DAILY_LIMIT - sentToday);
+  // eslint-disable-next-line react-hooks/purity -- Server Component, rendered once per request
+  const followUps = await followUpsDue(Date.now());
   const setupMissing = !settings.senderName || !settings.businessAddress || !settings.senderEmail;
 
   return (
@@ -104,6 +107,54 @@ async function Outreach() {
           <p className="p-6 text-sm text-muted">
             Queue khaali hai. Leads mein jaakar preview copy aur email draft banao — phir wo yahan aa jayenge.
           </p>
+        )}
+      </section>
+
+      <section className="card overflow-hidden">
+        <div className="border-b border-line px-5 py-4">
+          <h2 className="font-semibold">
+            Follow-ups due <span className="text-muted">({followUps.length})</span>
+          </h2>
+          <p className="mt-0.5 text-sm text-muted">Day 3 aur Day 7 par, sirf unko jinhone reply nahi kiya. Gmail mein apne pehle email ke thread mein reply karna sabse achha hai; ye button naya email kholta hai.</p>
+        </div>
+        {followUps.length ? (
+          <ul className="divide-y divide-line">
+            {followUps.map(({ lead, step, daysSince }) => {
+              const body = composeEmail(
+                followUpBody({ ownerName: lead.ownerName, viewCount: lead.viewCount, step, link: siteUrl() + "/p/" + lead.token }),
+                settings,
+              );
+              const href = lead.email
+                ? gmailComposeUrl({ to: lead.email, subject: "Re: " + (lead.emailSubject ?? ""), body, account: settings.senderEmail || undefined })
+                : null;
+              return (
+                <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <div className="min-w-0">
+                    <Link href={"/admin/leads/" + lead.id} className="font-medium hover:text-brand">
+                      {lead.businessName}
+                    </Link>
+                    <p className="text-sm text-muted">
+                      Follow-up {step} of 2 · emailed {daysSince} days ago · {lead.viewCount ? "opened " + lead.viewCount + "×" : "not opened"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                        Open in Gmail <ExternalLink className="size-3.5" />
+                      </a>
+                    ) : (
+                      <span className="text-sm text-muted">contact form</span>
+                    )}
+                    <ActionButton action={markFollowUpAction.bind(null, lead.id, step)} className="btn-ghost" pendingText="Saving…">
+                      Sent
+                    </ActionButton>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="p-6 text-sm text-muted">Abhi koi follow-up due nahi hai.</p>
         )}
       </section>
 
