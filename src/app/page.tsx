@@ -1,45 +1,82 @@
+import type { CSSProperties } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { InquiryForm } from "@/components/inquiry-form";
 import { SiteRender } from "@/components/site-render";
+import { PhotoStack, PromoReel, SHOWCASE } from "@/components/showcase";
+import { Reveal } from "@/components/motion/reveal";
+import { CountUp } from "@/components/motion/count-up";
+import { Chapters } from "@/components/motion/chapters";
 import { DEMOS } from "@/lib/demos";
-import { TRADE_META } from "@/lib/brand";
 
-const STEPS = [
-  { n: "01", title: "We look you up.", body: "Your Google reviews, your services, your service area. Nothing for you to fill out." },
-  { n: "02", title: "We build your homepage.", body: "A custom, phone-first preview with your name and your work. Usually within 48 hours." },
-  { n: "03", title: "You decide.", body: "Love it? Pay what you think it's worth and we put it live. Not for you? Walk away." },
+const INDUSTRIES = [
+  "Landscapers", "Cafés", "Salons", "Painters", "Bakeries", "Fitness studios",
+  "Cleaners", "Handymen", "Restaurants", "Pressure washers", "Barbers", "Florists",
 ];
 
-const FEATURES = [
-  { title: "Built for phones.", body: "Most customers find you on a phone. Every page is designed for a thumb first." },
-  { title: "Tap to call. Everywhere.", body: "One tap from any section to your phone. More calls, fewer bounces." },
-  { title: "Fast and findable.", body: "Clean, quick pages that search engines can read." },
-  { title: "AI photo set.", body: "Polished hero and gallery images when you don't have great photos yet." },
-  { title: "15‑second promo video.", body: "A short clip for your Google profile, Facebook or Instagram." },
-  { title: "Words that sound like you.", body: "Plain, friendly copy about what you actually do. No fluff." },
+const STEPS = [
+  { n: "01", title: "Tell us about you.", body: "Your business, your city, what you need. Two minutes, no calls." },
+  { n: "02", title: "We make it first.", body: "Your website, photo set or promo video — finished, not a mock-up. Usually within 48 hours." },
+  { n: "03", title: "Pay what it's worth.", body: "Love it? Choose the price and it's yours. Not for you? Walk away. No invoices, no hard feelings." },
 ];
 
 const PRICES = [
-  { name: "Homepage", price: "$99", items: ["Custom one‑page site", "Tap‑to‑call and quote section", "Set up on your domain"] },
-  { name: "Homepage + Photos", price: "$149", items: ["Everything in Homepage", "Six AI‑made photos", "Gallery section"], featured: true },
-  { name: "Homepage + Video", price: "$199", items: ["Everything in Homepage + Photos", "15‑second promo video", "Sized for Google and social"] },
+  { name: "Website", price: 99, note: "One-page site, tap-to-call, on your domain." },
+  { name: "AI photo set", price: 49, note: "Six polished photos for your site and socials." },
+  { name: "Promo video", price: 79, note: "A 15-second vertical reel for Google, Instagram and Facebook." },
+  { name: "Everything", price: 199, note: "Website, photo set and promo video together.", featured: true },
 ];
 
 const FAQ = [
-  { q: "Is the preview really free?", a: "Yes. We build it first so you can see exactly what you'd get. You only pay if you want it live." },
-  { q: "What does “pay what it's worth” mean?", a: "You pick the price. Most owners choose between $99 and $199 — whatever feels fair for your business." },
-  { q: "Do I need a domain?", a: "If you have one, we connect it. If not, we'll help you register one in your name. You always own it." },
-  { q: "What about hosting and changes later?", a: "Hosting plus small edits is an optional $15 a month after launch. Cancel anytime." },
-  { q: "I already have a website.", a: "We'll show you a fresh version side by side. If yours does the job, keep it." },
+  { q: "Is it really free to see?", a: "Yes. We make the finished thing first so you know exactly what you're getting. You only pay if you want to keep it." },
+  { q: "What does “pay what it's worth” mean?", a: "You choose the price. The amounts on this page are what most owners pick — pay what feels fair for your business." },
+  { q: "Are the photos real?", a: "They're made with AI and art-directed by us to match your business. Want your own photos instead? Send them and we'll use those." },
+  { q: "Who owns the work?", a: "You do. Your domain, your files, your video — all in your name." },
+  { q: "What happens after launch?", a: "Hosting plus small edits is an optional $15 a month. Cancel anytime." },
 ];
 
-const hero = DEMOS[0];
+function Words({ text, offset = 0 }: { text: string; offset?: number }) {
+  return text.split(" ").map((word, i) => (
+    <span key={`${word}-${i}`} className="word" style={{ "--i": i + offset } as CSSProperties}>
+      {word}&nbsp;
+    </span>
+  ));
+}
+
+const demo = DEMOS[0];
 
 export default function Home() {
+  const chapters = [
+    {
+      eyebrow: "Websites",
+      title: "A website that works while you do.",
+      body: "Built for the phone in your customer's hand. Your services, your reviews, one tap to call.",
+      points: ["Phone-first design", "Tap-to-call and quote requests", "Live on your domain in days"],
+      visual: <div className="w-full"><SiteRender data={{ ...demo, images: [] }} url={`${demo.slug}.com`} size="panel" /></div>,
+      mobileVisual: <SiteRender data={{ ...demo, images: [] }} url={`${demo.slug}.com`} size="panel" />,
+    },
+    {
+      eyebrow: "AI photos",
+      title: "Photos that look like a shoot. Without the shoot.",
+      body: "Hero images, gallery shots and social posts, art-directed to fit your business and your brand.",
+      points: ["Six photos per set", "Sized for web and social", "Your own photos welcome too"],
+      visual: <PhotoStack className="w-full max-w-[460px]" />,
+      mobileVisual: <PhotoStack />,
+    },
+    {
+      eyebrow: "Promo video",
+      title: "Fifteen seconds that stop the scroll.",
+      body: "A vertical reel with your best moments and a clear call to action — ready for Google, Instagram and Facebook.",
+      points: ["15-second vertical format", "Captions that read without sound", "Your offer, front and center"],
+      visual: <PromoReel className="w-[270px]" />,
+      mobileVisual: <PromoReel className="mx-auto w-[230px]" />,
+    },
+  ];
+
   return (
-    <div className="flex-1 bg-canvas text-graphite">
+    <div className="flex-1 bg-void text-graphite">
       {/* Global nav */}
       <nav className="bg-void text-white">
         <div className="mx-auto flex h-11 max-w-[1024px] items-center justify-between px-4 sm:px-6">
@@ -47,152 +84,215 @@ export default function Home() {
             <Logo size="sm" />
           </Link>
           <div className="hidden items-center gap-8 t-fine text-white/80 md:flex">
+            <a href="#what" className="hover:text-white">What we make</a>
+            <a href="#work" className="hover:text-white">Work</a>
             <a href="#how" className="hover:text-white">How it works</a>
-            <a href="#examples" className="hover:text-white">Examples</a>
             <a href="#pricing" className="hover:text-white">Pricing</a>
             <a href="#faq" className="hover:text-white">FAQ</a>
           </div>
-          <a href="#start" className="t-fine text-white/80 hover:text-white">Get started</a>
+          <a href="#start" className="t-fine text-white/80 hover:text-white">Contact</a>
         </div>
       </nav>
 
-      {/* Sub-nav (frosted) */}
-      <div className="sticky top-0 z-40 border-b border-black/[0.08] bg-parchment/80 backdrop-blur-xl backdrop-saturate-[180%]">
+      {/* Frosted sub-nav */}
+      <div className="sticky top-0 z-40 border-b border-white/10 bg-[#161617]/90 text-white backdrop-blur-xl backdrop-saturate-[180%]">
         <div className="mx-auto flex h-[52px] max-w-[1024px] items-center justify-between px-4 sm:px-6">
-          <span className="t-tagline">Brightyard</span>
+          <span className="t-tagline">Brightyard Studio</span>
           <div className="flex items-center gap-6">
-            <a href="#examples" className="hidden t-caption text-graphite-80 hover:text-graphite sm:block">Examples</a>
-            <a href="#pricing" className="hidden t-caption text-graphite-80 hover:text-graphite sm:block">Pricing</a>
+            <a href="#work" className="hidden t-caption text-white/80 hover:text-white sm:block">Work</a>
+            <a href="#pricing" className="hidden t-caption text-white/80 hover:text-white sm:block">Pricing</a>
             <a href="#start" className="rounded-full bg-action px-3.5 py-1.5 t-caption text-white transition-transform active:scale-95">
-              Free preview
+              Get a free sample
             </a>
           </div>
         </div>
       </div>
 
       <main>
-        {/* Hero — light tile */}
-        <section className="overflow-hidden bg-canvas pt-14 text-center sm:pt-20">
-          <div className="mx-auto max-w-[980px] px-4 sm:px-6">
-            <p className="t-tagline text-graphite-48">For landscapers, painters, cleaners and handymen</p>
-            <h1 className="t-hero mx-auto mt-3 max-w-[16ch]">Your new website is already built.</h1>
-            <p className="t-lead mx-auto mt-4 max-w-[30ch] text-graphite">
-              See it first. Love it? Pay what it&apos;s worth.
+        {/* ── Hero: dark stage ── */}
+        <section className="relative overflow-hidden bg-void pt-20 text-white sm:pt-28">
+          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+            <p className="fade-in text-[15px] font-semibold tracking-[-0.01em] text-white/60 sm:text-[21px]">Websites · AI photos · Promo videos</p>
+            <h1 className="mx-auto mt-4 max-w-[18ch] text-balance font-display text-[40px] font-semibold leading-[1.06] tracking-[-0.025em] sm:text-[56px] lg:text-[72px] lg:leading-[1.03]">
+              <Words text="We make it first." />
+              <span className="text-white/45">
+                <Words text="You pay if you love it." offset={4} />
+              </span>
+            </h1>
+            <p className="fade-in t-lead mx-auto mt-6 max-w-[34ch] text-on-dark-muted" style={{ "--d": "900ms" } as CSSProperties}>
+              A small studio making websites, photos and short videos for local businesses.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <a href="#start" className="pill-primary">Get my free preview</a>
-              <a href="#examples" className="pill-ghost">See examples</a>
+            <div className="fade-in mt-9 flex flex-wrap items-center justify-center gap-4" style={{ "--d": "1100ms" } as CSSProperties}>
+              <a href="#start" className="pill-primary">Get a free sample</a>
+              <a href="#work" className="pill-ghost-dark">See our work</a>
             </div>
           </div>
-          <div className="mx-auto mt-14 max-w-[980px] px-4 sm:mt-16 sm:px-6">
-            <SiteRender data={{ ...hero, images: [] }} url={`${hero.slug}.com`} />
+
+          {/* Stage: website + photo + phone */}
+          <div className="fade-in relative mx-auto mt-16 max-w-[1040px] px-4 pb-24 sm:mt-20 sm:px-10 sm:pb-32" style={{ "--d": "1300ms" } as CSSProperties}>
+            <div className="mx-auto max-w-[948px]">
+              <SiteRender data={{ ...demo, images: [] }} url={`${demo.slug}.com`} />
+            </div>
+            <div className="float-slow absolute bottom-10 left-1 w-[34%] max-w-[260px] -rotate-6 sm:bottom-14 sm:left-4">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] shadow-product ring-1 ring-white/10">
+                <Image src={SHOWCASE[0].src} alt="" fill preload sizes="260px" className="ken-burns object-cover" />
+                <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium backdrop-blur sm:text-[11px]">
+                  AI photo
+                </span>
+              </div>
+            </div>
+            <div className="float-slower absolute bottom-4 right-2 w-[24%] max-w-[200px] rotate-[5deg] sm:bottom-8 sm:right-6">
+              <PromoReel />
+            </div>
           </div>
-          <div className="h-16 sm:h-20" />
         </section>
 
-        {/* How it works — dark tile */}
-        <section id="how" className="bg-tile py-20 text-white sm:py-24">
-          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
-            <h2 className="t-display">Three steps. Zero risk.</h2>
-            <p className="t-lead mx-auto mt-3 max-w-[32ch] text-on-dark-muted">
-              You don&apos;t pay for a website you haven&apos;t seen.
-            </p>
-          </div>
-          <div className="mx-auto mt-14 grid max-w-[980px] gap-12 px-4 text-center sm:px-6 md:grid-cols-3 md:gap-8">
-            {STEPS.map((step) => (
-              <div key={step.n}>
-                <p className="t-caption font-semibold text-action-on-dark">{step.n}</p>
-                <h3 className="t-tagline mt-3">{step.title}</h3>
-                <p className="t-body mt-2 text-on-dark-muted">{step.body}</p>
-              </div>
+        {/* ── Industries marquee ── */}
+        <section className="overflow-hidden border-y border-hairline bg-canvas py-6" aria-label="Businesses we work with">
+          <div className="marquee-track flex w-max gap-10 whitespace-nowrap">
+            {[...INDUSTRIES, ...INDUSTRIES].map((name, i) => (
+              <span key={`${name}-${i}`} className="t-tagline text-graphite-48" aria-hidden={i >= INDUSTRIES.length}>
+                {name} <span className="ml-10 text-hairline">•</span>
+              </span>
             ))}
           </div>
         </section>
 
-        {/* Examples — parchment tile */}
-        <section id="examples" className="bg-parchment py-20 sm:py-24">
-          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
-            <h2 className="t-display">Previews we&apos;ve built.</h2>
-            <p className="t-lead mx-auto mt-3 max-w-[30ch] text-graphite-48">Fictional businesses. Real templates.</p>
+        {/* ── What we make: sticky chapters ── */}
+        <section id="what" className="bg-canvas pt-24 sm:pt-32">
+          <Reveal className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+            <h2 className="t-display">Three things. Done properly.</h2>
+            <p className="t-lead mx-auto mt-4 max-w-[30ch] text-graphite-48">
+              Everything a local business needs to look as good online as it is in person.
+            </p>
+          </Reveal>
+          <div className="pb-16 sm:pb-24">
+            <Chapters chapters={chapters} />
           </div>
-          <div className="mx-auto mt-12 grid max-w-[1100px] gap-5 px-4 sm:px-6 md:grid-cols-3">
-            {DEMOS.map((demo) => (
-              <Link
-                key={demo.slug}
-                href={`/demo/${demo.slug}`}
-                className="group rounded-[18px] border border-hairline bg-canvas p-5 transition-transform active:scale-[0.98]"
+        </section>
+
+        {/* ── Work gallery ── */}
+        <section id="work" className="bg-tile py-24 text-white sm:py-32">
+          <Reveal className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+            <h2 className="t-display">Made by us. Made with AI.</h2>
+            <p className="t-lead mx-auto mt-4 max-w-[32ch] text-on-dark-muted">
+              A few photos from recent sets. Every one art-directed for the business it&apos;s for.
+            </p>
+          </Reveal>
+          <div className="mx-auto mt-14 grid max-w-[1180px] grid-cols-2 gap-3 px-4 sm:px-6 md:grid-cols-4 md:gap-4">
+            {SHOWCASE.map((img, i) => (
+              <Reveal
+                key={img.src}
+                delay={(i % 4) * 90}
+                className={`group relative overflow-hidden rounded-[14px] ${i === 0 || i === 5 ? "md:col-span-2 md:row-span-2" : ""}`}
               >
-                <SiteRender data={{ ...demo, images: [] }} url={`${demo.slug}.com`} size="card" />
-                <p className="t-caption mt-5 font-semibold text-graphite-48">{TRADE_META[demo.trade].label}</p>
-                <p className="t-body mt-1 font-semibold">{demo.businessName}</p>
-                <p className="t-body text-graphite-48">{demo.city}, {demo.state}</p>
-                <span className="t-body mt-3 inline-flex items-center text-action group-hover:underline">
-                  View example <ChevronRight className="size-4" />
+                <div className={`relative aspect-[4/5] ${i === 0 || i === 5 ? "md:aspect-auto md:h-full" : ""}`}>
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    sizes="(min-width: 768px) 45vw, 50vw"
+                    className="object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-105"
+                  />
+                </div>
+                <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-[12px] font-medium backdrop-blur">
+                  {img.label}
+                </span>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mx-auto mt-16 grid max-w-[1100px] gap-5 px-4 sm:px-6 md:grid-cols-3">
+            {DEMOS.map((d) => (
+              <Link
+                key={d.slug}
+                href={`/demo/${d.slug}`}
+                className="group rounded-[18px] bg-tile-2 p-5 ring-1 ring-white/10 transition-transform active:scale-[0.98]"
+              >
+                <SiteRender data={{ ...d, images: [] }} url={`${d.slug}.com`} size="card" shadow={false} />
+                <p className="t-body mt-5 font-semibold">{d.businessName}</p>
+                <span className="t-body mt-1 inline-flex items-center text-action-on-dark group-hover:underline">
+                  View example website <ChevronRight className="size-4" />
                 </span>
               </Link>
             ))}
-          </div>
+          </Reveal>
         </section>
 
-        {/* Features — dark tile 2 */}
-        <section className="bg-tile-2 py-20 text-white sm:py-24">
-          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
-            <h2 className="t-display">Everything a local pro needs.</h2>
-            <p className="t-lead mx-auto mt-3 max-w-[30ch] text-on-dark-muted">Nothing you don&apos;t.</p>
-          </div>
-          <div className="mx-auto mt-14 grid max-w-[980px] gap-x-10 gap-y-12 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <div key={f.title}>
-                <h3 className="t-tagline">{f.title}</h3>
-                <p className="t-body mt-2 text-on-dark-muted">{f.body}</p>
-              </div>
+        {/* ── How it works ── */}
+        <section id="how" className="bg-parchment py-24 sm:py-32">
+          <Reveal className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+            <h2 className="t-display">No risk. Not even a little.</h2>
+            <p className="t-lead mx-auto mt-4 max-w-[30ch] text-graphite-48">You never pay for something you haven&apos;t seen.</p>
+          </Reveal>
+          <div className="mx-auto mt-16 grid max-w-[1100px] gap-5 px-4 sm:px-6 md:grid-cols-3">
+            {STEPS.map((step, i) => (
+              <Reveal key={step.n} delay={i * 120} className="rounded-[18px] bg-canvas p-8">
+                <p className="font-display text-[56px] font-semibold leading-none tracking-[-0.03em] text-action">{step.n}</p>
+                <h3 className="t-tagline mt-6">{step.title}</h3>
+                <p className="t-body mt-2 text-graphite-80">{step.body}</p>
+              </Reveal>
             ))}
           </div>
         </section>
 
-        {/* Pricing — light tile */}
-        <section id="pricing" className="bg-canvas py-20 sm:py-24">
-          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+        {/* ── Numbers ── */}
+        <section className="bg-canvas py-20 sm:py-24">
+          <div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-y-12 px-4 text-center sm:px-6 md:grid-cols-4">
+            {[
+              { value: <CountUp to={48} suffix="h" />, label: "to your first sample" },
+              { value: <CountUp to={0} prefix="$" />, label: "upfront, ever" },
+              { value: <CountUp to={15} suffix="s" />, label: "promo videos that convert" },
+              { value: <CountUp to={100} suffix="%" />, label: "yours to keep" },
+            ].map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 100}>
+                <p className="font-display text-[48px] font-semibold leading-none tracking-[-0.03em] sm:text-[64px]">{stat.value}</p>
+                <p className="t-caption mt-3 text-graphite-48">{stat.label}</p>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Pricing ── */}
+        <section id="pricing" className="bg-tile-2 py-24 text-white sm:py-32">
+          <Reveal className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
             <h2 className="t-display">Pay what it&apos;s worth.</h2>
-            <p className="t-lead mx-auto mt-3 max-w-[34ch] text-graphite-48">
-              See the finished preview, then choose the price. These are the amounts most owners pick.
+            <p className="t-lead mx-auto mt-4 max-w-[34ch] text-on-dark-muted">
+              See the finished work first, then choose your price. These are the amounts most owners pick.
             </p>
-          </div>
-          <div className="mx-auto mt-12 grid max-w-[1100px] gap-5 px-4 sm:px-6 md:grid-cols-3">
-            {PRICES.map((p) => (
-              <div
+          </Reveal>
+          <div className="mx-auto mt-14 grid max-w-[1180px] gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+            {PRICES.map((p, i) => (
+              <Reveal
                 key={p.name}
-                className={`flex flex-col rounded-[18px] bg-parchment p-8 ${p.featured ? "ring-2 ring-action-focus" : ""}`}
+                delay={i * 90}
+                className={`flex flex-col rounded-[18px] p-7 ${p.featured ? "bg-canvas text-graphite" : "bg-tile-3 ring-1 ring-white/10"}`}
               >
-                {p.featured ? <p className="t-caption font-semibold text-action">Most chosen</p> : <p className="t-caption">&nbsp;</p>}
-                <h3 className="t-tagline mt-2">{p.name}</h3>
-                <p className="mt-4 font-display text-[40px] font-semibold leading-none tracking-[-0.01em]">
-                  {p.price}
-                  <span className="t-caption ml-2 font-normal text-graphite-48">suggested</span>
+                <p className={`t-caption font-semibold ${p.featured ? "text-action" : "text-action-on-dark"}`}>
+                  {p.featured ? "Best value" : "Suggested"}
                 </p>
-                <ul className="t-body mt-6 flex-1 space-y-2 text-graphite-80">
-                  {p.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <a href="#start" className={`mt-8 self-start ${p.featured ? "pill-primary" : "pill-ghost"}`}>
-                  Get my preview
+                <h3 className="t-tagline mt-2">{p.name}</h3>
+                <p className="mt-4 font-display text-[44px] font-semibold leading-none tracking-[-0.02em]">${p.price}</p>
+                <p className={`t-body mt-4 flex-1 ${p.featured ? "text-graphite-80" : "text-on-dark-muted"}`}>{p.note}</p>
+                <a href="#start" className={`mt-8 self-start ${p.featured ? "pill-primary" : "pill-ghost-dark"}`}>
+                  Get a free sample
                 </a>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
 
-        {/* FAQ — parchment tile */}
-        <section id="faq" className="bg-parchment py-20 sm:py-24">
+        {/* ── FAQ ── */}
+        <section id="faq" className="bg-canvas py-24 sm:py-32">
           <div className="mx-auto max-w-[760px] px-4 sm:px-6">
-            <h2 className="t-display text-center">Questions? Answers.</h2>
+            <Reveal>
+              <h2 className="t-display text-center">Questions? Answers.</h2>
+            </Reveal>
             <div className="mt-12 divide-y divide-hairline border-y border-hairline">
               {FAQ.map((item) => (
                 <details key={item.q} className="group py-5">
-                  <summary className="t-tagline flex cursor-pointer list-none items-center justify-between gap-4 text-[19px]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[19px] font-semibold tracking-[-0.01em]">
                     {item.q}
-                    <span className="text-[24px] font-light text-graphite-48 transition-transform group-open:rotate-45">+</span>
+                    <span className="text-[26px] font-light text-graphite-48 transition-transform duration-300 group-open:rotate-45">+</span>
                   </summary>
                   <p className="t-body mt-3 text-graphite-80">{item.a}</p>
                 </details>
@@ -201,48 +301,52 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Start — dark tile 3 */}
-        <section id="start" className="bg-tile-3 py-20 text-white sm:py-24">
-          <div className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
-            <h2 className="t-display">Get your free preview.</h2>
-            <p className="t-lead mx-auto mt-3 max-w-[32ch] text-on-dark-muted">
-              Tell us who you are. Your new homepage lands in your inbox within 48 hours.
-            </p>
-          </div>
-          <div className="mx-auto mt-12 max-w-[760px] px-4 sm:px-6">
-            <InquiryForm />
+        {/* ── Start ── */}
+        <section id="start" className="relative overflow-hidden bg-void py-24 text-white sm:py-32">
+          <Image src={SHOWCASE[6].src} alt="" fill sizes="100vw" className="object-cover opacity-25" />
+          <div className="relative">
+            <Reveal className="mx-auto max-w-[980px] px-4 text-center sm:px-6">
+              <h2 className="t-display">Let&apos;s make something for you.</h2>
+              <p className="t-lead mx-auto mt-4 max-w-[32ch] text-on-dark-muted">
+                Tell us about your business. Your free sample lands in your inbox within 48 hours.
+              </p>
+            </Reveal>
+            <Reveal delay={150} className="mx-auto mt-12 max-w-[760px] px-4 sm:px-6">
+              <InquiryForm />
+            </Reveal>
           </div>
         </section>
       </main>
 
-      {/* Footer — parchment */}
+      {/* Footer */}
       <footer className="bg-parchment text-graphite-80">
         <div className="mx-auto max-w-[1024px] px-4 py-16 sm:px-6">
-          <div className="grid gap-10 sm:grid-cols-3">
-            <div>
+          <div className="grid gap-10 sm:grid-cols-4">
+            <div className="sm:col-span-2">
               <Logo className="text-graphite" />
-              <p className="t-caption mt-3 max-w-[28ch] text-graphite-48">
-                Websites for home‑service pros. Built before you pay.
+              <p className="t-caption mt-3 max-w-[34ch] text-graphite-48">
+                A small creative studio making websites, AI photos and promo videos for local businesses. We make it first — you pay if you love it.
               </p>
             </div>
             <div>
-              <p className="t-caption font-semibold text-graphite">Explore</p>
+              <p className="t-caption font-semibold text-graphite">Studio</p>
               <ul className="mt-2 text-[14px] leading-[2.2]">
-                <li><a href="#how" className="hover:underline">How it works</a></li>
-                <li><a href="#examples" className="hover:underline">Examples</a></li>
+                <li><a href="#what" className="hover:underline">What we make</a></li>
+                <li><a href="#work" className="hover:underline">Work</a></li>
                 <li><a href="#pricing" className="hover:underline">Pricing</a></li>
               </ul>
             </div>
             <div>
               <p className="t-caption font-semibold text-graphite">Help</p>
               <ul className="mt-2 text-[14px] leading-[2.2]">
+                <li><a href="#how" className="hover:underline">How it works</a></li>
                 <li><a href="#faq" className="hover:underline">FAQ</a></li>
-                <li><a href="#start" className="hover:underline">Get a free preview</a></li>
+                <li><a href="#start" className="hover:underline">Contact</a></li>
               </ul>
             </div>
           </div>
           <p className="t-fine mt-12 border-t border-hairline pt-6 text-graphite-48">
-            Example sites show fictional businesses. Brightyard is an independent web studio.
+            Photos on this page are AI-generated samples. Example websites show fictional businesses.
           </p>
         </div>
       </footer>

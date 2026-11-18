@@ -40,7 +40,7 @@ export function InquiryForm() {
         <input id="city" name="city" className={field} placeholder="Boise, ID" />
       </div>
       <div>
-        <label className={labelCls} htmlFor="trade">What do you do?</label>
+        <label className={labelCls} htmlFor="trade">Type of business</label>
         <select id="trade" name="trade" className={field} defaultValue="landscaping">
           {TRADES.map((t) => (
             <option key={t} value={t}>{TRADE_META[t].label}</option>
@@ -51,11 +51,24 @@ export function InquiryForm() {
         <label className={labelCls} htmlFor="website">Current website (if any)</label>
         <input id="website" name="website" className={field} placeholder="facebook.com/yourpage" />
       </div>
+      <fieldset className="sm:col-span-2">
+        <legend className={labelCls}>What would you like?</legend>
+        <div className="flex flex-wrap gap-2">
+          {["Website", "AI photos", "Promo video"].map((service) => (
+            <label key={service} className="cursor-pointer">
+              <input type="checkbox" name="services" value={service} defaultChecked={service === "Website"} className="peer sr-only" />
+              <span className="inline-flex rounded-full border border-hairline px-4 py-2 text-[15px] transition peer-checked:border-action-focus peer-checked:bg-action peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-action-focus">
+                {service}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <input type="text" name="company_url" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <div className="sm:col-span-2">
         {state?.message ? <p className="t-caption mb-3 text-[#d70015]">{state.message}</p> : null}
         <button className="pill-primary w-full" disabled={pending}>
-          {pending ? "Sending…" : "Build my free preview"}
+          {pending ? "Sending…" : "Get my free sample"}
         </button>
         <p className="t-fine mt-4 text-center text-graphite-48">No credit card. No obligation. We never share your details.</p>
       </div>

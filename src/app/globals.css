@@ -192,3 +192,129 @@ body {
 @utility card {
   @apply rounded-[18px] border border-line bg-card;
 }
+
+/* ─── Motion ──────────────────────────────────────────────────── */
+/* Reveal-on-scroll: hidden only when JS is running (html.js), so no-JS still shows content. */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
+    filter 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms);
+}
+.js .reveal[data-in] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* Headline words rise in on load */
+.word {
+  display: inline-block;
+  animation: word-rise 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 80ms + 150ms);
+}
+@keyframes word-rise {
+  from { opacity: 0; transform: translateY(0.45em); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.fade-in {
+  animation: fade-in 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Gentle float for hero objects */
+.float-slow { animation: float 7s ease-in-out infinite; }
+.float-slower { animation: float 9s ease-in-out infinite reverse; }
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+/* Infinite marquee */
+.marquee-track { animation: marquee 38s linear infinite; }
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* Slow Ken Burns zoom for photos */
+.ken-burns { animation: ken-burns 14s ease-in-out infinite alternate; }
+@keyframes ken-burns {
+  from { transform: scale(1); }
+  to { transform: scale(1.12) translate(-2%, -1%); }
+}
+
+/* 4-scene promo reel: each scene 3s, total 12s */
+.reel-scene {
+  opacity: 0;
+  animation: reel-scene 12s infinite;
+  animation-delay: calc(var(--i) * 3s);
+}
+.reel-scene img { animation: reel-zoom 12s infinite; animation-delay: calc(var(--i) * 3s); }
+@keyframes reel-scene {
+  0% { opacity: 0; }
+  3%, 25% { opacity: 1; }
+  29%, 100% { opacity: 0; }
+}
+@keyframes reel-zoom {
+  0% { transform: scale(1.18) translateY(2%); }
+  29% { transform: scale(1.02) translateY(0); }
+  100% { transform: scale(1.02); }
+}
+.reel-caption {
+  animation: reel-caption 12s infinite;
+  animation-delay: calc(var(--i) * 3s);
+  opacity: 0;
+}
+@keyframes reel-caption {
+  0%, 4% { opacity: 0; transform: translateY(14px); }
+  8%, 23% { opacity: 1; transform: none; }
+  27%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+.reel-progress { animation: reel-progress 3s linear infinite; transform-origin: left; }
+@keyframes reel-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Scroll-linked scale for showcase stages (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  .scroll-rise {
+    animation: scroll-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
+  @keyframes scroll-rise {
+    from { transform: translateY(60px) scale(0.92); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal { transform: none; filter: none; transition: opacity 0.4s ease; }
+  .word, .fade-in, .float-slow, .float-slower, .marquee-track, .ken-burns,
+  .reel-progress, .scroll-rise { animation: none !important; }
+  .reel-scene, .reel-caption { animation: none !important; opacity: 0; }
+  .reel-scene:first-child, .reel-caption:first-child { opacity: 1; }
+  .reel-scene img { animation: none !important; }
+}
+
+/* Story-style progress segments for the 12s reel (one keyframe per segment keeps them in sync) */
+.reel-seg > span { transform-origin: left; transform: scaleX(0); animation: 12s linear infinite; }
+.reel-seg:nth-child(1) > span { animation-name: seg-1; }
+.reel-seg:nth-child(2) > span { animation-name: seg-2; }
+.reel-seg:nth-child(3) > span { animation-name: seg-3; }
+.reel-seg:nth-child(4) > span { animation-name: seg-4; }
+@keyframes seg-1 { 0% { transform: scaleX(0); } 25%, 100% { transform: scaleX(1); } }
+@keyframes seg-2 { 0%, 25% { transform: scaleX(0); } 50%, 100% { transform: scaleX(1); } }
+@keyframes seg-3 { 0%, 50% { transform: scaleX(0); } 75%, 100% { transform: scaleX(1); } }
+@keyframes seg-4 { 0%, 75% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .reel-seg > span { animation: none !important; transform: scaleX(1); }
+}

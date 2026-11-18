@@ -1,12 +1,14 @@
 import type { CSSProperties } from "react";
 import { SiteTemplate, type SiteData } from "./site-template";
 
-type Size = "hero" | "card";
+type Size = "hero" | "card" | "panel";
 
 // A 1280px-wide desktop site rendered at reduced zoom — the "product" on our shelves.
 // --z is the zoom. The frame is capped at 1280px × z, so it always hugs the zoomed site exactly.
 const ZOOM: Record<Size, string> = {
   hero: "[--z:0.26] min-[420px]:[--z:0.28] sm:[--z:0.46] md:[--z:0.56] lg:[--z:0.74]",
+  // Half-width sticky panel on the homepage chapters (mobile: full width).
+  panel: "[--z:0.26] min-[420px]:[--z:0.28] sm:[--z:0.45] md:[--z:0.26] lg:[--z:0.38] xl:[--z:0.4]",
   // Card renders sit inside 20px card padding in a 1/3/3-column grid.
   card: "[--z:0.23] sm:[--z:0.42] md:[--z:0.145] lg:[--z:0.21] xl:[--z:0.24]",
 };
