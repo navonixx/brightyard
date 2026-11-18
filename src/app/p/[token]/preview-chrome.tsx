@@ -10,10 +10,11 @@ type Props = {
   businessName: string;
   claimed: boolean;
   prices: number[];
+  currentSite?: string | null;
 };
 
 /** Top banner + bottom "make it live" panel shown around a prospect's preview. */
-export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
+export function PreviewChrome({ token, businessName, claimed, prices, currentSite }: Props) {
   const tracked = useRef(false);
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<number>(prices[1] ?? 99);
@@ -39,8 +40,13 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
         <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
           <LogoMark className="size-5 shrink-0" />
           <span className="truncate text-white/85">
-            Free preview for <strong>{businessName}</strong> · made by Brightyard
+            {currentSite ? "Redesign concept for" : "Free preview for"} <strong>{businessName}</strong> · made by Brightyard
           </span>
+          {currentSite ? (
+            <a href={currentSite} target="_blank" rel="noopener noreferrer" className="hidden shrink-0 text-white/60 underline hover:text-white sm:inline">
+              Compare with your current site ↗
+            </a>
+          ) : null}
         </div>
         {!done ? (
           <button
@@ -64,7 +70,7 @@ export function PreviewChrome({ token, businessName, claimed, prices }: Props) {
           ) : (
             <>
               <p className="t-caption text-center sm:text-left">
-                <strong>Like it?</strong> Pay what you think it&apos;s worth and we&apos;ll put it live on your domain.
+                <strong>Like it?</strong> Pay what you think it&apos;s worth and we&apos;ll put it live on your domain{currentSite ? " — your current site stays up until you say go" : ""}.
               </p>
               <div className="flex shrink-0 items-center gap-2">
                 <button

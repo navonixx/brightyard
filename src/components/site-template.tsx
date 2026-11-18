@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element -- client sites mix local sample photos with ImageKit uploads */
-import type { AnchorHTMLAttributes, CSSProperties } from "react";
+import type { AnchorHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { ArrowRight, Check, MapPin, Phone, Star } from "lucide-react";
 import type { LeadImage, SampleContent, Trade } from "@/lib/db/schema";
 import { TRADE_META } from "@/lib/brand";
+import { Reveal } from "./motion/reveal";
 
 /*
  * The website a client receives. Layout responds to its *container* (not the viewport),
@@ -117,6 +118,11 @@ function A({ isStatic, href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> 
   return isStatic ? <span {...rest} /> : <a href={href} {...rest} />;
 }
 
+/** Scroll-reveal wrapper on the live site; a plain div inside static device renders. */
+function R({ isStatic, delay, className, children }: { isStatic: boolean; delay?: number; className?: string; children: ReactNode }) {
+  return isStatic ? <div className={className}>{children}</div> : <Reveal delay={delay} className={className}>{children}</Reveal>;
+}
+
 const DISPLAY_FONT = {
   sans: "",
   serif: "font-[family-name:var(--font-serif-display)] font-normal",
@@ -163,6 +169,11 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
     "--radius": v.radius,
     "--btn-radius": v.btnRadius,
   } as CSSProperties;
+
+  const rise = isStatic ? "" : "fade-in";
+  const kb = isStatic ? "" : "ken-burns";
+  const lift = isStatic ? "" : "transition-transform duration-300 hover:-translate-y-1";
+  const d = (ms: number) => (isStatic ? undefined : ({ "--d": `${ms}ms` } as CSSProperties));
 
   const btnPrimary =
     "inline-flex items-center justify-center gap-2 rounded-[var(--btn-radius)] bg-[var(--accent)] px-6 py-3.5 text-[15px] font-semibold text-[var(--accent-ink)]";
@@ -229,31 +240,31 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
       {theme.hero === "photo" ? (
         <section className="relative isolate flex min-h-[560px] items-end overflow-hidden @3xl:min-h-[680px]">
           {hero ? (
-            <img src={hero.url} alt={hero.alt} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+            <img src={hero.url} alt={hero.alt} className={`absolute inset-0 -z-10 h-full w-full object-cover ${kb}`} />
           ) : (
             <div className="absolute inset-0 -z-10 bg-[var(--accent)]" />
           )}
           <div className="absolute inset-0 -z-10 bg-black/45" />
           <div className="mx-auto w-full max-w-[1200px] px-5 pb-14 pt-32 text-white @3xl:px-8 @3xl:pb-20">
-            <p className="mb-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-white/75">
+            <p className={`mb-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-white/75 ${rise}`}>
               {industry}
               {place ? ` · ${place}` : ""}
             </p>
-            <H1Tag className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
+            <H1Tag style={d(120)} className={`max-w-[14ch] text-balance ${rise} ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
             <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.5] text-white/85 @3xl:text-[20px]">{sample.subheadline}</p>
-            <div className="mt-8">{ctas(true)}</div>
+            <div style={d(420)} className={`mt-8 ${rise}`}>{ctas(true)}</div>
           </div>
         </section>
       ) : theme.hero === "split" ? (
         <section className="mx-auto grid max-w-[1200px] items-center gap-10 px-5 pb-16 pt-12 @3xl:grid-cols-[1.05fr_1fr] @3xl:gap-14 @3xl:px-8 @3xl:pb-24 @3xl:pt-20">
           <div>
-            <p className="mb-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+            <p className={`mb-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)] ${rise}`}>
               {industry}
               {place ? ` · ${place}` : ""}
             </p>
-            <H1Tag className={`max-w-[14ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
+            <H1Tag style={d(120)} className={`max-w-[14ch] text-balance ${rise} ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
             <p className="mt-5 max-w-[46ch] text-[17px] leading-[1.5] text-[var(--muted)] @3xl:text-[19px]">{sample.subheadline}</p>
-            <div className="mt-8">{ctas(false)}</div>
+            <div style={d(420)} className={`mt-8 ${rise}`}>{ctas(false)}</div>
           </div>
           <div className="relative">
             {hero ? (
@@ -266,13 +277,13 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
         </section>
       ) : (
         <section className="mx-auto max-w-[1200px] px-5 pb-12 pt-14 text-center @3xl:px-8 @3xl:pt-24">
-          <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">
+          <p className={`mb-5 text-[13px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)] ${rise}`}>
             {industry}
             {place ? ` · ${place}` : ""}
           </p>
-          <H1Tag className={`mx-auto max-w-[16ch] text-balance ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
+          <H1Tag style={d(120)} className={`mx-auto max-w-[16ch] text-balance ${rise} ${H1[theme.font]} ${display}`}>{sample.headline}</H1Tag>
           <p className="mx-auto mt-6 max-w-[52ch] text-[17px] leading-[1.5] text-[var(--muted)] @3xl:text-[20px]">{sample.subheadline}</p>
-          <div className="mt-8 flex justify-center">{ctas(false)}</div>
+          <div style={d(420)} className={`mt-8 flex justify-center ${rise}`}>{ctas(false)}</div>
           {hero ? (
             <img
               src={hero.url}
@@ -317,11 +328,11 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
         </div>
         <div className="mt-10 grid gap-4 @md:grid-cols-2 @3xl:grid-cols-4">
           {sample.services.slice(0, 4).map((service, i) => (
-            <div key={service.title} className="rounded-[var(--radius)] bg-[var(--surface)] p-6">
+            <R isStatic={isStatic} delay={i * 110} key={service.title} className={`rounded-[var(--radius)] bg-[var(--surface)] p-6 ${lift}`}>
               <p className={`text-[13px] font-semibold text-[var(--accent)] ${DISPLAY_FONT[theme.font]}`}>0{i + 1}</p>
               <H3Tag className="mt-5 text-[18px] font-semibold tracking-[-0.01em]">{service.title}</H3Tag>
               <p className="mt-2 text-[15px] leading-[1.5] text-[var(--muted)]">{service.description}</p>
-            </div>
+            </R>
           ))}
         </div>
       </section>
@@ -334,19 +345,25 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
             <H2Tag className={`mt-2 ${H2[theme.font]} ${display}`}>Recent projects</H2Tag>
             <div className={`mt-10 grid grid-cols-2 gap-3 @3xl:gap-4 ${gallery.length >= 3 ? "@3xl:grid-cols-3" : ""}`}>
               {gallery.slice(0, 5).map((image, i) => (
-                <img
+                <R
+                  isStatic={isStatic}
+                  delay={i * 110}
                   key={image.url + i}
-                  src={image.url}
-                  alt={image.alt}
-                  loading="lazy"
-                  className={`w-full rounded-[var(--radius)] object-cover ${
+                  className={`group/shot overflow-hidden rounded-[var(--radius)] ${
                     gallery.length < 3
                       ? "aspect-[4/5] @3xl:aspect-[4/3]"
                       : i === 0
                         ? "col-span-2 aspect-[16/10] @3xl:row-span-2 @3xl:aspect-auto @3xl:h-full"
                         : "aspect-square"
                   }`}
-                />
+                >
+                  <img
+                    src={image.url}
+                    alt={image.alt}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover/shot:scale-105"
+                  />
+                </R>
               ))}
             </div>
           </div>
@@ -362,13 +379,13 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
 
       {/* About + why */}
       <section className="mx-auto grid max-w-[1200px] gap-12 px-5 py-16 @3xl:grid-cols-[1.1fr_1fr] @3xl:gap-20 @3xl:px-8 @3xl:py-24">
-        <div>
+        <R isStatic={isStatic}>
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">About</p>
           <H2Tag className={`mt-2 ${H2[theme.font]} ${display}`}>About {data.businessName}</H2Tag>
           <p className="mt-6 text-[18px] leading-[1.55] text-[var(--muted)] @3xl:text-[20px]">{sample.about}</p>
           {ratingBadge ? <div className="mt-8">{ratingBadge}</div> : null}
-        </div>
-        <div className="rounded-[var(--radius)] bg-[var(--accent-soft)] p-7 @3xl:p-9">
+        </R>
+        <R isStatic={isStatic} delay={150} className="rounded-[var(--radius)] bg-[var(--accent-soft)] p-7 @3xl:p-9">
           <H3Tag className="text-[20px] font-semibold tracking-[-0.01em]">Why neighbors choose us</H3Tag>
           <ul className="mt-6 space-y-4">
             {sample.whyUs.map((reason) => (
@@ -380,7 +397,7 @@ export function SiteTemplate({ data, isStatic = false }: { data: SiteData; isSta
               </li>
             ))}
           </ul>
-        </div>
+        </R>
       </section>
 
       {/* CTA band */}

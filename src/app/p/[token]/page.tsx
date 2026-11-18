@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { SiteTemplate } from "@/components/site-template";
+import { SiteTemplate, THEMES, type ThemeKey } from "@/components/site-template";
 import { getLeadByToken } from "@/lib/data";
 import { templateSample } from "@/lib/templates";
 import { TRADE_FALLBACK } from "@/lib/photos";
@@ -37,6 +37,12 @@ async function Preview({ params }: { params: PageProps<"/p/[token]">["params"] }
   const sample = lead.sample ?? templateSample(lead);
   // Until real photos are uploaded, show a fitting sample photo so the preview never looks empty.
   const images = lead.images.length ? lead.images : [TRADE_FALLBACK[lead.trade]];
+  const theme = lead.theme && lead.theme in THEMES ? (lead.theme as ThemeKey) : undefined;
+  // Only real websites count as a "current site" to compare against (not social profiles).
+  const currentSite =
+    lead.website && !/facebook.com|instagram.com|yelp.com/i.test(lead.website)
+      ? lead.website.startsWith("http") ? lead.website : `https://${lead.website}`
+      : null;
 
   return (
     <div style={{ "--site-top": "2.75rem" } as CSSProperties} className="pb-28">
@@ -45,8 +51,9 @@ async function Preview({ params }: { params: PageProps<"/p/[token]">["params"] }
         businessName={lead.businessName}
         claimed={lead.status === "interested" || lead.status === "won"}
         prices={BRAND.suggestedPrices}
+        currentSite={currentSite}
       />
-      <SiteTemplate data={{ ...lead, sample, images }} />
+      <SiteTemplate data={{ ...lead, sample, images, theme }} />
     </div>
   );
 }

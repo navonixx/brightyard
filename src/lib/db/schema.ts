@@ -64,6 +64,7 @@ export const leads = pgTable("leads", {
   sample: jsonb("sample").$type<SampleContent | null>(),
   images: jsonb("images").$type<LeadImage[]>().notNull().default([]),
   videoUrl: text("video_url"),
+  theme: text("theme"),
   emailSubject: text("email_subject"),
   emailBody: text("email_body"),
   offerAmount: integer("offer_amount"),
@@ -131,6 +132,7 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS theme text;
 CREATE INDEX IF NOT EXISTS leads_status_idx ON leads (status);
 CREATE TABLE IF NOT EXISTS events (
   id serial PRIMARY KEY,

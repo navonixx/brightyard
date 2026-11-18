@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getLead, getSettings, leadEvents } from "@/lib/data";
 import { LEAD_STATUSES, TRADES, type Lead } from "@/lib/db/schema";
 import { siteUrl, TRADE_META } from "@/lib/brand";
+import { THEMES, THEME_BY_TRADE } from "@/components/site-template";
 import { aiEnabled, aiLabel } from "@/lib/ai";
 import { imagekitEnabled } from "@/lib/imagekit";
 import { composeEmail, gmailComposeUrl } from "@/lib/email";
@@ -338,6 +339,15 @@ function DetailsSection({ lead }: { lead: Lead }) {
             <select id="trade" name="trade" defaultValue={lead.trade} className="input">
               {TRADES.map((t) => (
                 <option key={t} value={t}>{TRADE_META[t].label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="theme">Design theme</label>
+            <select id="theme" name="theme" defaultValue={lead.theme ?? ""} className="input">
+              <option value="">Auto ({THEME_BY_TRADE[lead.trade]})</option>
+              {Object.keys(THEMES).map((t) => (
+                <option key={t} value={t}>{t}</option>
               ))}
             </select>
           </div>

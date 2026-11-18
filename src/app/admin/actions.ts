@@ -189,6 +189,7 @@ export async function updateLeadAction(id: string, _: ActionState, form: FormDat
     reviewCount: num(form, "reviewCount"),
     notes: str(form, "notes"),
     videoUrl: str(form, "videoUrl"),
+    theme: str(form, "theme"),
   };
   await updateLead(id, { ...fields, score: scoreLead(fields) });
   refresh();
