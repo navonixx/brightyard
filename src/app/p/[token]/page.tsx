@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { SiteTemplate } from "@/components/site-template";
 import { getLeadByToken } from "@/lib/data";
 import { templateSample } from "@/lib/templates";
+import { TRADE_FALLBACK } from "@/lib/photos";
 import { BRAND } from "@/lib/brand";
 import { PreviewChrome } from "./preview-chrome";
 
@@ -26,7 +27,7 @@ async function Preview({ params }: { params: PageProps<"/p/[token]">["params"] }
     return (
       <main className="grid min-h-dvh place-items-center px-4 text-center">
         <div>
-          <p className="font-display text-2xl font-bold">You&apos;re all set.</p>
+          <p className="font-display text-2xl font-semibold">You&apos;re all set.</p>
           <p className="mt-2 text-muted">We won&apos;t contact you again. Thanks for your time.</p>
         </div>
       </main>
@@ -34,6 +35,8 @@ async function Preview({ params }: { params: PageProps<"/p/[token]">["params"] }
   }
 
   const sample = lead.sample ?? templateSample(lead);
+  // Until real photos are uploaded, show a fitting sample photo so the preview never looks empty.
+  const images = lead.images.length ? lead.images : [TRADE_FALLBACK[lead.trade]];
 
   return (
     <div style={{ "--site-top": "2.75rem" } as CSSProperties} className="pb-28">
@@ -43,7 +46,7 @@ async function Preview({ params }: { params: PageProps<"/p/[token]">["params"] }
         claimed={lead.status === "interested" || lead.status === "won"}
         prices={BRAND.suggestedPrices}
       />
-      <SiteTemplate data={{ ...lead, sample }} />
+      <SiteTemplate data={{ ...lead, sample, images }} />
     </div>
   );
 }

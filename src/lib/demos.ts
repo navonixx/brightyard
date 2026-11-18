@@ -1,44 +1,214 @@
-import type { Trade } from "./db/schema";
-import { templateSample } from "./templates";
+import type { SiteData } from "@/components/site-template";
+import { PHOTO } from "./photos";
 
-// Fictional example businesses for the public showcase. Phone numbers use the 555 range.
-const BASE = [
+export type Demo = SiteData & {
+  slug: string;
+  industry: string;
+  blurb: string;
+  tags: string[];
+};
+
+// Concept sites for fictional businesses. Phone numbers use the reserved 555 range.
+export const DEMOS: Demo[] = [
   {
     slug: "greenline-lawn",
     businessName: "Greenline Lawn Co.",
-    trade: "landscaping" as Trade,
+    industry: "Landscaping",
+    trade: "landscaping",
+    theme: "fresh",
     city: "Austin",
     state: "TX",
     phone: "(512) 555-0142",
     rating: 4.9,
     reviewCount: 87,
+    blurb: "Photo-led, fast and built to get the call from a phone.",
+    tags: ["One-page site", "Tap-to-call", "Gallery"],
+    images: [
+      { url: PHOTO.yard, alt: "Freshly landscaped front yard at golden hour" },
+      { url: PHOTO.yard2, alt: "Mower leaving crisp stripes on a lawn" },
+      { url: PHOTO.yard3, alt: "Backyard stone patio with a fire pit at dusk" },
+    ],
+    sample: {
+      headline: "Austin yards, done right.",
+      subheadline: "Weekly lawn care, landscape design and seasonal cleanups for homeowners across Austin. Rated 4.9★ by 87 neighbors.",
+      services: [
+        { title: "Weekly lawn care", description: "Mowing, edging and blowing on a schedule you never have to think about." },
+        { title: "Landscape design", description: "Beds, shrubs and stone work planned around how you actually use your yard." },
+        { title: "Seasonal cleanups", description: "Spring and fall cleanups that leave every corner sharp and tidy." },
+        { title: "Patios & fire pits", description: "Outdoor spaces built to last through Texas summers." },
+      ],
+      whyUs: ["Same-day replies", "Upfront pricing, no surprises", "Locally owned and insured"],
+      about: "Greenline is a small Austin crew that treats every yard like our own. We show up on time, communicate clearly and don't call a job finished until you're happy with it.",
+      cta: "Get a free quote",
+      serviceArea: "Austin, Round Rock and Cedar Park",
+    },
+  },
+  {
+    slug: "maison-bakery",
+    businessName: "Maison Bakery",
+    industry: "Bakery",
+    trade: "other",
+    theme: "editorial",
+    city: "Portland",
+    state: "OR",
+    phone: "(503) 555-0163",
+    rating: 4.8,
+    reviewCount: 212,
+    blurb: "Warm, editorial and unmistakably handmade.",
+    tags: ["Editorial layout", "Serif type", "Menu-ready"],
+    images: [
+      { url: PHOTO.bakery, alt: "Fresh croissants and pastries on a baking tray" },
+      { url: PHOTO.bakery2, alt: "Bakery display case full of pastries and sourdough" },
+      { url: PHOTO.bakery3, alt: "Baker's hands shaping sourdough dough" },
+    ],
+    sample: {
+      headline: "Baked before sunrise. Gone by noon.",
+      subheadline: "Naturally leavened bread, French pastry and very good coffee from a tiny bakery in Southeast Portland.",
+      services: [
+        { title: "Sourdough & loaves", description: "Slow-fermented country loaves, seeded rye and focaccia, baked daily." },
+        { title: "Pastry", description: "Croissants, kouign-amann and seasonal danishes, laminated by hand." },
+        { title: "Cakes to order", description: "Birthday and celebration cakes with a week's notice." },
+        { title: "Wholesale", description: "Bread and pastry for cafés and restaurants around the city." },
+      ],
+      whyUs: ["Everything baked the same morning", "Local flour, real butter", "Ask us anything — we love talking bread"],
+      about: "Maison started as a Saturday farmers-market stall and grew into a neighborhood bakery. We keep the menu short so that everything on it is the best version of itself.",
+      cta: "See today's menu",
+      serviceArea: "Southeast Portland",
+    },
+  },
+  {
+    slug: "noir-hair-studio",
+    businessName: "Noir Hair Studio",
+    industry: "Hair salon",
+    trade: "other",
+    theme: "noir",
+    city: "Scottsdale",
+    state: "AZ",
+    phone: "(480) 555-0199",
+    rating: 5.0,
+    reviewCount: 64,
+    blurb: "Dark, luxurious and designed around the booking button.",
+    tags: ["Dark theme", "Luxury", "Booking CTA"],
+    images: [
+      { url: PHOTO.salon3, alt: "Dark salon with black leather chairs and brass mirrors" },
+      { url: PHOTO.salon, alt: "Leather salon chair beside a round mirror" },
+      { url: PHOTO.salon2, alt: "Gold scissors and comb on black marble" },
+    ],
+    sample: {
+      headline: "Hair that turns heads.",
+      subheadline: "Precision cuts, lived-in color and bridal styling in a calm, private studio in Old Town Scottsdale.",
+      services: [
+        { title: "Cut & style", description: "Consultation-first cuts tailored to your hair, face and routine." },
+        { title: "Color", description: "Balayage, lived-in blondes and glossy brunettes that grow out beautifully." },
+        { title: "Treatments", description: "Keratin smoothing and bond-building repair for healthier hair." },
+        { title: "Bridal & events", description: "On-location styling for weddings and special occasions." },
+      ],
+      whyUs: ["One guest at a time", "Transparent pricing before we start", "Evening appointments available"],
+      about: "Noir is a two-chair studio built for people who want their stylist's full attention. No double-booking, no rushing — just great hair and a quiet hour to yourself.",
+      cta: "Book an appointment",
+      serviceArea: "Scottsdale and North Phoenix",
+    },
+  },
+  {
+    slug: "forge-fitness",
+    businessName: "Forge Fitness",
+    industry: "Gym",
+    trade: "other",
+    theme: "bold",
+    city: "Denver",
+    state: "CO",
+    phone: "(720) 555-0117",
+    rating: 4.9,
+    reviewCount: 143,
+    blurb: "Loud type, hard contrast and a trial-class button that can't be missed.",
+    tags: ["Bold type", "Dark theme", "Trial offer"],
+    images: [
+      { url: PHOTO.gym3, alt: "Chalked hands gripping a barbell" },
+      { url: PHOTO.gym2, alt: "Row of rowing machines in a dark gym" },
+      { url: PHOTO.gym, alt: "Kettlebells in a moody boutique gym" },
+    ],
+    sample: {
+      headline: "Train hard. Train together.",
+      subheadline: "Coached strength and conditioning classes for every level, six days a week in RiNo. First class is free.",
+      services: [
+        { title: "Strength", description: "Barbell-based programming that builds real, measurable strength." },
+        { title: "Conditioning", description: "Rowers, sleds and bikes. 45 minutes. You'll feel it tomorrow." },
+        { title: "Open gym", description: "Full access to the floor between classes for members." },
+        { title: "Personal training", description: "One-on-one coaching for specific goals and comebacks." },
+      ],
+      whyUs: ["Every class is coached", "No contracts, cancel anytime", "Showers, lockers and free parking"],
+      about: "Forge opened in 2019 with eight racks and a garage door. Today it's a community of people who show up for each other at 6am. Come try a class — the first one's on us.",
+      cta: "Claim your free class",
+      serviceArea: "RiNo, Five Points and LoDo",
+    },
+  },
+  {
+    slug: "oak-and-ember",
+    businessName: "Oak & Ember Café",
+    industry: "Café",
+    trade: "other",
+    theme: "warm",
+    city: "Asheville",
+    state: "NC",
+    phone: "(828) 555-0138",
+    rating: 4.7,
+    reviewCount: 318,
+    blurb: "Cozy and warm, with the menu and hours one tap away.",
+    tags: ["Split hero", "Warm palette", "Menu + hours"],
+    images: [
+      { url: PHOTO.cafe2, alt: "Cozy café interior with window light" },
+      { url: PHOTO.cafe, alt: "Latte with latte art on an oak counter" },
+      { url: PHOTO.cafe3, alt: "Barista pouring a pour-over coffee" },
+    ],
+    sample: {
+      headline: "Slow coffee, warm room.",
+      subheadline: "Single-origin espresso, pour-overs and all-day breakfast in a sunny corner of West Asheville.",
+      services: [
+        { title: "Coffee & espresso", description: "Roasted in the Blue Ridge, dialed in every morning." },
+        { title: "Breakfast all day", description: "Sourdough toasts, egg sandwiches and oats that actually fill you up." },
+        { title: "Pastry", description: "Croissants and scones delivered fresh from our bakery friends." },
+        { title: "Private events", description: "Rent the room for evening gatherings of up to 40." },
+      ],
+      whyUs: ["Open 7am–5pm, every day", "Fast Wi-Fi and lots of outlets", "Dog-friendly patio"],
+      about: "Oak & Ember is the neighborhood living room: good coffee, a long table for working and a patio for lazy Sundays. Come as you are.",
+      cta: "See the menu",
+      serviceArea: "West Asheville",
+    },
   },
   {
     slug: "fresh-coat-painting",
     businessName: "Fresh Coat Painting",
-    trade: "painting" as Trade,
+    industry: "House painting",
+    trade: "painting",
+    theme: "clean",
     city: "Raleigh",
     state: "NC",
     phone: "(919) 555-0178",
     rating: 4.8,
     reviewCount: 54,
-  },
-  {
-    slug: "sparkle-and-co",
-    businessName: "Sparkle & Co. Cleaning",
-    trade: "cleaning" as Trade,
-    city: "Boise",
-    state: "ID",
-    phone: "(208) 555-0119",
-    rating: 5.0,
-    reviewCount: 41,
+    blurb: "Clean, confident and quote-first.",
+    tags: ["Split hero", "Quote CTA", "Before/after gallery"],
+    images: [
+      { url: PHOTO.paint2, alt: "Freshly painted house exterior" },
+      { url: PHOTO.paint, alt: "Freshly painted sage living room with roller" },
+      { url: PHOTO.paint3, alt: "Paint swatches, brushes and roller" },
+    ],
+    sample: {
+      headline: "Fresh paint. Clean lines. Zero stress.",
+      subheadline: "Interior and exterior painting for Raleigh homeowners who want it done right the first time.",
+      services: [
+        { title: "Interior painting", description: "Protected floors, crisp edges and rooms ready to live in the same day." },
+        { title: "Exterior painting", description: "Proper prep and premium paint that stands up to Carolina summers." },
+        { title: "Cabinet refinishing", description: "A brand-new kitchen look for a fraction of replacement cost." },
+        { title: "Drywall repair", description: "Patches and cracks fixed so smooth you can't find them." },
+      ],
+      whyUs: ["Written quote within 24 hours", "We clean up like we were never there", "Licensed and insured crew"],
+      about: "Fresh Coat is a family-run painting company serving Raleigh since 2016. Clear quotes, tidy crews and paint that looks as good in year five as it did on day one.",
+      cta: "Get a free quote",
+      serviceArea: "Raleigh, Cary and Apex",
+    },
   },
 ];
-
-export const DEMOS = BASE.map((demo) => ({
-  ...demo,
-  sample: templateSample(demo),
-}));
 
 export function getDemo(slug: string) {
   return DEMOS.find((demo) => demo.slug === slug);

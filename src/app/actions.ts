@@ -19,10 +19,7 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     return { message: "Please add your business name and a valid email." };
   }
   const tradeValue = get("trade");
-  const services = form
-    .getAll("services")
-    .map(String)
-    .filter((s) => ["Website", "AI photos", "Promo video"].includes(s));
+  const need = get("need");
   const fields = {
     businessName,
     email,
@@ -30,11 +27,11 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     city: get("city"),
     website: get("website"),
     trade: (TRADES.includes(tradeValue as Trade) ? tradeValue : "other") as Trade,
-    notes: services.length ? `Wants: ${services.join(", ")}` : null,
+    notes: need ? `Wants: ${need}` : null,
   };
   const id = await createLead({ ...fields, source: "inbound", score: scoreLead(fields) + 50 });
   if (id) await logEvent(id, "inbound");
-  const wants = services.length ? `\nWants: ${services.join(", ")}` : "";
+  const wants = need ? `\nWants: ${need}` : "";
   await notify(`📥 New inbound request: ${businessName} (${fields.city ?? "?"}) — ${email}${wants}`);
-  return { ok: true, message: "Got it! Your free sample will land in your inbox within 48 hours." };
+  return { ok: true, message: "Got it! Your free website preview will land in your inbox within 48 hours." };
 }

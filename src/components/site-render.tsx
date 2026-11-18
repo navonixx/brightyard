@@ -1,46 +1,78 @@
 import type { CSSProperties } from "react";
 import { SiteTemplate, type SiteData } from "./site-template";
+import { AutoZoom } from "./motion/auto-zoom";
 
-type Size = "hero" | "card" | "panel";
+/*
+ * Device frames that show a full client site scaled to fit. The site inside is the real
+ * component, laid out at the device's true width (1280 desktop / 390 phone) and zoomed.
+ */
 
-// A 1280px-wide desktop site rendered at reduced zoom — the "product" on our shelves.
-// --z is the zoom. The frame is capped at 1280px × z, so it always hugs the zoomed site exactly.
-const ZOOM: Record<Size, string> = {
-  hero: "[--z:0.26] min-[420px]:[--z:0.28] sm:[--z:0.46] md:[--z:0.56] lg:[--z:0.74]",
-  // Half-width sticky panel on the homepage chapters (mobile: full width).
-  panel: "[--z:0.26] min-[420px]:[--z:0.28] sm:[--z:0.45] md:[--z:0.26] lg:[--z:0.38] xl:[--z:0.4]",
-  // Card renders sit inside 20px card padding in a 1/3/3-column grid.
-  card: "[--z:0.23] sm:[--z:0.42] md:[--z:0.145] lg:[--z:0.21] xl:[--z:0.24]",
-};
+type Scroll = "always" | "hover" | "none";
 
-export function SiteRender({
+const scrollClass = (scroll: Scroll) =>
+  scroll === "none" ? "" : scroll === "hover" ? "autoscroll-hover" : "autoscroll-always";
+
+export function BrowserRender({
   data,
   url,
-  size = "hero",
+  scroll = "none",
+  initialZoom = 0.6,
+  className = "",
   shadow = true,
+  bar = true,
 }: {
   data: SiteData;
   url: string;
-  size?: Size;
+  scroll?: Scroll;
+  initialZoom?: number;
+  className?: string;
   shadow?: boolean;
+  bar?: boolean;
 }) {
   return (
     <div
-      className={`mx-auto w-full max-w-[calc(1280px*var(--z))] overflow-hidden rounded-[10px] bg-white ring-1 ring-black/5 ${ZOOM[size]} ${shadow ? "shadow-product" : ""}`}
+      className={`overflow-hidden rounded-[12px] bg-white ring-1 ring-black/10 ${shadow ? "shadow-product" : ""} ${scrollClass(scroll)} ${className}`}
       aria-hidden="true"
     >
-      <div className="flex items-center gap-1.5 border-b border-black/5 bg-[#f6f6f8] px-3 py-2">
-        <span className="size-2.5 rounded-full bg-[#ff5f57]" />
-        <span className="size-2.5 rounded-full bg-[#febc2e]" />
-        <span className="size-2.5 rounded-full bg-[#28c840]" />
-        <span className="mx-auto truncate rounded-md bg-white px-6 py-0.5 text-[11px] text-graphite-48">{url}</span>
-      </div>
-      <div
-        className="pointer-events-none h-[820px] w-[1280px] overflow-hidden select-none [zoom:var(--z)]"
-        inert
-      >
-        <div style={{ "--site-top": "0px" } as CSSProperties}>
+      {bar ? (
+        <div className="flex items-center gap-1.5 border-b border-black/5 bg-[#f3f3f5] px-3 py-2">
+          <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+          <span className="size-2.5 rounded-full bg-[#febc2e]" />
+          <span className="size-2.5 rounded-full bg-[#28c840]" />
+          <span className="mx-auto truncate rounded-md bg-white px-6 py-0.5 text-[11px] text-[#6e6e73]">{url}</span>
+        </div>
+      ) : null}
+      <AutoZoom base={1280} height={820} initial={initialZoom}>
+        <div className={scroll === "none" ? "" : "autoscroll"} style={{ "--frame-h": "820px" } as CSSProperties}>
           <SiteTemplate data={data} isStatic />
+        </div>
+      </AutoZoom>
+    </div>
+  );
+}
+
+export function PhoneRender({
+  data,
+  scroll = "none",
+  initialZoom = 0.6,
+  className = "",
+}: {
+  data: SiteData;
+  scroll?: Scroll;
+  initialZoom?: number;
+  className?: string;
+}) {
+  return (
+    <div className={`@container ${scrollClass(scroll)} ${className}`} aria-hidden="true">
+      <div className="relative rounded-[13cqw] bg-[#0b0b0c] p-[2.8cqw] shadow-product ring-1 ring-white/15">
+        <div className="relative overflow-hidden rounded-[10.5cqw] bg-white">
+          <AutoZoom base={390} height={844} initial={initialZoom}>
+            <div className={scroll === "none" ? "" : "autoscroll"} style={{ "--frame-h": "844px" } as CSSProperties}>
+              <SiteTemplate data={data} isStatic />
+            </div>
+          </AutoZoom>
+          {/* dynamic island */}
+          <span className="pointer-events-none absolute left-1/2 top-[2.4cqw] h-[6cqw] w-[26cqw] -translate-x-1/2 rounded-full bg-black" />
         </div>
       </div>
     </div>

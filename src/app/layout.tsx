@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Serif_Display, Inter, Oswald } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+// Display faces used by the client-site themes (editorial / luxury / bold).
+const serifDisplay = DM_Serif_Display({ variable: "--font-serif-display", subsets: ["latin"], weight: "400" });
+const condensed = Oswald({ variable: "--font-condensed", subsets: ["latin"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
-  title: "Brightyard — websites, AI photos and promo videos for small businesses",
+  title: "Brightyard — websites for local businesses, built before you pay",
   description:
-    "Brightyard is a small creative studio. We make your website, AI photo set or promo video first — you pay only if you love it.",
+    "Brightyard is a web design studio for local businesses. We build your whole website first — you pay only if you love it.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    // `js` is added before paint so scroll-reveal content starts hidden only when JS can reveal it.
-    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
-      </head>
+    <html lang="en" className={`${inter.variable} ${serifDisplay.variable} ${condensed.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

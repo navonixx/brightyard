@@ -194,20 +194,18 @@ body {
 }
 
 /* ─── Motion ──────────────────────────────────────────────────── */
-/* Reveal-on-scroll: hidden only when JS is running (html.js), so no-JS still shows content. */
-.js .reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  filter: blur(6px);
+/* Reveal-on-scroll. Content is visible by default; the Reveal component hides an element on
+   mount only if it is below the fold, then removes the class when it scrolls into view. */
+.reveal {
   transition:
     opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
     transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms),
     filter 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms);
 }
-.js .reveal[data-in] {
-  opacity: 1;
-  transform: none;
-  filter: none;
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
 }
 
 /* Headline words rise in on load */
@@ -297,7 +295,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .js .reveal { transform: none; filter: none; transition: opacity 0.4s ease; }
+  .reveal-hidden { opacity: 1; transform: none; filter: none; }
   .word, .fade-in, .float-slow, .float-slower, .marquee-track, .ken-burns,
   .reel-progress, .scroll-rise { animation: none !important; }
   .reel-scene, .reel-caption { animation: none !important; opacity: 0; }
@@ -317,4 +315,22 @@ body {
 @keyframes seg-4 { 0%, 75% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) {
   .reel-seg > span { animation: none !important; transform: scaleX(1); }
+}
+
+/* ─── Device renders: the site inside slowly scrolls, like a screen recording ── */
+.autoscroll {
+  animation: site-scroll var(--dur, 18s) ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes site-scroll {
+  0%, 8% { transform: translateY(0); }
+  92%, 100% { transform: translateY(calc(-100% + var(--frame-h))); }
+}
+.autoscroll-hover .autoscroll { animation-play-state: paused; }
+.autoscroll-hover:hover .autoscroll { animation-play-state: running; }
+@media (hover: none) {
+  .autoscroll-hover .autoscroll { animation-play-state: running; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autoscroll { animation: none !important; }
 }

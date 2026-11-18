@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 
-/** Fades/rises its content in the first time it scrolls into view. */
+/**
+ * Rises its content in the first time it scrolls into view.
+ * Content is visible in the server HTML; it is hidden on mount only when it sits below the
+ * fold, so a slow or failed script can never leave a blank page.
+ */
 export function Reveal({
   children,
   delay = 0,
@@ -18,18 +22,25 @@ export function Reveal({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.92) return;
+
+    el.classList.add("reveal-hidden");
+    const show = () => el.classList.remove("reveal-hidden");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.setAttribute("data-in", "");
+          show();
           observer.disconnect();
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.1 },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      show();
+    };
   }, []);
 
   return (

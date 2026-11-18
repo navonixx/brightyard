@@ -24,12 +24,14 @@ async function Demo({ params }: { params: PageProps<"/demo/[slug]">["params"] })
   return (
     <div style={{ "--site-top": "2.5rem" } as CSSProperties}>
       <div className="sticky top-0 z-30 flex h-10 items-center justify-between gap-3 bg-void px-4 t-fine text-white/85">
-        <span>Example preview · fictional business</span>
-        <Link href="/#start" className="rounded-full bg-action px-3.5 py-1 text-[13px] text-white transition-transform active:scale-95">
+        <span className="truncate">
+          Concept site · <strong className="text-white">{demo.businessName}</strong> is a fictional business
+        </span>
+        <Link href="/#start" className="shrink-0 rounded-full bg-action px-3.5 py-1 text-[13px] text-white transition-transform active:scale-95">
           Get yours free
         </Link>
       </div>
-      <SiteTemplate data={{ ...demo, images: [] }} />
+      <SiteTemplate data={demo} />
     </div>
   );
 }

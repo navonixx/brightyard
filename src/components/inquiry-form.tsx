@@ -52,11 +52,11 @@ export function InquiryForm() {
         <input id="website" name="website" className={field} placeholder="facebook.com/yourpage" />
       </div>
       <fieldset className="sm:col-span-2">
-        <legend className={labelCls}>What would you like?</legend>
+        <legend className={labelCls}>What do you need?</legend>
         <div className="flex flex-wrap gap-2">
-          {["Website", "AI photos", "Promo video"].map((service) => (
+          {["A new website", "A redesign of my current site"].map((service) => (
             <label key={service} className="cursor-pointer">
-              <input type="checkbox" name="services" value={service} defaultChecked={service === "Website"} className="peer sr-only" />
+              <input type="radio" name="need" value={service} defaultChecked={service === "A new website"} className="peer sr-only" />
               <span className="inline-flex rounded-full border border-hairline px-4 py-2 text-[15px] transition peer-checked:border-action-focus peer-checked:bg-action peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-action-focus">
                 {service}
               </span>
@@ -68,7 +68,7 @@ export function InquiryForm() {
       <div className="sm:col-span-2">
         {state?.message ? <p className="t-caption mb-3 text-[#d70015]">{state.message}</p> : null}
         <button className="pill-primary w-full" disabled={pending}>
-          {pending ? "Sending…" : "Get my free sample"}
+          {pending ? "Sending…" : "Build my free website"}
         </button>
         <p className="t-fine mt-4 text-center text-graphite-48">No credit card. No obligation. We never share your details.</p>
       </div>
