@@ -38,20 +38,21 @@ export const GUIDE: GuidePhase[] = [
       {
         id: "setup-domain",
         day: "Day 1",
-        title: "2 domain lo: ek site ke liye, ek cold email ke liye",
-        body: "Main domain (jaise brightyard.studio) website ke liye. Alag cold-email domain (jaise trybrightyard.com) sirf outreach ke liye — main domain se kabhi cold email nahi. Kharidne se pehle availability aur renewal price check karo.",
+        title: "Sending ke liye naya Gmail banao",
+        body: "Abhi domain nahi le rahe, isliye ek alag Gmail banao jaise kunj.brightyard@gmail.com. Personal Gmail se cold email mat bhejo — block hua to personal account bhi jayega. Profile photo aur naam (\"Kunj from Brightyard\") laga do, isse email zyada bharosemand dikhta hai.",
       },
       {
         id: "setup-mailbox",
-        day: "Day 2",
-        title: "Cold domain par 2 inbox + SPF/DKIM/DMARC",
-        body: "Google Workspace ya Zoho par 2 inbox banao (jaise alex@ aur hello@). DNS mein SPF, DKIM, DMARC records lagao. Bina inke mail spam mein jayega.",
+        day: "Day 1",
+        title: "Settings mein Gmail address daalo",
+        body: "Admin → Settings → \"Sending Gmail address\". Isse \"Open in Gmail\" button hamesha isi account se compose kholta hai, chahe browser mein kai Gmail login hon.",
+        link: { label: "Settings", href: "/admin/settings" },
       },
       {
         id: "setup-warmup",
-        day: "Day 2",
-        title: "Instantly/Smartlead mein warm-up ON",
-        body: "Dono inbox connect karo aur warm-up chalu karo. 14 din tak koi cold email nahi — is beech leads aur previews banao.",
+        day: "Day 1–7",
+        title: "Naye Gmail ko ek hafta normal use karo",
+        body: "Pehle 5–7 din apne dosto ko 5–10 normal emails bhejo aur unse reply karwao, kuch newsletters subscribe karo. Naya account seedha cold email bhejega to Google shak karega. Is beech admin mein leads aur previews banate raho. (Baad mein domain + Instantly lo to wahan automatic warm-up hota hai.)",
       },
       {
         id: "setup-money",
@@ -112,16 +113,16 @@ export const GUIDE: GuidePhase[] = [
     steps: [
       {
         id: "out-first",
-        day: "Day 15",
-        title: "Pehle 20 emails (10 per inbox)",
-        body: "Outreach page se CSV download karo → Instantly mein import → sequence: Email 1 (Day 0), follow-up (Day 3), last note (Day 7). Upload ke baad 'Mark as emailed' dabao.",
+        day: "Day 8",
+        title: "Pehle hafte roz 10 emails (Gmail se)",
+        body: "Outreach page → har lead par \"Open in Gmail\" → email padho → Send → \"Sent\" dabao. Follow-up khud karo: Day 3 par same thread mein ek line (\"Just bumping this — happy to change anything\"), Day 7 par aakhri note.",
         link: { label: "Outreach", href: "/admin/outreach" },
       },
       {
         id: "out-scale",
-        day: "Day 18+",
-        title: "40–60 emails/day tak badhao",
-        body: "Har inbox se 20–30/day se zyada nahi. Bounce 3% se upar jaye to ruk kar list saaf karo.",
+        day: "Day 15+",
+        title: "Roz 20 tak badhao, isse zyada nahi",
+        body: "Ek Gmail se roz 20 se zyada naye logon ko mat bhejo. Bounce aaye to wo email lead se hata do. Agar replies aane lagein aur zyada volume chahiye, tab domain + Instantly lena sahi rahega.",
       },
       {
         id: "out-hot",

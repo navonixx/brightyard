@@ -145,6 +145,18 @@ export async function hotLeads(limit = 6): Promise<Lead[]> {
     .limit(limit);
 }
 
+/** Leads marked as emailed since local midnight (server time). */
+export async function emailedToday(): Promise<number> {
+  const db = await getDb();
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(leads)
+    .where(sql`${leads.emailedAt} >= ${since.toISOString()}`);
+  return row?.n ?? 0;
+}
+
 // ─── Guide progress ────────────────────────────────────────────────────
 
 export async function guideState(): Promise<Record<string, boolean>> {
@@ -170,6 +182,7 @@ export type AppSettings = {
   startDate: string;
   goalUsd: number;
   senderName: string;
+  senderEmail: string;
   businessAddress: string;
   paypalLink: string;
 };
@@ -178,6 +191,7 @@ const DEFAULTS: AppSettings = {
   startDate: "",
   goalUsd: 100,
   senderName: "",
+  senderEmail: "",
   businessAddress: "",
   paypalLink: "",
 };
@@ -190,6 +204,7 @@ export async function getSettings(): Promise<AppSettings> {
     startDate: map.startDate ?? DEFAULTS.startDate,
     goalUsd: Number(map.goalUsd ?? DEFAULTS.goalUsd) || DEFAULTS.goalUsd,
     senderName: map.senderName ?? DEFAULTS.senderName,
+    senderEmail: map.senderEmail ?? DEFAULTS.senderEmail,
     businessAddress: map.businessAddress ?? DEFAULTS.businessAddress,
     paypalLink: map.paypalLink ?? DEFAULTS.paypalLink,
   };

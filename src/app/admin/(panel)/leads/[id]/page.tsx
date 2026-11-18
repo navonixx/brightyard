@@ -9,7 +9,7 @@ import { LEAD_STATUSES, TRADES, type Lead } from "@/lib/db/schema";
 import { siteUrl, TRADE_META } from "@/lib/brand";
 import { aiEnabled, aiLabel } from "@/lib/ai";
 import { imagekitEnabled } from "@/lib/imagekit";
-import { composeEmail } from "@/lib/email";
+import { composeEmail, gmailComposeUrl } from "@/lib/email";
 import {
   deleteLeadAction,
   generateEmailAction,
@@ -98,7 +98,7 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
         <div className="space-y-6">
           <SampleSection lead={lead} />
           <ImagesSection lead={lead} />
-          <EmailSection lead={lead} footer={composeEmail("", settings).trim()} />
+          <EmailSection lead={lead} footer={composeEmail("", settings).trim()} account={settings.senderEmail} />
           <DetailsSection lead={lead} />
         </div>
 
@@ -268,8 +268,12 @@ function ImagesSection({ lead }: { lead: Lead }) {
   );
 }
 
-function EmailSection({ lead, footer }: { lead: Lead; footer: string }) {
+function EmailSection({ lead, footer, account }: { lead: Lead; footer: string; account: string }) {
   const full = lead.emailBody ? `${lead.emailBody}\n\n${footer}` : "";
+  const gmail =
+    lead.email && lead.emailBody
+      ? gmailComposeUrl({ to: lead.email, subject: lead.emailSubject ?? "", body: full, account: account || undefined })
+      : null;
   return (
     <Section
       title="3 · Email"
@@ -297,15 +301,23 @@ function EmailSection({ lead, footer }: { lead: Lead; footer: string }) {
             </div>
           </div>
 </ActionForm>
-          <div className="mt-4 border-t border-line pt-4">
+          <div className="mt-4 flex flex-wrap items-start gap-2 border-t border-line pt-4">
+            {gmail ? (
+              <a href={gmail} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                Open in Gmail <ExternalLink className="size-3.5" />
+              </a>
+            ) : null}
             {lead.emailedAt ? (
-              <p className="text-sm text-muted">Emailed {lead.emailedAt.toLocaleDateString("en-US")}.</p>
+              <p className="py-2 text-sm text-muted">Emailed {lead.emailedAt.toLocaleDateString("en-US")}.</p>
             ) : (
               <ActionButton action={markEmailedAction.bind(null, [lead.id])} className="btn-ghost">
                 Mark as emailed
               </ActionButton>
             )}
           </div>
+          {gmail && !lead.emailedAt ? (
+            <p className="mt-2 text-xs text-muted">Gmail khulega sab bhara hua. Padh kar Send dabao, phir yahan &quot;Mark as emailed&quot;.</p>
+          ) : null}
         </>
       ) : (
         <p className="text-sm text-muted">Generate the preview first, then write the email — it includes their personal link.</p>

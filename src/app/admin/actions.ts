@@ -75,6 +75,7 @@ export async function saveSettingsAction(_: ActionState, form: FormData): Promis
     startDate: String(form.get("startDate") ?? ""),
     goalUsd: String(form.get("goalUsd") ?? "100"),
     senderName: String(form.get("senderName") ?? ""),
+    senderEmail: String(form.get("senderEmail") ?? "").trim().toLowerCase(),
     businessAddress: String(form.get("businessAddress") ?? ""),
     paypalLink: String(form.get("paypalLink") ?? ""),
   });
