@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brightyard
 
-## Getting Started
+Agency site + admin workspace for selling websites to US home-service businesses
+(landscapers, painters, cleaners, handymen, pressure washers).
 
-First, run the development server:
+**Offer:** we build a homepage preview for the business first, email them their personal
+link, and they pay what they think it's worth to put it live.
+
+## What's inside
+
+| Area | URL | What it does |
+|---|---|---|
+| Public site | `/` | Landing page, example previews, "get my free preview" form (creates an inbound lead) |
+| Demos | `/demo/[slug]` | Three fictional example sites |
+| Prospect preview | `/p/[token]` | Personal site for one lead. Tracks opens, "Make it live" (pay-what-you-want) and "Not for me" (opt-out) |
+| Admin | `/admin` | Dashboard ($ goal, funnel, who opened their preview), 30-day guide, leads, workspace, outreach CSV, settings |
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000/admin. The password is `ADMIN_PASSWORD` in `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Without `DATABASE_URL` the app uses an embedded Postgres (PGlite) stored in `./.data`.
+Every integration is optional locally. Without its key, the app falls back to templates,
+manual entry or pasted URLs.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+See `.env.example`. On Vercel, add the same keys under **Settings → Environment Variables**.
+`DATABASE_URL` is required there. Tables are created automatically on first request.
 
-To learn more about Next.js, take a look at the following resources:
+| Key | Used for |
+|---|---|
+| `ADMIN_PASSWORD`, `SESSION_SECRET` | Admin login |
+| `NEXT_PUBLIC_SITE_URL` | Links inside emails |
+| `DATABASE_URL` | Postgres (Neon / Supabase) |
+| `ANTHROPIC_API_KEY`, `CLAUDE_MODEL` | Homepage copy and email drafts — preferred when set (default `claude-opus-5-5`, low effort, server-side refusal fallback on) |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | Used for copy and drafts when no Claude key is set (default `gpt-5.4-mini`, low reasoning effort) |
+| `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | Image uploads |
+| `GOOGLE_PLACES_API_KEY` | Lead finder |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Phone alerts for opens, claims, opt-outs, inbound requests |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16.4 (App Router, Cache Components, `proxy.ts`), React 19, Tailwind CSS 4,
+Drizzle ORM (postgres.js or PGlite), Anthropic and OpenAI TypeScript SDKs, Zod 4.

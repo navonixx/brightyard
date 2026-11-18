@@ -1,0 +1,187 @@
+import { Suspense } from "react";
+import Link from "next/link";
+import { Globe, Mail, Star } from "lucide-react";
+import { requireAdmin } from "@/lib/auth";
+import { listLeads } from "@/lib/data";
+import { LEAD_STATUSES, TRADES, type LeadStatus } from "@/lib/db/schema";
+import { TRADE_META } from "@/lib/brand";
+import { placesEnabled } from "@/lib/places";
+import { addLeadAction, findLeadsAction, importCsvAction } from "../../actions";
+import { ActionForm, SubmitButton } from "@/components/admin/ui";
+import { PageSkeleton } from "@/components/admin/skeleton";
+import { STATUS_META, StatusBadge } from "@/components/admin/status";
+
+export default function LeadsPage({ searchParams }: PageProps<"/admin/leads">) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <Leads searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+function TradeSelect({ name = "trade" }: { name?: string }) {
+  return (
+    <select name={name} className="input" defaultValue="landscaping">
+      {TRADES.map((t) => (
+        <option key={t} value={t}>{TRADE_META[t].label}</option>
+      ))}
+    </select>
+  );
+}
+
+async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">["searchParams"] }) {
+  await requireAdmin();
+  const params = await searchParams;
+  const status = LEAD_STATUSES.includes(params.status as LeadStatus) ? (params.status as LeadStatus) : undefined;
+  const leads = await listLeads(status);
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-display text-3xl font-bold tracking-tight">Leads</h1>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Find via Google Places */}
+        <section className="card p-5 lg:col-span-2">
+          <h2 className="font-semibold">Find leads</h2>
+          <p className="mt-1 text-sm text-muted">
+            Google Places se businesses laata hai aur score karta hai (bina website + achhe reviews = upar).
+          </p>
+          {placesEnabled() ? (
+            <ActionForm action={findLeadsAction} className="mt-4">
+              <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                <TradeSelect />
+                <input name="location" required placeholder="Boise, ID" className="input" />
+                <SubmitButton pendingText="Searching…">Search</SubmitButton>
+              </div>
+            </ActionForm>
+          ) : (
+            <p className="mt-4 rounded-lg bg-sun-soft p-3 text-sm">
+              GOOGLE_PLACES_API_KEY abhi set nahi hai. Tab tak neeche manually ya CSV se leads add karo.
+            </p>
+          )}
+        </section>
+
+        {/* CSV */}
+        <section className="card p-5">
+          <h2 className="font-semibold">Import CSV</h2>
+          <ActionForm action={importCsvAction} className="mt-3" resetOnSuccess>
+            <textarea
+              name="csv"
+              rows={4}
+              className="input font-mono text-xs"
+              placeholder={"business,trade,owner,email,phone,website,city,state\nAcme Lawn,landscaping,Mike,mike@acme.com,,,Boise,ID"}
+            />
+            <div className="mt-2">
+              <SubmitButton className="btn-ghost w-full" pendingText="Importing…">Import</SubmitButton>
+            </div>
+          </ActionForm>
+        </section>
+      </div>
+
+      {/* Manual add */}
+      <details className="card p-5">
+        <summary className="cursor-pointer font-semibold">+ Add a lead manually</summary>
+        <ActionForm action={addLeadAction} className="mt-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <input name="businessName" required placeholder="Business name *" className="input" />
+            <TradeSelect />
+            <input name="ownerName" placeholder="Owner first name" className="input" />
+            <input name="email" type="email" placeholder="Email" className="input" />
+            <input name="phone" placeholder="Phone" className="input" />
+            <input name="website" placeholder="Website / Facebook" className="input" />
+            <input name="city" placeholder="City" className="input" />
+            <input name="state" placeholder="State (ID)" maxLength={2} className="input" />
+            <div className="grid grid-cols-2 gap-3">
+              <input name="rating" placeholder="Rating 4.8" className="input" />
+              <input name="reviewCount" placeholder="Reviews 37" className="input" />
+            </div>
+          </div>
+          <textarea name="notes" rows={2} placeholder="Notes (what you noticed about them)" className="input mt-3" />
+          <div className="mt-3">
+            <SubmitButton>Add lead</SubmitButton>
+          </div>
+        </ActionForm>
+      </details>
+
+      {/* Filters */}
+      <nav className="flex gap-2 overflow-x-auto pb-1">
+        <Link
+          href="/admin/leads"
+          className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${!status ? "bg-ink text-paper" : "bg-card text-muted"}`}
+        >
+          All
+        </Link>
+        {LEAD_STATUSES.map((s) => (
+          <Link
+            key={s}
+            href={`/admin/leads?status=${s}`}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${status === s ? "bg-ink text-paper" : "bg-card text-muted"}`}
+          >
+            {STATUS_META[s].label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Table */}
+      <section className="card overflow-hidden">
+        {leads.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="border-b border-line bg-paper text-left text-xs text-muted">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Business</th>
+                  <th className="px-4 py-3 font-medium">Location</th>
+                  <th className="px-4 py-3 font-medium">Signals</th>
+                  <th className="px-4 py-3 font-medium">Score</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {leads.map((lead) => (
+                  <tr key={lead.id} className="hover:bg-paper">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/leads/${lead.id}`} className="font-medium hover:text-brand">
+                        {lead.businessName}
+                      </Link>
+                      <p className="text-xs text-muted">{TRADE_META[lead.trade].label}</p>
+                    </td>
+                    <td className="px-4 py-3 text-muted">
+                      {[lead.city, lead.state].filter(Boolean).join(", ") || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3 text-muted">
+                        {lead.rating ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Star className="size-3.5 fill-sun text-sun" /> {lead.rating} ({lead.reviewCount ?? 0})
+                          </span>
+                        ) : null}
+                        <span title={lead.website ?? "No website"} className={lead.website ? "" : "text-brand"}>
+                          <Globe className="size-4" />
+                        </span>
+                        <span title={lead.email ?? "No email yet"} className={lead.email ? "text-brand" : "opacity-40"}>
+                          <Mail className="size-4" />
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`font-display font-bold ${lead.score >= 60 ? "text-brand" : "text-muted"}`}>
+                        {lead.score}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={lead.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="p-8 text-center text-sm text-muted">
+            No leads here yet. Search above or add one manually.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
