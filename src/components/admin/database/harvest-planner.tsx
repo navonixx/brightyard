@@ -298,13 +298,13 @@ export function HarvestPlanner({
       <div className="flex flex-col gap-3 rounded-2xl bg-ink p-4 text-paper sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <p className="text-lg font-semibold">
-            {searches.toLocaleString()} niche × city searches
+            {searches.toLocaleString("en-US")} niche × city searches
             <span className="ml-2 text-sm font-normal opacity-70">
               {nicheCount} niche{nicheCount === 1 ? "" : "s"} × {marketCount} cit{marketCount === 1 ? "y" : "ies"}
             </span>
           </p>
           <p className="text-sm opacity-70">
-            Usually {low.toLocaleString()}–{high.toLocaleString()} businesses in total · at {lookupCap.toLocaleString()} a month that&apos;s about{" "}
+            Usually {low.toLocaleString("en-US")}–{high.toLocaleString("en-US")} businesses in total · at {lookupCap.toLocaleString("en-US")} a month that&apos;s about{" "}
             {months(low) === months(high) ? months(low) : `${months(low)}–${months(high)}`} month{months(high) === 1 ? "" : "s"}. Opening their websites and finding emails is free.
           </p>
         </div>

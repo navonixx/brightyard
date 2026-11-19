@@ -239,7 +239,7 @@ async function Database({ searchParams }: { searchParams: PageProps<"/admin/data
 
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
           <p className="text-muted">
-            <strong className="text-ink">{total.toLocaleString()}</strong> businesses
+            <strong className="text-ink">{total.toLocaleString("en-US")}</strong> businesses
             {total > PAGE_SIZE ? ` · page ${filter.page} of ${pages}` : ""}
           </p>
           <div className="flex items-center gap-2">

@@ -14,7 +14,7 @@ function Bar({ label, value, total, tone = "bg-brand" }: { label: string; value:
       <div className="flex justify-between text-xs">
         <span className="text-muted">{label}</span>
         <span className="font-medium tabular-nums">
-          {value.toLocaleString()} / {total.toLocaleString()}
+          {value.toLocaleString("en-US")} / {total.toLocaleString("en-US")}
         </span>
       </div>
       <div className="mt-1 h-2 overflow-hidden rounded-full bg-line/60">
@@ -27,7 +27,7 @@ function Bar({ label, value, total, tone = "bg-brand" }: { label: string; value:
 function Stat({ label, value, accent }: { label: string; value: number; accent?: string }) {
   return (
     <div className="rounded-xl border border-line bg-card px-4 py-3">
-      <p className={`font-display text-2xl font-semibold tabular-nums ${accent ?? ""}`}>{value.toLocaleString()}</p>
+      <p className={`font-display text-2xl font-semibold tabular-nums ${accent ?? ""}`}>{value.toLocaleString("en-US")}</p>
       <p className="text-xs text-muted">{label}</p>
     </div>
   );
@@ -109,7 +109,7 @@ export function HarvestRunner({
               ? `Working${stats.current ? ` on ${stats.current}` : " through the websites"}… keep this tab open. You can pause any time and continue later.`
               : nothingToDo
                 ? "Nothing waiting. Add niches and cities above, then press Start."
-                : `${queueLeft} searches and ${stats.toCheck.toLocaleString()} website checks waiting. Press Start and leave this tab open.`}
+                : `${queueLeft} searches and ${stats.toCheck.toLocaleString("en-US")} website checks waiting. Press Start and leave this tab open.`}
           </p>
         </div>
         {running ? (

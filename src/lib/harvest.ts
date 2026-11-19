@@ -250,11 +250,11 @@ async function runJobPage(jobId: number, log: string[]): Promise<boolean> {
 
   const usage = await monthlyUsage();
   if (usage.searches >= usage.searchCap) {
-    throw new BudgetPaused(`Paused: this month's Google search limit (${usage.searchCap.toLocaleString()}) is reached. It resumes on the 1st, or raise the limit in "Collect leads".`);
+    throw new BudgetPaused(`Paused: this month's Google search limit (${usage.searchCap.toLocaleString("en-US")}) is reached. It resumes on the 1st, or raise the limit in "Collect leads".`);
   }
   // A page can bring up to 20 new businesses, each needing one lookup.
   if (usage.lookups + 20 > usage.lookupCap) {
-    throw new BudgetPaused(`Paused: this month's lead limit (${usage.lookupCap.toLocaleString()} new businesses) is reached. It resumes on the 1st, or raise the limit in "Collect leads".`);
+    throw new BudgetPaused(`Paused: this month's lead limit (${usage.lookupCap.toLocaleString("en-US")} new businesses) is reached. It resumes on the 1st, or raise the limit in "Collect leads".`);
   }
 
   const page = await legacyTextSearch(step.query, { pageToken: job.pageToken, location: step.location, radius: step.radius });
@@ -270,7 +270,27 @@ async function runJobPage(jobId: number, log: string[]): Promise<boolean> {
         ),
       )
     : new Set<string>();
-  const fresh = inState.filter((h) => !known.has(h.placeId));
+  // Branches of a chain share a name: skip a name already stored for this city before paying for a lookup.
+  const nameKey = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const candidates = inState.filter((h) => !known.has(h.placeId));
+  const names = [...new Set(candidates.map((h) => nameKey(h.name)))];
+  const takenNames = new Set<string>();
+  if (names.length) {
+    const rows = rowsOf<{ k: string }>(
+      await db.execute(sql`
+        SELECT DISTINCT trim(regexp_replace(lower(name), '[^a-z0-9]+', ' ', 'g')) AS k
+        FROM prospects
+        WHERE market = ${job.market}
+          AND trim(regexp_replace(lower(name), '[^a-z0-9]+', ' ', 'g')) IN (${sql.join(names.map((n) => sql`${n}`), sql`, `)})`),
+    );
+    for (const r of rows) takenNames.add(r.k);
+  }
+  const fresh = candidates.filter((h) => {
+    const k = nameKey(h.name);
+    if (takenNames.has(k)) return false;
+    takenNames.add(k);
+    return true;
+  });
   const details = await Promise.all(fresh.map((h) => legacyPlaceDetails(h.placeId)));
   await count("lookups", fresh.length);
 
@@ -343,7 +363,9 @@ async function runJobPage(jobId: number, log: string[]): Promise<boolean> {
     .set({ queryIndex, pageToken, found, dry, centerLat, centerLng, requests: job.requests + 1, status: finished ? "done" : "queued", updatedAt: new Date() })
     .where(eq(harvestJobs.id, jobId));
   log.push(
-    `${nicheLabel(job.niche)} · ${job.market}: +${inserted.length} new (${found} total${finished ? " — Google has no more here" : ""})`,
+    `${nicheLabel(job.niche)} · ${job.market}: +${inserted.length} new` +
+      (candidates.length - inserted.length > 0 ? `, ${candidates.length - inserted.length} duplicate${candidates.length - inserted.length === 1 ? "" : "s"} skipped` : "") +
+      ` (${found} total${finished ? " — Google has no more here" : ""})`,
   );
   return finished;
 }
