@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Brightyard design system — gallery-quiet UI.
+ * Alderwell Creative design system — gallery-quiet UI.
  * One interactive blue, white / parchment / near-black surfaces, pill actions,
  * tight display type, no gradients, one shadow reserved for "product" renders.
  */
@@ -13,9 +13,9 @@
   --ink: #1d1d1f;
   --muted: #6e6e73;
   --line: #e0e0e0;
-  --brand: #0066cc;
-  --brand-strong: #0058b0;
-  --brand-soft: #e8f1fb;
+  --brand: #6d28d9;
+  --brand-strong: #5b21b6;
+  --brand-soft: #f1ebff;
   --sun: #f5a623; /* status highlight only — never a brand accent */
   --sun-soft: #fdf2df;
   --danger: #d70015;
@@ -29,9 +29,9 @@
     --ink: #f5f5f7;
     --muted: #a1a1a6;
     --line: #38383a;
-    --brand: #2997ff;
-    --brand-strong: #5eb0ff;
-    --brand-soft: #0b2540;
+    --brand: #a78bfa;
+    --brand-strong: #c4b5fd;
+    --brand-soft: #24163f;
     --sun: #ffb340;
     --sun-soft: #3a2a10;
     --danger: #ff453a;
@@ -45,9 +45,9 @@
   --ink: #f5f5f7;
   --muted: #a1a1a6;
   --line: #38383a;
-  --brand: #2997ff;
-  --brand-strong: #5eb0ff;
-  --brand-soft: #0b2540;
+  --brand: #a78bfa;
+  --brand-strong: #c4b5fd;
+  --brand-soft: #24163f;
   --sun: #ffb340;
   --sun-soft: #3a2a10;
   --danger: #ff453a;
@@ -74,15 +74,18 @@
   --color-tile: #272729;
   --color-tile-2: #2a2a2c;
   --color-tile-3: #252527;
-  --color-void: #000000;
+  --color-void: #07051a;
   --color-graphite: #1d1d1f;
   --color-graphite-80: #333333;
   --color-graphite-48: #6e6e73;
   --color-on-dark-muted: #cccccc;
   --color-hairline: #e0e0e0;
-  --color-action: #0066cc;
-  --color-action-focus: #0071e3;
-  --color-action-on-dark: #2997ff;
+  /* Brand kit: magenta → violet → cyan. Violet carries every action. */
+  --color-action: #6d28d9;
+  --color-action-focus: #7c3aed;
+  --color-action-on-dark: #a78bfa;
+  --color-neon-pink: #e040fb;
+  --color-neon-cyan: #22d3ee;
 
   /* Apple devices resolve -apple-system to SF Pro; everything else gets Inter. */
   --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), system-ui, sans-serif;

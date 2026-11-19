@@ -1,7 +1,7 @@
 import type { AppSettings } from "./data";
 import { siteUrl } from "./brand";
 
-/** "Kunj from Brightyard" → "Kunj". Used for the "I'm {me}" intro line. */
+/** "Ethan from Alderwell Creative" → "Kunj". Used for the "I'm {me}" intro line. */
 function firstName(settings: AppSettings): string {
   return settings.senderName.trim().split(/\s+/)[0] ?? "";
 }
@@ -10,7 +10,7 @@ function firstName(settings: AppSettings): string {
 export function emailFooter(settings: AppSettings): string {
   const lines = [
     firstName(settings) || "{your name}",
-    `Brightyard — websites for local businesses`,
+    `Alderwell Creative — websites for local businesses`,
     siteUrl().replace(/^https?:\/\//, ""),
     settings.businessAddress || "{business address}",
   ];

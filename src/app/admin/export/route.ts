@@ -32,7 +32,7 @@ export async function GET() {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="brightyard-outreach.csv"`,
+      "Content-Disposition": `attachment; filename="alderwell-outreach.csv"`,
       "Cache-Control": "no-store",
     },
   });

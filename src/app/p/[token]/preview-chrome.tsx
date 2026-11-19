@@ -40,7 +40,7 @@ export function PreviewChrome({ token, businessName, claimed, prices, currentSit
         <div className="flex min-w-0 items-center gap-2 text-xs sm:text-sm">
           <LogoMark className="size-5 shrink-0" />
           <span className="truncate text-white/85">
-            {currentSite ? "Redesign concept for" : "Free preview for"} <strong>{businessName}</strong> · made by Brightyard
+            {currentSite ? "Redesign concept for" : "Free preview for"} <strong>{businessName}</strong> · made by Alderwell Creative
           </span>
           {currentSite ? (
             <a href={currentSite} target="_blank" rel="noopener noreferrer" className="hidden shrink-0 text-white/60 underline hover:text-white sm:inline">

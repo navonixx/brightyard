@@ -5,7 +5,7 @@ import { Logo } from "@/components/logo";
 import { logout } from "../actions";
 
 export const metadata: Metadata = {
-  title: "Brightyard Admin",
+  title: "Alderwell Creative Admin",
   robots: { index: false, follow: false },
 };
 

@@ -1,10 +1,10 @@
 import type { Trade } from "./db/schema";
 
 export const BRAND = {
-  name: "Brightyard",
+  name: "Alderwell Creative",
   tagline: "Websites for home-service pros — built before you pay.",
   niche: "US home-service businesses (landscapers, painters, cleaners, handymen, pressure washers)",
-  contactEmail: "hello@brightyard.studio",
+  contactEmail: "alderwellcreative@gmail.com",
   suggestedPrices: [49, 99, 149, 199],
 };
 

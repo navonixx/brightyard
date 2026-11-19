@@ -8,9 +8,9 @@ const serifDisplay = DM_Serif_Display({ variable: "--font-serif-display", subset
 const condensed = Oswald({ variable: "--font-condensed", subsets: ["latin"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
-  title: "Brightyard — websites for local businesses, built before you pay",
+  title: "Alderwell Creative — websites for local businesses, built before you pay",
   description:
-    "Brightyard is a web design studio for local businesses. We build your whole website first — you pay only if you love it.",
+    "Alderwell Creative is a web design studio for local businesses. We build your whole website first — you pay only if you love it.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

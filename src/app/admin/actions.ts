@@ -272,7 +272,7 @@ export async function uploadImagesAction(id: string, _: ActionState, form: FormD
   const added: LeadImage[] = [];
   try {
     for (const file of files.slice(0, 6)) {
-      added.push({ url: await uploadImage(file, `/brightyard/${lead.id}`), alt });
+      added.push({ url: await uploadImage(file, `/alderwell/${lead.id}`), alt });
     }
   } catch (error) {
     return { message: error instanceof Error ? error.message : "Upload failed." };

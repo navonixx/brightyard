@@ -46,11 +46,11 @@ async function Settings() {
           </div>
           <div>
             <label className="label" htmlFor="senderName">Sender name (email signature)</label>
-            <input id="senderName" name="senderName" defaultValue={settings.senderName} placeholder="Kunj from Brightyard" className="input" />
+            <input id="senderName" name="senderName" defaultValue={settings.senderName} placeholder="Ethan from Alderwell Creative" className="input" />
           </div>
           <div>
             <label className="label" htmlFor="senderEmail">Sending Gmail address</label>
-            <input id="senderEmail" name="senderEmail" type="email" defaultValue={settings.senderEmail} placeholder="yourname.brightyard@gmail.com" className="input" />
+            <input id="senderEmail" name="senderEmail" type="email" defaultValue={settings.senderEmail} placeholder="alderwellcreative@gmail.com" className="input" />
           </div>
           <div>
             <label className="label" htmlFor="paypalLink">PayPal.me link</label>

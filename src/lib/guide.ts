@@ -26,7 +26,7 @@ export const GUIDE: GuidePhase[] = [
       {
         id: "setup-domain",
         title: "Sending ke liye naya Gmail banao",
-        body: "Ek alag Gmail banao, jaise kunj.brightyard@gmail.com. Personal Gmail se mat bhejo — block hua to personal account bhi jayega. Gmail mein naam \"Kunj from Brightyard\" aur ek profile photo lagao: asli chehra dikhne se reply zyada aate hain.",
+        body: "Ek alag Gmail banao, jaise alderwellcreative@gmail.com. Personal Gmail se mat bhejo — block hua to personal account bhi jayega. Gmail mein naam \"Kunj from Brightyard\" aur ek profile photo lagao: asli chehra dikhne se reply zyada aate hain.",
       },
       {
         id: "setup-mailbox",

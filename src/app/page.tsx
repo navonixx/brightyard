@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { Logo } from "@/components/logo";
+import { Logo, LogoMark } from "@/components/logo";
 import { InquiryForm } from "@/components/inquiry-form";
 import { BrowserRender, PhoneRender } from "@/components/site-render";
 import { Reveal } from "@/components/motion/reveal";
@@ -37,9 +37,9 @@ const FAQ = [
   { q: "What happens after launch?", a: "Hosting plus small edits is an optional $15 a month. Cancel anytime." },
 ];
 
-function Words({ text, offset = 0 }: { text: string; offset?: number }) {
+function Words({ text, offset = 0, className = "" }: { text: string; offset?: number; className?: string }) {
   return text.split(" ").map((word, i) => (
-    <span key={`${word}-${i}`} className="word" style={{ "--i": i + offset } as CSSProperties}>
+    <span key={`${word}-${i}`} className={`word ${className}`} style={{ "--i": i + offset } as CSSProperties}>
       {word}&nbsp;
     </span>
   ));
@@ -52,7 +52,7 @@ export default function Home() {
     {
       eyebrow: "Phone-first",
       title: "Looks right on the phone in their hand.",
-      body: "Most people find a local business on a phone, often while standing in the driveway. Every Brightyard site is designed thumb-first, then scaled up to desktop.",
+      body: "Most people find a local business on a phone, often while standing in the driveway. Every Alderwell site is designed thumb-first, then scaled up to desktop.",
       points: ["Big, readable type", "Photos that load fast on mobile data", "Nothing to pinch or zoom"],
       visual: <PhoneRender data={oak} scroll="always" initialZoom={0.67} className="w-[260px]" />,
       mobileVisual: <PhoneRender data={oak} scroll="always" initialZoom={0.56} className="mx-auto w-[220px]" />,
@@ -80,7 +80,7 @@ export default function Home() {
       {/* Global nav */}
       <nav className="bg-void text-white">
         <div className="mx-auto flex h-11 max-w-[1100px] items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="Brightyard home" className="opacity-90 hover:opacity-100">
+          <Link href="/" aria-label="Alderwell Creative home" className="opacity-90 hover:opacity-100">
             <Logo size="sm" />
           </Link>
           <div className="hidden items-center gap-8 t-fine text-white/80 md:flex">
@@ -95,9 +95,9 @@ export default function Home() {
       </nav>
 
       {/* Frosted sub-nav */}
-      <div className="sticky top-0 z-40 border-b border-white/10 bg-[#161617]/90 text-white backdrop-blur-xl backdrop-saturate-[180%]">
+      <div className="sticky top-0 z-40 border-b border-white/10 bg-[#0d0a24]/90 text-white backdrop-blur-xl backdrop-saturate-[180%]">
         <div className="mx-auto flex h-[52px] max-w-[1100px] items-center justify-between px-4 sm:px-6">
-          <span className="t-tagline">Brightyard</span>
+          <span className="t-tagline">Alderwell Creative</span>
           <div className="flex items-center gap-6">
             <a href="#work" className="hidden t-caption text-white/80 hover:text-white sm:block">Work</a>
             <a href="#pricing" className="hidden t-caption text-white/80 hover:text-white sm:block">Pricing</a>
@@ -111,12 +111,26 @@ export default function Home() {
       <main>
         {/* ── Hero ── */}
         <section className="relative overflow-hidden bg-void pt-16 text-white sm:pt-24">
-          <div className="mx-auto max-w-[1100px] px-4 text-center sm:px-6">
+          {/* Brand glow: the logo's magenta → violet → cyan, kept soft behind the headline */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[720px]">
+            <div className="absolute left-1/2 top-24 h-[420px] w-[420px] -translate-x-[85%] rounded-full bg-neon-pink/25 blur-[120px]" />
+            <div className="absolute left-1/2 top-40 h-[420px] w-[420px] -translate-x-[15%] rounded-full bg-neon-cyan/20 blur-[120px]" />
+          </div>
+          <div className="relative mx-auto max-w-[1100px] px-4 text-center sm:px-6">
+            <div className="fade-in mx-auto mb-6 w-fit">
+              <LogoMark className="size-14 drop-shadow-[0_0_24px_rgba(167,139,250,0.55)] sm:size-16" />
+            </div>
             <p className="fade-in text-[14px] font-semibold uppercase tracking-[0.2em] text-white/55 sm:text-[15px]">
-              Web design studio for local businesses
+              Alderwell Creative · web design for local businesses
             </p>
             <h1 className="mx-auto mt-5 max-w-[14ch] text-balance font-display text-[44px] font-semibold leading-[1.02] tracking-[-0.03em] sm:text-[64px] lg:text-[88px]">
-              <Words text="Websites that win the call." />
+              <Words text="Websites that" />
+              {/* Gradient sits on each word: the per-word animation layers would hide a parent background-clip. */}
+              <Words
+                text="win the call."
+                offset={2}
+                className="bg-gradient-to-r from-neon-pink via-[#a78bfa] to-neon-cyan bg-clip-text pb-[0.08em] text-transparent"
+              />
             </h1>
             <p className="fade-in t-lead mx-auto mt-6 max-w-[34ch] text-on-dark-muted" style={{ "--d": "700ms" } as CSSProperties}>
               We build your whole website first. You pay only if you love it.
@@ -197,7 +211,7 @@ export default function Home() {
           <Reveal className="mx-auto max-w-[1100px] px-4 text-center sm:px-6">
             <h2 className="t-display">Built to get the call.</h2>
             <p className="t-lead mx-auto mt-4 max-w-[32ch] text-graphite-48">
-              Every Brightyard site is built around the one thing that matters: a customer reaching you.
+              Every Alderwell site is built around the one thing that matters: a customer reaching you.
             </p>
           </Reveal>
           <div className="pb-16 sm:pb-24">
@@ -320,6 +334,9 @@ export default function Home() {
               <p className="t-caption mt-3 max-w-[34ch] text-graphite-48">
                 A small web design studio for local businesses. We build your site first — you pay if you love it.
               </p>
+              <a href="mailto:alderwellcreative@gmail.com" className="t-caption mt-3 inline-block text-action hover:underline">
+                alderwellcreative@gmail.com
+              </a>
             </div>
             <div>
               <p className="t-caption font-semibold text-graphite">Studio</p>
