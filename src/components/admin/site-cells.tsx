@@ -12,7 +12,7 @@ export function WeaknessBadge({ score, checked }: { score: number | null; checke
   return (
     <span
       title="Website weakness score — higher means a weaker site and a better redesign prospect"
-      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+      className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${
         weak ? "bg-danger/12 text-danger" : "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
       }`}
     >
@@ -33,6 +33,14 @@ export function CurrentSiteCell({
   issues: string[] | null;
 }) {
   if (!website) return <span className="text-xs text-muted">No website</span>;
+  const social = /facebook\.com|instagram\.com|yelp\.com|linktr\.ee/i.exec(website)?.[0];
+  if (social) {
+    return (
+      <a href={full(website)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted hover:text-ink">
+        Only a {social.replace(/\.(com|ee)$/, "")} page — no real website <ExternalLink className="size-3" />
+      </a>
+    );
+  }
   return (
     <div className="min-w-0 space-y-1">
       <a href={full(website)} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-[220px] items-center gap-1 truncate text-sm hover:text-brand">
@@ -47,7 +55,7 @@ export function CurrentSiteCell({
 }
 
 export function NewSiteCell({ token, built }: { token: string; built: boolean }) {
-  if (!built) return <span className="text-xs text-muted">Not built yet</span>;
+  if (!built) return <span className="whitespace-nowrap text-xs text-muted">Not built yet</span>;
   return (
     <a href={`/p/${token}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
       {short(siteUrl())}/p/{token.slice(0, 6)}… <ExternalLink className="size-3" />

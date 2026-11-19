@@ -421,7 +421,8 @@ export async function findAndBuildAction(_: ActionState, form: FormData): Promis
 /** Opens and scores the current website of up to 12 leads that haven't been checked yet. */
 export async function checkWebsitesAction(): Promise<ActionState> {
   await requireAdmin();
-  const pending = (await listLeads()).filter((l) => l.website && !l.siteCheckedAt).slice(0, 12);
+  const social = /facebook.com|instagram.com|yelp.com|linktr.ee/i;
+  const pending = (await listLeads()).filter((l) => l.website && !social.test(l.website) && !l.siteCheckedAt).slice(0, 12);
   if (!pending.length) return { ok: true, message: "Every lead with a website has already been checked." };
   const results = await Promise.all(
     pending.map(async (lead) => {
