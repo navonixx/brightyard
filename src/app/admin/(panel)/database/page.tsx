@@ -96,15 +96,19 @@ async function Database({ searchParams }: { searchParams: PageProps<"/admin/data
 
       <Disclosure
         title="Collect leads"
-        description="Pick niches and cities. Searches run niche by niche — every city for niche 1, then niche 2, and so on."
+        description="Pick niches and cities. Each one is searched in the city and its suburbs until Google has nothing new — no fixed number, no duplicates."
         defaultOpen={progress.jobsTotal === 0}
       >
         <ActionForm action={queueHarvestAction}>
           <HarvestPlanner
-            niches={NICHES.map((n) => ({ value: n.key, label: n.label }))}
-            markets={MARKETS.map((m) => ({ value: m.value, label: m.value, badge: m.recommended ? "top" : undefined }))}
+            niches={NICHES.map((n) => ({ value: n.key, label: n.label, group: n.group }))}
+            markets={MARKETS.map((m) => {
+              const [city, state] = m.value.split(", ");
+              return { value: m.value, label: city, group: state, badge: m.recommended ? "top" : undefined };
+            })}
             defaultMarkets={MARKETS.filter((m) => m.recommended).map((m) => m.value)}
-            cap={progress.cap}
+            lookupCap={progress.usage.lookupCap}
+            searchCap={progress.usage.searchCap}
           />
         </ActionForm>
       </Disclosure>

@@ -121,6 +121,9 @@ export const prospects = pgTable("prospects", {
   state: text("state"),
   rating: real("rating"),
   reviewCount: integer("review_count"),
+  /** Digits-only phone and bare website host — used to keep one row per real business. */
+  phoneKey: text("phone_key"),
+  domain: text("domain"),
   email: text("email"),
   emails: jsonb("emails").$type<string[] | null>(),
   siteScore: integer("site_score"),
@@ -147,6 +150,11 @@ export const harvestJobs = pgTable("harvest_jobs", {
   pageToken: text("page_token"),
   found: integer("found").notNull().default(0),
   requests: integer("requests").notNull().default(0),
+  /** City centre, learned from the first results; used to also search the suburbs around it. */
+  centerLat: real("center_lat"),
+  centerLng: real("center_lng"),
+  /** Pages in a row that turned up nothing new — the search stops once Google runs dry. */
+  dry: integer("dry").notNull().default(0),
   error: text("error"),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -252,4 +260,11 @@ CREATE TABLE IF NOT EXISTS harvest_jobs (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS harvest_jobs_niche_market_idx ON harvest_jobs (niche, market);
+ALTER TABLE harvest_jobs ADD COLUMN IF NOT EXISTS center_lat real;
+ALTER TABLE harvest_jobs ADD COLUMN IF NOT EXISTS center_lng real;
+ALTER TABLE harvest_jobs ADD COLUMN IF NOT EXISTS dry integer NOT NULL DEFAULT 0;
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS phone_key text;
+ALTER TABLE prospects ADD COLUMN IF NOT EXISTS domain text;
+CREATE INDEX IF NOT EXISTS prospects_phone_key_idx ON prospects (phone_key);
+CREATE INDEX IF NOT EXISTS prospects_domain_idx ON prospects (domain);
 `;

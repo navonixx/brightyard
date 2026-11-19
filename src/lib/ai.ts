@@ -71,10 +71,15 @@ Greeting: "Hi <first name>," if an owner name is given, otherwise "Hi,". No sign
 
 Subject: lowercase, 3 to 6 words, specific to this business (their phrase, their domain or their trade), never salesy.`;
 
+/** The niche the lead was found under (e.g. "Dentist") beats the broad trade bucket. */
+function tradeLabel(lead: Lead): string {
+  return lead.notes?.match(/Niche: ([^·\n]+)/)?.[1]?.trim() || TRADE_META[lead.trade].label;
+}
+
 function leadFacts(lead: Lead): string {
   return [
     `Business: ${lead.businessName}`,
-    `Trade: ${TRADE_META[lead.trade].label}`,
+    `Trade: ${tradeLabel(lead)}`,
     lead.city && `City: ${lead.city}${lead.state ? `, ${lead.state}` : ""}`,
     lead.rating && `Google rating: ${lead.rating} from ${lead.reviewCount ?? "?"} reviews`,
     `Current website: ${lead.website || "none"}`,
@@ -234,7 +239,7 @@ ${EMAIL_SYSTEM_PROMPT}
 The email's opening should use the hook, and its observation should be the weakness. If the redesign gives a specific service or promise its own place, say so in one sentence.`;
 
   const user = `Business: ${lead.businessName}
-Trade: ${TRADE_META[lead.trade].label}
+Trade: ${tradeLabel(lead)}
 Location: ${[lead.city, lead.state].filter(Boolean).join(", ") || "unknown"}
 Phone: ${lead.phone ?? "unknown"}
 Current website: ${lead.website}

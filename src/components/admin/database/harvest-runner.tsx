@@ -130,10 +130,23 @@ export function HarvestRunner({
         <Stat label="Weak website (redesign targets)" value={stats.weak} accent="text-danger" />
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
-        <Bar label="Google searches (niche × city)" value={stats.jobsDone + stats.jobsFailed} total={stats.jobsTotal} tone="bg-ink" />
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <Bar label="Niche × city searches finished" value={stats.jobsDone + stats.jobsFailed} total={stats.jobsTotal} tone="bg-ink" />
         <Bar label="Websites opened & scored" value={stats.checked} total={stats.checked + stats.toCheck} />
-        <Bar label="Google searches used this month" value={stats.used} total={stats.cap} tone={stats.used / stats.cap > 0.9 ? "bg-danger" : "bg-emerald-500"} />
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <Bar
+          label="New leads looked up this month (limit)"
+          value={stats.usage.lookups}
+          total={stats.usage.lookupCap}
+          tone={stats.usage.lookups / stats.usage.lookupCap > 0.9 ? "bg-danger" : "bg-emerald-500"}
+        />
+        <Bar
+          label="Google searches this month (limit)"
+          value={stats.usage.searches}
+          total={stats.usage.searchCap}
+          tone={stats.usage.searches / stats.usage.searchCap > 0.9 ? "bg-danger" : "bg-emerald-500"}
+        />
       </div>
 
       {error ? <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">{error}</p> : null}

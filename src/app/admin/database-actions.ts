@@ -8,23 +8,27 @@ import { clearQueue, harvestStep, promoteProspects, queueHarvest, retryFailed, t
 import type { ActionState } from "./actions";
 
 const clean = (values: FormDataEntryValue[]) =>
-  [...new Set(values.map((v) => String(v).trim()).filter(Boolean))].slice(0, 60);
+  [...new Set(values.map((v) => String(v).trim()).filter(Boolean))].slice(0, 1000);
 
 export async function queueHarvestAction(_: ActionState, form: FormData): Promise<ActionState> {
   await requireAdmin();
   const niches = clean(form.getAll("niche")).map((n) => n.toLowerCase());
   const markets = clean(form.getAll("market")).filter((m) => /^[^,]{2,40},\s*[A-Za-z]{2}$/.test(m));
-  const target = Math.min(300, Math.max(20, Number(form.get("target")) || 100));
-  const cap = Number(form.get("cap"));
-  if (Number.isFinite(cap) && cap >= 50) await saveSetting("harvestMonthlyCap", String(Math.round(cap)));
-  if (!niches.length || !markets.length) return { message: "Pick at least one niche and one city (cities as “City, ST”)." };
-  const added = await queueHarvest(niches, markets, target);
+  const lookupCap = Number(form.get("lookupCap"));
+  if (Number.isFinite(lookupCap) && lookupCap >= 100) await saveSetting("harvestLookupCap", String(Math.round(lookupCap)));
+  const searchCap = Number(form.get("searchCap"));
+  if (Number.isFinite(searchCap) && searchCap >= 100) await saveSetting("harvestMonthlyCap", String(Math.round(searchCap)));
+  if (!niches.length || !markets.length) {
+    refresh();
+    return { ok: true, message: "Limits saved. (Pick at least one niche and one city to queue searches.)" };
+  }
+  const added = await queueHarvest(niches, markets, form.get("order") === "city" ? "city" : "niche");
   refresh();
   return {
     ok: true,
     message: added
       ? `Queued ${added} searches (${niches.length} niche${niches.length === 1 ? "" : "s"} × ${markets.length} cit${markets.length === 1 ? "y" : "ies"}). Press Start below.`
-      : "Those niche × city searches are already in the queue or done.",
+      : "Limits saved. Those niche × city searches were already in the queue or done.",
   };
 }
 

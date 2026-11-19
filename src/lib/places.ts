@@ -69,56 +69,103 @@ export async function searchPlaces(query: string): Promise<PlaceResult[]> {
     });
 }
 
-export class PlacesNewDisabledError extends Error {
-  constructor() {
-    super(
-      'Your Google key can\'t use "Places API (New)". Turn it on in Google Cloud → APIs & Services → Library → "Places API (New)" → Enable (and allow it on the key if the key is restricted).',
-    );
-  }
-}
+// ─── Legacy Places API, page by page (used by the bulk harvester) ──────
 
-export type PlacePage = { places: (PlaceResult & { address: string | null })[]; nextPageToken: string | null };
+const LEGACY = "https://maps.googleapis.com/maps/api/place";
+
+export type LegacyHit = {
+  placeId: string;
+  name: string;
+  address: string | null;
+  /** Two-letter state parsed from the address, e.g. "OK". */
+  state: string | null;
+  rating: number | null;
+  reviewCount: number | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+type LegacyPage = {
+  status: string;
+  error_message?: string;
+  next_page_token?: string;
+  results?: {
+    place_id: string;
+    name: string;
+    formatted_address?: string;
+    vicinity?: string;
+    rating?: number;
+    user_ratings_total?: number;
+    business_status?: string;
+    geometry?: { location?: { lat: number; lng: number } };
+  }[];
+};
 
 /**
- * One page (up to 20) of a Text Search with website and phone included — a single billed request,
- * no per-place details calls. Google returns at most 3 pages (60 places) per query.
+ * One page (up to 20) of a legacy search. Google allows 3 pages (60) per query;
+ * a next-page token only becomes valid a couple of seconds after it is issued.
+ * With a location it runs a Nearby Search: the best matches inside that circle only,
+ * which is how the suburbs turn up businesses a city-wide search never shows.
  */
-export async function searchPlacesPage(query: string, pageToken?: string | null): Promise<PlacePage> {
+export async function legacyTextSearch(
+  query: string,
+  opts: { pageToken?: string | null; location?: { lat: number; lng: number }; radius?: number } = {},
+): Promise<{ hits: LegacyHit[]; nextPageToken: string | null }> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
-  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask":
-        "places.id,places.displayName,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.addressComponents,places.formattedAddress,places.businessStatus,nextPageToken",
-    },
-    body: JSON.stringify({ textQuery: query, regionCode: "US", pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(15000),
-  });
-  const data = (await response.json().catch(() => ({}))) as PlacesResponse & { nextPageToken?: string };
-  if (response.status === 403) throw new PlacesNewDisabledError();
-  if (!response.ok) throw new Error(data.error?.message || `Places API error ${response.status}`);
+  const params = new URLSearchParams({ key });
+  const endpoint = opts.location ? "nearbysearch" : "textsearch";
+  if (opts.pageToken) params.set("pagetoken", opts.pageToken);
+  else if (opts.location) {
+    params.set("keyword", query);
+    params.set("location", `${opts.location.lat},${opts.location.lng}`);
+    params.set("radius", String(opts.radius ?? 8000));
+  } else {
+    params.set("query", query);
+    params.set("region", "us");
+  }
+  let data: LegacyPage = { status: "UNKNOWN" };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    data = (await fetch(`${LEGACY}/${endpoint}/json?${params}`, { cache: "no-store", signal: AbortSignal.timeout(15000) }).then((r) =>
+      r.json(),
+    )) as LegacyPage;
+    // A fresh page token answers INVALID_REQUEST until it is ready.
+    if (!(opts.pageToken && data.status === "INVALID_REQUEST")) break;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  if (data.status === "ZERO_RESULTS" || (opts.pageToken && data.status === "INVALID_REQUEST")) return { hits: [], nextPageToken: null };
+  if (data.status !== "OK") throw new Error(data.error_message || `Places API error: ${data.status}`);
 
-  const places = (data.places ?? [])
-    .filter((place) => place.businessStatus !== "CLOSED_PERMANENTLY")
-    .map((place) => {
-      const part = (type: string) => place.addressComponents?.find((c) => c.types.includes(type))?.shortText ?? null;
-      return {
-        placeId: place.id,
-        name: place.displayName?.text ?? "Unknown",
-        phone: place.nationalPhoneNumber ?? null,
-        website: place.websiteUri ?? null,
-        rating: place.rating ?? null,
-        reviewCount: place.userRatingCount ?? null,
-        city: part("locality"),
-        state: part("administrative_area_level_1"),
-        address: place.formattedAddress ?? null,
-      };
-    });
-  return { places, nextPageToken: data.nextPageToken ?? null };
+  const hits = (data.results ?? [])
+    .filter((r) => r.business_status !== "CLOSED_PERMANENTLY")
+    .map((r) => ({
+      placeId: r.place_id,
+      name: r.name,
+      address: r.formatted_address ?? r.vicinity ?? null,
+      state: r.formatted_address?.match(/,\s*([A-Z]{2})\s+\d{5}/)?.[1] ?? null,
+      rating: r.rating ?? null,
+      reviewCount: r.user_ratings_total ?? null,
+      lat: r.geometry?.location?.lat ?? null,
+      lng: r.geometry?.location?.lng ?? null,
+    }));
+  return { hits, nextPageToken: data.next_page_token ?? null };
+}
+
+/** Website, phone and city for one place (Place Details + Contact Data). */
+export async function legacyPlaceDetails(placeId: string): Promise<{ website: string | null; phone: string | null; city: string | null }> {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
+  const data = (await fetch(
+    `${LEGACY}/details/json?place_id=${encodeURIComponent(placeId)}&fields=website,formatted_phone_number,address_components&key=${key}`,
+    { cache: "no-store", signal: AbortSignal.timeout(12000) },
+  )
+    .then((r) => r.json())
+    .catch(() => ({}))) as LegacyDetails;
+  return {
+    website: data.result?.website ?? null,
+    phone: data.result?.formatted_phone_number ?? null,
+    city: data.result?.address_components?.find((c) => c.types.includes("locality"))?.short_name ?? null,
+  };
 }
 
 type LegacySearch = {
