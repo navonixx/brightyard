@@ -13,7 +13,7 @@ const MAX_HTML = 1_500_000;
 const MAX_TEXT = 12_000;
 
 /** Only public http(s) sites — never localhost or private network addresses. */
-function assertPublicUrl(raw: string): URL {
+export function assertPublicUrl(raw: string): URL {
   const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
   const host = url.hostname.toLowerCase();
   const privateHost =
@@ -72,7 +72,7 @@ function findEmails(html: string): string[] {
   );
 }
 
-function detectBuilder(html: string): string | null {
+export function detectBuilder(html: string): string | null {
   const generator = html.match(/<meta[^>]+name=["']generator["'][^>]+content=["']([^"']+)["']/i)?.[1];
   if (generator) return generator.slice(0, 60);
   const hit = /(wix\.com|weebly|squarespace|godaddy|duda|webflow|wp-content)/i.exec(html)?.[1];

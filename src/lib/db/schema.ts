@@ -65,6 +65,10 @@ export const leads = pgTable("leads", {
   images: jsonb("images").$type<LeadImage[]>().notNull().default([]),
   videoUrl: text("video_url"),
   theme: text("theme"),
+  /** 0–100, higher = weaker current website. Null until checked. */
+  siteScore: integer("site_score"),
+  siteIssues: jsonb("site_issues").$type<string[] | null>(),
+  siteCheckedAt: timestamp("site_checked_at", { withTimezone: true }),
   emailSubject: text("email_subject"),
   emailBody: text("email_body"),
   offerAmount: integer("offer_amount"),
@@ -133,6 +137,9 @@ CREATE TABLE IF NOT EXISTS leads (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS theme text;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS site_score integer;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS site_issues jsonb;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS site_checked_at timestamptz;
 CREATE INDEX IF NOT EXISTS leads_status_idx ON leads (status);
 CREATE TABLE IF NOT EXISTS events (
   id serial PRIMARY KEY,

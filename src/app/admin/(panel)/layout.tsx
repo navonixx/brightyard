@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, LayoutDashboard, LogOut, Send, Settings, Users } from "lucide-react";
+import { BookOpenCheck, Columns2, LayoutDashboard, LogOut, Send, Settings, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { logout } from "../actions";
 
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/guide", label: "Guide", icon: BookOpenCheck },
   { href: "/admin/leads", label: "Leads", icon: Users },
+  { href: "/admin/sites", label: "Before & After", icon: Columns2 },
   { href: "/admin/outreach", label: "Outreach", icon: Send },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;

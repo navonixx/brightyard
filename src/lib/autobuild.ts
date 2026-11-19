@@ -5,6 +5,7 @@ import { getLead, logEvent, updateLead } from "./data";
 import { PHOTO_LIBRARY } from "./photos";
 import { scoreLead } from "./places";
 import { researchSite } from "./research";
+import { checkSite } from "./sitecheck";
 import { templateEmail } from "./templates";
 
 export type AutoBuildResult = { ok: boolean; message: string };
@@ -22,6 +23,14 @@ export async function autoBuildLead(id: string): Promise<AutoBuildResult> {
     return { ok: false, message: "This lead has no website to read. Use Generate copy instead." };
   }
 
+  // Score the current site first (Find & build has usually done this already).
+  let siteIssues = lead.siteIssues;
+  if (!lead.siteCheckedAt) {
+    const check = await checkSite(lead.website);
+    siteIssues = check.issues;
+    await updateLead(id, { siteScore: check.reachable ? check.score : null, siteIssues: check.issues, siteCheckedAt: new Date() });
+  }
+
   const research = await researchSite(lead.website).catch(() => null);
   if (!research || research.text.length < 200) {
     await logEvent(id, "autobuild_failed", { reason: "site_unreadable" });
@@ -34,6 +43,7 @@ export async function autoBuildLead(id: string): Promise<AutoBuildResult> {
     siteText: research.text,
     emails: research.emails,
     builder: research.builder,
+    siteIssues,
     photoLibrary: PHOTO_LIBRARY,
     link,
   });

@@ -1,15 +1,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Globe, Mail, Star } from "lucide-react";
+import { Mail, Star } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { listLeads } from "@/lib/data";
 import { LEAD_STATUSES, TRADES, type LeadStatus } from "@/lib/db/schema";
 import { TRADE_META } from "@/lib/brand";
 import { placesEnabled } from "@/lib/places";
-import { addLeadAction, findAndBuildAction, findLeadsAction, importCsvAction } from "../../actions";
-import { ActionForm, SubmitButton } from "@/components/admin/ui";
+import { addLeadAction, checkWebsitesAction, findAndBuildAction, findLeadsAction, importCsvAction } from "../../actions";
+import { ActionButton, ActionForm, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
-import { SiteLinks } from "@/components/admin/site-links";
+import { CurrentSiteCell, NewSiteCell } from "@/components/admin/site-cells";
 import { STATUS_META, StatusBadge } from "@/components/admin/status";
 
 // Find & build reads several websites and calls the AI; allow it time on Vercel.
@@ -48,7 +48,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
         <section className="card p-5 lg:col-span-2">
           <h2 className="font-semibold">Find &amp; build (automatic)</h2>
           <p className="mt-1 text-sm text-muted">
-            Finds businesses that already have a website, reads each site, and prepares a redesign and a personal email for every one.
+            Opens the website of every business it finds, skips the ones that are already good, and builds a redesign + personal email only for weak sites.
             Takes 30–60 seconds. Read each lead before sending.
           </p>
           {placesEnabled() ? (
@@ -125,6 +125,18 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
         </ActionForm>
       </details>
 
+      <section className="card flex flex-wrap items-center justify-between gap-3 p-5">
+        <div>
+          <h2 className="font-semibold">Check websites</h2>
+          <p className="mt-0.5 text-sm text-muted">
+            Opens each lead&apos;s current website and rates how weak it is (12 at a time). Red &quot;Weak&quot; = worth a redesign.
+          </p>
+        </div>
+        <ActionButton action={checkWebsitesAction} pendingText="Opening websites…" className="btn-ghost">
+          Check unchecked websites
+        </ActionButton>
+      </section>
+
       {/* Filters */}
       <nav className="flex gap-2 overflow-x-auto pb-1">
         <Link
@@ -148,13 +160,13 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
       <section className="card overflow-hidden">
         {leads.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="border-b border-line bg-paper text-left text-xs text-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Business</th>
-                  <th className="px-4 py-3 font-medium">Location</th>
-                  <th className="px-4 py-3 font-medium">Signals</th>
-                  <th className="px-4 py-3 font-medium">Score</th>
+                  <th className="px-4 py-3 font-medium">Their website (before)</th>
+                  <th className="px-4 py-3 font-medium">Our new site (after)</th>
+                  <th className="px-4 py-3 font-medium">Contact</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                 </tr>
               </thead>
@@ -165,31 +177,32 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
                       <Link href={`/admin/leads/${lead.id}`} className="font-medium hover:text-brand">
                         {lead.businessName}
                       </Link>
-                      <p className="text-xs text-muted">{TRADE_META[lead.trade].label}</p>
-                      {lead.sample ? <SiteLinks website={lead.website} token={lead.token} className="mt-1" /> : null}
+                      <p className="text-xs text-muted">
+                        {TRADE_META[lead.trade].label} · {[lead.city, lead.state].filter(Boolean).join(", ") || "—"}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-muted">
-                      {[lead.city, lead.state].filter(Boolean).join(", ") || "—"}
+                    <td className="px-4 py-3">
+                      <CurrentSiteCell
+                        website={lead.website}
+                        score={lead.siteScore}
+                        checked={Boolean(lead.siteCheckedAt)}
+                        issues={lead.siteIssues}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <NewSiteCell token={lead.token} built={Boolean(lead.sample)} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 text-muted">
                         {lead.rating ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Star className="size-3.5 fill-sun text-sun" /> {lead.rating} ({lead.reviewCount ?? 0})
+                          <span className="inline-flex items-center gap-1 text-xs">
+                            <Star className="size-3.5 fill-sun text-sun" /> {lead.rating}
                           </span>
                         ) : null}
-                        <span title={lead.website ?? "No website"} className={lead.website ? "" : "text-brand"}>
-                          <Globe className="size-4" />
-                        </span>
                         <span title={lead.email ?? "No email yet"} className={lead.email ? "text-brand" : "opacity-40"}>
                           <Mail className="size-4" />
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`font-display font-semibold ${lead.score >= 60 ? "text-brand" : "text-muted"}`}>
-                        {lead.score}
-                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={lead.status} />

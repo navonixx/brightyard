@@ -1,9 +1,10 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { saveSettingsAction } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/admin/ui";
+import { ComboField } from "@/components/admin/combo-field";
 import { PageSkeleton } from "@/components/admin/skeleton";
 
 export default function SettingsPage() {
@@ -26,15 +27,28 @@ const INTEGRATIONS = [
 
 const SENDER_NAMES = ["Ethan from Alderwell Creative", "Ethan | Alderwell Creative", "Ethan Alderwell"];
 const SENDER_EMAILS = ["alderwellcreative@gmail.com"];
-const GOALS = [100, 200, 300, 500, 1000];
-
-/** Keeps a saved value selectable even if it isn't one of the presets. */
-function withCurrent<T>(options: T[], current: T | "" | undefined): T[] {
-  return current && !options.includes(current as T) ? [current as T, ...options] : options;
-}
+const GOALS = ["100", "200", "300", "500", "1000"];
 
 function isoDay(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+/** Puts a saved custom value at the top of the suggestions so it stays selected. */
+function suggestions(values: string[], current: string, label?: (v: string) => string) {
+  const list = values.map((v) => ({ value: v, label: label?.(v) }));
+  return current && !values.includes(current) ? [{ value: current, label: label?.(current) ?? current }, ...list] : list;
+}
+
+function Group({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-5 border-t border-line pt-6 first:border-t-0 first:pt-0 md:grid-cols-[200px_1fr] md:gap-8">
+      <div>
+        <h3 className="font-semibold">{title}</h3>
+        <p className="mt-1 text-sm text-muted">{description}</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </div>
+  );
 }
 
 async function Settings() {
@@ -45,80 +59,86 @@ async function Settings() {
   const tomorrow = new Date(today.getTime() + 86_400_000);
   const nextMonday = new Date(today.getTime() + (((8 - today.getUTCDay()) % 7 || 7) * 86_400_000));
   const startOptions = [
-    { value: isoDay(today), label: `Today (${isoDay(today)})` },
-    { value: isoDay(tomorrow), label: `Tomorrow (${isoDay(tomorrow)})` },
-    { value: isoDay(nextMonday), label: `Next Monday (${isoDay(nextMonday)})` },
+    { value: isoDay(today), label: `Today · ${isoDay(today)}` },
+    { value: isoDay(tomorrow), label: `Tomorrow · ${isoDay(tomorrow)}` },
+    { value: isoDay(nextMonday), label: `Next Monday · ${isoDay(nextMonday)}` },
   ];
   if (settings.startDate && !startOptions.some((o) => o.value === settings.startDate)) {
-    startOptions.unshift({ value: settings.startDate, label: `Current (${settings.startDate})` });
+    startOptions.unshift({ value: settings.startDate, label: `Saved · ${settings.startDate}` });
   }
   const paypalUser = settings.paypalLink.replace(/^https?:\/\/(www\.)?paypal\.me\//i, "").replace(/\/.*$/, "");
+  const firstName = (settings.senderName || SENDER_NAMES[0]).split(/\s+/)[0];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
+        <p className="mt-1 text-sm text-muted">Pick from the suggestions, or choose “Type my own…” in any list.</p>
+      </div>
 
-      <section className="card p-6">
-        <h2 className="font-semibold">Business details</h2>
-        <p className="mt-1 text-sm text-muted">Used in every email footer and on the payment step.</p>
-        <ActionForm action={saveSettingsAction} className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="senderName">Sender name</label>
-            <select id="senderName" name="senderName" defaultValue={settings.senderName || SENDER_NAMES[0]} className="input">
-              {withCurrent(SENDER_NAMES, settings.senderName).map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted">Emails say &quot;I&apos;m {(settings.senderName || SENDER_NAMES[0]).split(/\s+/)[0]}&quot; and sign with this name.</p>
-          </div>
-          <div>
-            <label className="label" htmlFor="senderEmail">Sending Gmail</label>
-            <select id="senderEmail" name="senderEmail" defaultValue={settings.senderEmail || SENDER_EMAILS[0]} className="input">
-              {withCurrent(SENDER_EMAILS, settings.senderEmail).map((email) => (
-                <option key={email} value={email}>{email}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted">&quot;Open in Gmail&quot; always opens this account.</p>
-          </div>
-          <div>
-            <label className="label" htmlFor="startDate">Sprint start date</label>
-            <select id="startDate" name="startDate" defaultValue={settings.startDate || startOptions[0].value} className="input">
-              {startOptions.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="goalUsd">Goal</label>
-            <select id="goalUsd" name="goalUsd" defaultValue={String(settings.goalUsd)} className="input">
-              {withCurrent(GOALS, settings.goalUsd).map((goal) => (
-                <option key={goal} value={goal}>${goal} in 30 days</option>
-              ))}
-            </select>
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label" htmlFor="businessAddress">Postal address — the only field you type</label>
-            <input
-              id="businessAddress"
-              name="businessAddress"
-              defaultValue={settings.businessAddress}
-              placeholder="e.g. 123 Main St, Suite 4, City, ST 12345"
-              className="input"
+      <section className="card p-6 sm:p-8">
+        <ActionForm action={saveSettingsAction} className="space-y-6">
+          <Group title="Who emails are from" description={`Emails open with “I'm ${firstName}” and are signed with this name.`}>
+            <ComboField
+              name="senderName"
+              label="Sender name"
+              options={suggestions(SENDER_NAMES, settings.senderName)}
+              defaultValue={settings.senderName || SENDER_NAMES[0]}
+              placeholder="e.g. Ethan from Alderwell Creative"
             />
-            <p className="mt-1 text-xs text-muted">
-              US law (CAN-SPAM) requires a real address where you can receive mail in every commercial email. A PO box or virtual mailbox
-              is fine. It must be real, so it can&apos;t be picked from a list.
-            </p>
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label" htmlFor="paypalUser">PayPal.me username (optional for now)</label>
-            <div className="flex items-stretch overflow-hidden rounded-xl border border-line bg-card focus-within:border-brand">
-              <span className="grid place-items-center bg-paper px-3 text-sm text-muted">paypal.me/</span>
-              <input id="paypalUser" name="paypalUser" defaultValue={paypalUser} placeholder="yourname" className="w-full bg-transparent px-3 py-2.5 text-[15px] outline-none" />
+            <ComboField
+              name="senderEmail"
+              label="Sending Gmail"
+              inputType="email"
+              options={suggestions(SENDER_EMAILS, settings.senderEmail)}
+              defaultValue={settings.senderEmail || SENDER_EMAILS[0]}
+              placeholder="name@gmail.com"
+              hint="“Open in Gmail” always opens this account."
+            />
+          </Group>
+
+          <Group title="Your 30-day sprint" description="Drives the Day X of 30 counter and the goal meter on the dashboard.">
+            <ComboField
+              name="startDate"
+              label="Start date"
+              inputType="date"
+              options={startOptions}
+              defaultValue={settings.startDate || startOptions[0].value}
+            />
+            <ComboField
+              name="goalUsd"
+              label="Goal"
+              inputType="number"
+              options={suggestions(GOALS, String(settings.goalUsd), (v) => `$${v} in 30 days`)}
+              defaultValue={String(settings.goalUsd)}
+              placeholder="Amount in dollars"
+            />
+          </Group>
+
+          <Group title="Address & payment" description="The address is required by US law (CAN-SPAM) in every commercial email.">
+            <div className="sm:col-span-2">
+              <ComboField
+                name="businessAddress"
+                label="Postal address"
+                options={[{ value: "", label: "Not set yet — emails show {business address}" }]}
+                defaultValue={settings.businessAddress}
+                placeholder="e.g. 123 Main St, Suite 4, City, ST 12345"
+                hint="Must be a real address where you can receive mail. A PO box or virtual mailbox is fine."
+              />
             </div>
-            <p className="mt-1 text-xs text-muted">Shown to prospects after they click &quot;Make it live&quot;. Leave empty until you have a PayPal Business account.</p>
-          </div>
-          <div className="sm:col-span-2">
+            <div className="sm:col-span-2">
+              <ComboField
+                name="paypalUser"
+                label="PayPal.me username"
+                options={[{ value: "", label: "Not set yet (optional)" }]}
+                defaultValue={paypalUser}
+                placeholder="yourname — from paypal.me/yourname"
+                hint="Shown to prospects after they click “Make it live”. You can add it when your first client says yes."
+              />
+            </div>
+          </Group>
+
+          <div className="flex items-center justify-end border-t border-line pt-6">
             <SubmitButton>Save settings</SubmitButton>
           </div>
         </ActionForm>

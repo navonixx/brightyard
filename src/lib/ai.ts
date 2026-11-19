@@ -54,7 +54,7 @@ const EmailSchema = z.object({
 const EMAIL_SYSTEM_PROMPT = `You are drafting a first email for me. I am one person who builds websites for small local service businesses. I looked at this business, built a finished website for them before contacting them, and now I am writing to its owner to show it. The owner gets many spam pitches from web agencies, so the email only works if it is obviously written by a person who actually looked at their business.
 
 How to write it:
-- Open with one concrete thing about their business taken from the facts or research notes — ideally their own phrase quoted, or how long they have been around. Never open with a greeting formula or a compliment that could fit any business.
+- Open with one concrete thing about their business taken from the facts or research notes — ideally their own phrase quoted, or how long they have been around. Introduce a quote naturally ("Your homepage says …", or the quote followed by why it stood out); never write "You said". Never open with a greeting formula or a compliment that could fit any business.
 - Introduce me in one short sentence using the literal placeholder {me} for my name, for example: I'm {me}. I build websites for small service businesses. Write {me} exactly as shown; it is replaced with my real name later.
 - Then one honest, specific observation about why I built this (what their current site hides or lacks, or that they have none). Be kind about it; they may have built the site themselves.
 - Then say I built a new version and give the preview link alone on its own line, exactly once.
@@ -207,18 +207,19 @@ export async function buildFromResearch(input: {
   siteText: string;
   emails: string[];
   builder: string | null;
+  siteIssues?: string[] | null;
   photoLibrary: Record<string, { alt: string }>;
   link: string;
 }): Promise<BuildResult | null> {
   if (!aiEnabled()) return null;
-  const { lead, siteText, emails, builder, photoLibrary, link } = input;
+  const { lead, siteText, emails, builder, siteIssues, photoLibrary, link } = input;
 
   const system = `You help me, a solo web designer, prepare a redesign of a small local business's website and the first email I send its owner. You are given the text of their current website. Work only from that text and the facts provided: never invent awards, licenses, years, prices, guarantees, reviews or names.
 
 PART 1 — research
 - ownerFirstName: only if the site names the owner. contactEmail: choose from the candidate list only; ignore web-designer, platform or placeholder addresses.
 - hook: the most distinctive true thing about them (their slogan, a promise, how long they have operated, the owner's story).
-- weakness: something about the CONTENT of their current site that I can say honestly and kindly — for example a key service or promise is buried, text repeats, there is very little information, no clear way to get a quote. You cannot see the design, so do not comment on colors, layout, speed or mobile behavior.
+- weakness: one honest, kind observation about their current site. Prefer a finding from the automated site check if one is given (for example: not built for phones, footer copyright years out of date, phone number not tap-to-call, very little information) or a content problem you can see in the text (a key service or promise is buried, text repeats, no clear way to get a quote). Never comment on colors or visual style, which you cannot see.
 
 PART 2 — the redesigned site copy ("sample")
 Write as the business ("we", or "I" if it is clearly a one-person company) speaking to customers. Concrete, short sentences, American English. headline 4-8 words built on the hook. Exactly 4 services drawn from what they actually offer, each with a one-sentence description. Exactly 3 whyUs points that are stated on their site. about: 2-3 sentences in their voice using their real story. cta: 2-4 words matching how they take work (free estimate, free quote, book, schedule a consultation).
@@ -238,6 +239,7 @@ Location: ${[lead.city, lead.state].filter(Boolean).join(", ") || "unknown"}
 Phone: ${lead.phone ?? "unknown"}
 Current website: ${lead.website}
 Website platform: ${builder ?? "unknown"}
+Automated site check found: ${siteIssues?.length ? siteIssues.join("; ") : "nothing notable"}
 Candidate emails: ${emails.join(", ") || "none found"}
 ${lead.notes ? `My notes: ${lead.notes}\n` : ""}
 Photo library (key: what it shows):

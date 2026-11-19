@@ -13,6 +13,7 @@ import { imagekitEnabled } from "@/lib/imagekit";
 import { composeEmail, gmailComposeUrl } from "@/lib/email";
 import {
   autoBuildAction,
+  checkSiteAction,
   deleteLeadAction,
   generateEmailAction,
   generateSampleAction,
@@ -28,6 +29,7 @@ import {
 import { ActionButton, ActionForm, CopyButton, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { SiteLinks } from "@/components/admin/site-links";
+import { WeaknessBadge } from "@/components/admin/site-cells";
 import { STATUS_META, StatusBadge, timeAgo } from "@/components/admin/status";
 
 export const maxDuration = 60;
@@ -99,6 +101,31 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
       </div>
 
       <SiteLinks website={lead.website} token={lead.token} size="lg" />
+
+      {lead.website ? (
+        <section className="card flex flex-wrap items-start justify-between gap-4 p-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold">Their current website</h2>
+              <WeaknessBadge score={lead.siteScore} checked={Boolean(lead.siteCheckedAt)} />
+            </div>
+            {lead.siteIssues?.length ? (
+              <ul className="mt-2 grid gap-x-6 gap-y-1 text-sm text-muted sm:grid-cols-2">
+                {lead.siteIssues.map((issue) => (
+                  <li key={issue}>• {issue}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-sm text-muted">
+                {lead.siteCheckedAt ? "No problems found — this site is already decent." : "Not checked yet."}
+              </p>
+            )}
+          </div>
+          <ActionButton action={checkSiteAction.bind(null, lead.id)} pendingText="Opening site…" className="btn-ghost">
+            {lead.siteCheckedAt ? "Re-check" : "Check website"}
+          </ActionButton>
+        </section>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* ── Left: work ── */}

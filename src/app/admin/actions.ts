@@ -9,6 +9,7 @@ import {
   createLead,
   deleteLead,
   getLead,
+  listLeads,
   logEvent,
   saveSettings,
   setGuideStep,
@@ -20,6 +21,7 @@ import { aiLabel, generateEmail, generateSample } from "@/lib/ai";
 import { uploadImage } from "@/lib/imagekit";
 import { siteUrl } from "@/lib/brand";
 import { autoBuildLead } from "@/lib/autobuild";
+import { checkSite, WEAK_SITE_THRESHOLD } from "@/lib/sitecheck";
 
 export type ActionState = { ok?: boolean; message?: string } | null;
 
@@ -354,7 +356,10 @@ export async function autoBuildAction(id: string): Promise<ActionState> {
   return result;
 }
 
-/** Finds businesses that already have a website and prepares a redesign + email for each. */
+/**
+ * Finds businesses with their own website, opens every site, and builds a redesign + email
+ * only for the weakest ones. Strong sites are skipped and never added as leads.
+ */
 export async function findAndBuildAction(_: ActionState, form: FormData): Promise<ActionState> {
   await requireAdmin();
   const what = str(form, "trade");
@@ -365,12 +370,19 @@ export async function findAndBuildAction(_: ActionState, form: FormData): Promis
   try {
     const results = await searchPlaces(`${what.replace("_", " ")} in ${where}`);
     // Small local businesses with their own site: skip social-only pages and big-review chains.
-    const candidates = results.filter(
-      (p) => p.website && !/facebook\.com|instagram\.com|yelp\.com/i.test(p.website) && (p.reviewCount ?? 0) <= 400,
-    );
+    const candidates = results
+      .filter((p) => p.website && !/facebook\.com|instagram\.com|yelp\.com/i.test(p.website) && (p.reviewCount ?? 0) <= 400)
+      .slice(0, 14);
+
+    const checks = await Promise.all(candidates.map(async (place) => ({ place, check: await checkSite(place.website!) })));
+    const weak = checks
+      .filter((c) => c.check.reachable && c.check.score >= WEAK_SITE_THRESHOLD)
+      .sort((a, b) => b.check.score - a.check.score);
+    const strong = checks.filter((c) => c.check.reachable && c.check.score < WEAK_SITE_THRESHOLD).length;
+    const broken = checks.filter((c) => !c.check.reachable).length;
 
     const created: string[] = [];
-    for (const place of candidates) {
+    for (const { place, check } of weak) {
       if (created.length >= limit) break;
       const fields = {
         businessName: place.name,
@@ -386,7 +398,9 @@ export async function findAndBuildAction(_: ActionState, form: FormData): Promis
         notes: place.rating ? `Google: ${place.rating}★ (${place.reviewCount ?? 0} reviews)` : null,
       };
       const id = await createLead({ ...fields, source: "places", score: scoreLead(fields) });
-      if (id) created.push(id);
+      if (!id) continue; // already a lead
+      await updateLead(id, { siteScore: check.score, siteIssues: check.issues, siteCheckedAt: new Date() });
+      created.push(id);
     }
 
     const built = await Promise.allSettled(created.map((id) => autoBuildLead(id)));
@@ -394,11 +408,41 @@ export async function findAndBuildAction(_: ActionState, form: FormData): Promis
     refresh();
     return {
       ok: true,
-      message: `Found ${results.length}, added ${created.length} new, built ${ok} redesign(s). ${created.length - ok ? `${created.length - ok} need a manual build. ` : ""}Open each lead and read it before sending.`,
+      message:
+        `Opened ${checks.length} websites: ${weak.length} weak, ${strong} already good (skipped)${broken ? `, ${broken} didn't load` : ""}. ` +
+        `Built ${ok} redesign(s)${created.length - ok ? `, ${created.length - ok} need a manual build` : ""}.` +
+        (created.length ? " Open the Before & After page to review them." : " Try another city."),
     };
   } catch (error) {
     return { message: error instanceof Error ? error.message : "Search failed." };
   }
+}
+
+/** Opens and scores the current website of up to 12 leads that haven't been checked yet. */
+export async function checkWebsitesAction(): Promise<ActionState> {
+  await requireAdmin();
+  const pending = (await listLeads()).filter((l) => l.website && !l.siteCheckedAt).slice(0, 12);
+  if (!pending.length) return { ok: true, message: "Every lead with a website has already been checked." };
+  const results = await Promise.all(
+    pending.map(async (lead) => {
+      const check = await checkSite(lead.website!);
+      await updateLead(lead.id, { siteScore: check.reachable ? check.score : null, siteIssues: check.issues, siteCheckedAt: new Date() });
+      return check;
+    }),
+  );
+  refresh();
+  const weak = results.filter((c) => c.reachable && c.score >= WEAK_SITE_THRESHOLD).length;
+  return { ok: true, message: `Checked ${results.length} websites: ${weak} weak — worth a redesign.` };
+}
+
+export async function checkSiteAction(id: string): Promise<ActionState> {
+  await requireAdmin();
+  const lead = await getLead(id);
+  if (!lead?.website) return { message: "This lead has no website." };
+  const check = await checkSite(lead.website);
+  await updateLead(id, { siteScore: check.reachable ? check.score : null, siteIssues: check.issues, siteCheckedAt: new Date() });
+  refresh();
+  return { ok: true, message: check.reachable ? `Weakness score ${check.score}/100.` : check.issues[0] };
 }
 
 export async function markFollowUpAction(id: string, step: number): Promise<void> {
