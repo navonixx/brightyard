@@ -106,7 +106,7 @@ export function PreviewChrome({ token, businessName, claimed, prices, currentSit
               <div>
                 <p className="t-section">Put it live.</p>
                 <p className="mt-1 text-sm text-muted">
-                  Choose what it&apos;s worth to you. You pay only after we confirm the details by email.
+                  This first project is our gift to you — pay whatever you feel it&apos;s worth. The amounts below are only ideas; type any amount you like. You pay only after we confirm the details by email.
                 </p>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-muted">

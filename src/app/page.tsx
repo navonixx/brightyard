@@ -1,7 +1,10 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Camera, Check, Clapperboard, MonitorSmartphone } from "lucide-react";
+import {
+  ArrowUpRight, Camera, Check, Clapperboard, Gift, HeartHandshake, Mail, Megaphone, MonitorSmartphone,
+  Palette, PenLine, Search, Share2, Smartphone, Sparkles,
+} from "lucide-react";
 import { Logo } from "@/components/logo";
 import { InquiryForm } from "@/components/inquiry-form";
 import { BrowserRender, PhoneRender } from "@/components/site-render";
@@ -24,7 +27,7 @@ const SERVICES = [
     name: "Websites",
     line: "Built before you pay.",
     body: "A complete, working website for your business — phone-first, fast, with your services, reviews and a tap-to-call button. You see it finished, then decide.",
-    items: ["Finished preview in 48 hours", "Your domain, your ownership", "Pay what it's worth"],
+    items: ["Finished preview in 48 hours", "Your domain, your ownership", "Pay what you feel it's worth"],
     href: "#websites",
   },
   {
@@ -45,25 +48,40 @@ const SERVICES = [
   },
 ];
 
-const STEPS = [
-  { n: "01", title: "Tell us about your brand.", body: "Two minutes: what you sell, who you sell to, and what you need — a website, photos, video or all three." },
-  { n: "02", title: "We make it first.", body: "Websites are built completely before you pay a cent. For photo and video we agree a short brief and a fixed quote, then produce." },
-  { n: "03", title: "You approve. It goes live.", body: "Love the site? Choose your price and we launch it on your domain. Photos and video arrive ready for web, ads and social." },
+// Everything else we help with, shown as a compact grid under the three flagship services.
+const MORE_SERVICES = [
+  { icon: Megaphone, name: "Ad campaigns", body: "We plan, launch and tune your Facebook, Instagram and Google ads so every dollar of budget works harder." },
+  { icon: PenLine, name: "Ad content & copy", body: "Scroll-stopping ad creatives, captions, carousels and headlines — written and designed for your audience." },
+  { icon: Search, name: "Digital marketing & SEO", body: "Google Business profile, local SEO and a clear plan so people nearby find you before your competitors." },
+  { icon: Share2, name: "Social media", body: "A month of on-brand posts, stories and reels planned out, so your pages never look abandoned." },
+  { icon: Smartphone, name: "Mobile apps", body: "iPhone and Android apps for bookings, orders or loyalty — designed and built for your customers." },
+  { icon: Palette, name: "Branding & logo", body: "Logo, colours and a simple brand kit, so your website, ads and posts all look like one business." },
+  { icon: Mail, name: "Email marketing", body: "Welcome emails, offers and newsletters that bring past customers back without you lifting a finger." },
+  { icon: Sparkles, name: "Something else?", body: "Landing pages, menus, flyers, online stores — if it helps your business grow online, ask us." },
 ];
 
-const PRICES = [
-  { name: "Starter", price: "$99", note: "One-page website, live on your domain.", items: ["Your services, reviews and photos", "Tap-to-call and quote button", "Domain connected"] },
-  { name: "Plus", price: "$149", note: "Everything in Starter, polished with you.", items: ["Copy refined together", "Two rounds of changes", "Google Business profile linked"], featured: true },
-  { name: "Pro", price: "$199", note: "Everything in Plus, looked after.", items: ["3 months of edits included", "Hosting for the first year", "Priority turnaround"] },
+const STEPS = [
+  { n: "01", title: "Tell us what you need.", body: "Two minutes: what you sell, who you sell to, and what you need — a website, photos, video, ads, an app or a mix." },
+  { n: "02", title: "We do the first piece free.", body: "A finished website, a set of ad creatives, a marketing plan or your first app screens — real work, before any money changes hands." },
+  { n: "03", title: "You decide what it's worth.", body: "Love it? Pay whatever you feel is fair. Not for you? Walk away and owe nothing. No packages, no contracts." },
+];
+
+const PAY_POINTS = [
+  { icon: Gift, title: "Your first project is free", body: "We start by doing real work for you — not a sales call, not a pitch deck." },
+  { icon: HeartHandshake, title: "Pay what you feel", body: "If it helped your business, pay what you think it was worth. If not, you pay nothing." },
+  { icon: Check, title: "No packages, no lock-in", body: "No compulsory plans or monthly fees. Want more work later? We agree it together, one project at a time." },
 ];
 
 const FAQ = [
-  { q: "Is the website really free to see?", a: "Yes. We build the finished website first, so you know exactly what you're getting. You only pay if you want to keep it — and you choose the price." },
-  { q: "How does photography and video work?", a: "Tell us about the product and where the images will be used. We send a short creative direction and a fixed quote; once you approve, we produce the full set — usually within a week." },
+  { q: "Is the first project really free?", a: "Yes. We do the first piece of work before you pay anything — a finished website, ad creatives, a marketing plan or app screens. If you like it, you pay what you feel it's worth. If not, you owe nothing." },
+  { q: "Do I have to buy a package or plan?", a: "No. There are no fixed packages or contracts. Every project after the first is agreed with you, and you can stop anytime." },
+  { q: "Who pays for the ad budget?", a: "The money you spend on Facebook, Instagram or Google ads goes straight from your own card to those platforms — we never hold it. We handle the creatives, setup and optimisation." },
+  { q: "Can you build a mobile app for my business?", a: "Yes — booking, ordering, loyalty or catalogue apps for iPhone and Android. We start with free designs of your first screens so you can see it before deciding to go further." },
+  { q: "How does photography and video work?", a: "Tell us about the product and where the images will be used. We send a short creative direction and produce the set — usually within a week." },
   { q: "Are the campaign images real photoshoots?", a: "The campaigns on this page are concept work for fictional brands, produced with AI-assisted imaging and art-directed by us. For your brand we work from your real product photos so what customers see matches what they get." },
   { q: "Can I use my own photos on the website?", a: "Please do — send them over and we'll swap them in. Until then we use fitting sample imagery so the preview never looks empty." },
   { q: "Who owns everything?", a: "You do. Your domain, your website, your images and your videos — all yours to use anywhere." },
-  { q: "What happens after launch?", a: "Hosting plus small edits is an optional $15 a month for websites. Cancel anytime." },
+  { q: "What happens after launch?", a: "Your website keeps running on your domain. If you'd like us to look after edits, ads or posts going forward, we agree it together — it's always optional." },
 ];
 
 const [greenline, maison, , forge] = DEMOS;
@@ -96,12 +114,12 @@ export default function Home() {
           </div>
 
           <div className="relative mx-auto max-w-[1240px] px-4 text-center sm:px-6">
-            <p className="fade-in eyebrow">Alderwell Creative · Websites · Photography · Video</p>
+            <p className="fade-in eyebrow">Alderwell Creative · Websites · Content · Ads · Apps</p>
             <h1 className="fade-in mx-auto mt-6 max-w-[15ch] font-display text-[46px] font-semibold leading-[0.98] tracking-[-0.04em] text-balance sm:text-[72px] lg:text-[88px]" style={{ "--d": "120ms" } as CSSProperties}>
               Make your brand <span className="text-aurora">impossible to scroll past.</span>
             </h1>
             <p className="fade-in mx-auto mt-7 max-w-[46ch] text-[18px] leading-relaxed text-white/65 sm:text-[21px]" style={{ "--d": "260ms" } as CSSProperties}>
-              Websites we build before you pay, plus campaign-grade product photos and video ads — one studio, one consistent look.
+              Websites, product photos, video, ads, marketing and mobile apps — one studio, one consistent look. Your first project is free; pay what you feel it&apos;s worth.
             </p>
             <div className="fade-in mt-9 flex flex-wrap items-center justify-center gap-3" style={{ "--d": "380ms" } as CSSProperties}>
               <a href="#start" className="btn-glow px-7 py-3.5 text-[16px]">Start a project</a>
@@ -146,7 +164,7 @@ export default function Home() {
         </section>
 
         {/* ── Services ── */}
-        <section className="py-20 sm:py-28">
+        <section id="services" className="scroll-mt-16 py-20 sm:py-28">
           <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
             <div className="sd-reveal max-w-[760px]">
               <p className="eyebrow">What we make</p>
@@ -171,6 +189,27 @@ export default function Home() {
                     </ul>
                     <span className="mt-7 inline-flex items-center gap-1 text-[14px] font-medium text-white/80 group-hover:text-white">
                       See examples <ArrowUpRight className="size-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    </span>
+                  </a>
+                </Tilt>
+              ))}
+            </div>
+
+            <div className="sd-reveal mt-20 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <h3 className="text-[28px] font-semibold tracking-[-0.02em] sm:text-[36px]">And everything that helps you grow.</h3>
+              <p className="max-w-[44ch] text-[16px] leading-relaxed text-white/60">Marketing, ads, content and apps — handled by the same team, so it all fits together.</p>
+            </div>
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {MORE_SERVICES.map((s, i) => (
+                <Tilt key={s.name} max={8} className="sd-reveal rounded-[22px]" style={{ animationRangeStart: `entry ${(i % 4) * 6}%` } as CSSProperties}>
+                  <a href="#start" className="group flex h-full flex-col rounded-[22px] border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/25 hover:bg-white/[0.05]">
+                    <span className="grid size-10 place-items-center rounded-xl bg-white/[0.07] text-[#c4b5fd] ring-1 ring-white/10 transition group-hover:bg-gradient-to-br group-hover:from-[#e040fb] group-hover:to-[#22d3ee] group-hover:text-white" style={{ transform: "translateZ(30px)" }}>
+                      <s.icon className="size-5" />
+                    </span>
+                    <h4 className="mt-5 text-[18px] font-semibold tracking-[-0.01em]">{s.name}</h4>
+                    <p className="mt-2 flex-1 text-[14px] leading-relaxed text-white/55">{s.body}</p>
+                    <span className="mt-5 inline-flex items-center gap-1 text-[13px] font-medium text-white/70 group-hover:text-white">
+                      Ask about it <ArrowUpRight className="size-3.5" />
                     </span>
                   </a>
                 </Tilt>
@@ -319,48 +358,41 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Pricing ── */}
-        <section id="pricing" className="scroll-mt-16 border-t border-white/10 py-20 sm:py-28">
-          <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
-            <div className="sd-reveal mx-auto max-w-[760px] text-center">
-              <p className="eyebrow">Pricing</p>
-              <h2 className="h-section mt-4">Websites: pay what it&apos;s worth.</h2>
-              <p className="mx-auto mt-5 max-w-[48ch] text-[17px] leading-relaxed text-white/60">
-                See the finished site first, then choose your price. These are the amounts most owners pick.
+        {/* ── How you pay: first project free, then pay what you feel ── */}
+        <section id="pay" className="relative scroll-mt-16 overflow-hidden border-t border-white/10 py-20 sm:py-28">
+          <div aria-hidden="true" className="aurora left-1/2 top-10 h-[380px] w-[760px] -translate-x-1/2 bg-[#e040fb]/20" />
+          <div className="relative mx-auto max-w-[1240px] px-4 sm:px-6">
+            <div className="sd-reveal mx-auto max-w-[800px] text-center">
+              <p className="eyebrow">How you pay</p>
+              <h2 className="h-section mt-4">
+                Your first project is free. <span className="text-aurora">You decide what it&apos;s worth.</span>
+              </h2>
+              <p className="mx-auto mt-5 max-w-[52ch] text-[17px] leading-relaxed text-white/60">
+                No price list, no packages to choose from. We do the work first — if it helps your business, pay whatever you feel is fair.
               </p>
             </div>
             <div className="mt-14 grid gap-5 md:grid-cols-3">
-              {PRICES.map((p) => (
-                <Tilt key={p.name} max={6} className="sd-reveal rounded-[26px]">
-                  <div
-                    className={`flex h-full flex-col rounded-[26px] p-8 ${
-                      p.featured ? "bg-white text-void shadow-[0_30px_80px_-30px_rgba(167,139,250,0.8)]" : "border border-white/10 bg-white/[0.03]"
-                    }`}
-                  >
-                    <p className={`text-[13px] font-semibold ${p.featured ? "text-[#6d28d9]" : "text-[#a78bfa]"}`}>{p.featured ? "Most chosen" : "Suggested"}</p>
-                    <h3 className="mt-2 text-[22px] font-semibold">{p.name}</h3>
-                    <p className="mt-4 font-display text-[52px] font-semibold leading-none tracking-[-0.03em]">{p.price}</p>
-                    <p className={`mt-4 text-[15px] ${p.featured ? "text-void/70" : "text-white/60"}`}>{p.note}</p>
-                    <ul className={`mt-6 flex-1 space-y-2 text-[15px] ${p.featured ? "text-void/80" : "text-white/75"}`}>
-                      {p.items.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <Check className={`mt-0.5 size-4 shrink-0 ${p.featured ? "text-[#6d28d9]" : "text-[#a78bfa]"}`} /> {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <a href="#start" className={`mt-8 self-start ${p.featured ? "pill-primary" : "btn-outline-dark"}`}>
-                      Build my free site
-                    </a>
+              {PAY_POINTS.map((p, i) => (
+                <Tilt key={p.title} max={6} className="sd-reveal rounded-[26px]" style={{ animationRangeStart: `entry ${i * 8}%` } as CSSProperties}>
+                  <div className="flex h-full flex-col rounded-[26px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] p-8">
+                    <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-[#e040fb] via-[#7c3aed] to-[#22d3ee]" style={{ transform: "translateZ(40px)" }}>
+                      <p.icon className="size-6" />
+                    </span>
+                    <h3 className="mt-6 text-[22px] font-semibold tracking-[-0.01em]">{p.title}</h3>
+                    <p className="mt-2 text-[15px] leading-relaxed text-white/60">{p.body}</p>
                   </div>
                 </Tilt>
               ))}
             </div>
             <div className="sd-reveal mt-6 flex flex-col items-start justify-between gap-4 rounded-[26px] border border-white/10 bg-gradient-to-r from-[#e040fb]/10 via-[#7c3aed]/10 to-[#22d3ee]/10 p-7 sm:flex-row sm:items-center">
               <div>
-                <h3 className="text-[20px] font-semibold">Photography &amp; video</h3>
-                <p className="mt-1 text-[15px] text-white/65">Quoted per project after a short brief — a fixed price before we start, no surprises.</p>
+                <h3 className="text-[20px] font-semibold">What counts as the first project?</h3>
+                <p className="mt-1 max-w-[70ch] text-[15px] text-white/65">
+                  A finished website, a set of ad creatives, a product photo set, a short video ad, a local marketing plan or the first screens of your app — you pick.
+                  Ad spend you run on Facebook or Google is paid by you directly to those platforms.
+                </p>
               </div>
-              <a href="#start" className="btn-glow shrink-0">Ask for a quote</a>
+              <a href="#start" className="btn-glow shrink-0">Claim my free project</a>
             </div>
           </div>
         </section>
@@ -393,7 +425,7 @@ export default function Home() {
             <div className="sd-reveal mx-auto max-w-[760px] text-center">
               <h2 className="h-section">Let&apos;s make yours.</h2>
               <p className="mx-auto mt-5 max-w-[44ch] text-[18px] leading-relaxed text-white/65">
-                Tell us about your business and what you need. Websites land in your inbox within 48 hours; photo and video quotes within a day.
+                Tell us about your business and what you need. We reply within a day, and your free first project starts right away.
               </p>
             </div>
             <div className="mx-auto mt-12 max-w-[760px]">
@@ -409,7 +441,7 @@ export default function Home() {
             <div className="sm:col-span-2">
               <Logo />
               <p className="mt-4 max-w-[38ch] text-[14px] leading-relaxed text-white/50">
-                A small creative studio for growing businesses: websites built before you pay, product photography and video ads.
+                A creative and marketing studio for growing businesses: websites, photography, video, ads, content and mobile apps. First project free.
               </p>
               <a href="mailto:alderwellcreative@gmail.com" className="mt-3 inline-block text-[14px] text-[#a78bfa] hover:underline">
                 alderwellcreative@gmail.com
@@ -427,7 +459,7 @@ export default function Home() {
               <p className="text-[13px] font-semibold text-white">Studio</p>
               <ul className="mt-2 text-[14px] leading-[2.2] text-white/60">
                 <li><a href="#process" className="hover:text-white">Process</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
+                <li><a href="#pay" className="hover:text-white">How you pay</a></li>
                 <li><a href="#start" className="hover:text-white">Contact</a></li>
               </ul>
             </div>

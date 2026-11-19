@@ -6,11 +6,11 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 const LINKS = [
+  { href: "#services", label: "Services" },
   { href: "#websites", label: "Websites" },
   { href: "#photography", label: "Photography" },
   { href: "#video", label: "Video" },
-  { href: "#process", label: "Process" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "#pay", label: "How you pay" },
   { href: "#faq", label: "FAQ" },
 ];
 

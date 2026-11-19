@@ -10,9 +10,9 @@ const condensed = Oswald({ variable: "--font-condensed", subsets: ["latin"], wei
 export const metadata: Metadata = {
   // Absolute URLs for the social image etc. follow the public site address, not the Vercel project name.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: "Alderwell Creative — websites, product photography & video ads",
+  title: "Alderwell Creative — websites, content, ads & apps",
   description:
-    "Alderwell Creative is a creative studio for growing businesses: websites built before you pay, campaign-grade product photography and video ads.",
+    "Alderwell Creative is a creative and marketing studio for growing businesses: websites, product photography, video ads, ad campaigns, digital marketing and mobile apps. Your first project is free — pay what you feel it's worth.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

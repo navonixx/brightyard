@@ -48,7 +48,11 @@ export function InquiryForm() {
       <fieldset className="sm:col-span-2">
         <legend className={labelCls}>What do you need? (pick any)</legend>
         <div className="flex flex-wrap gap-2">
-          {["A new website", "A website redesign", "Product photography", "Video / motion ads"].map((service) => (
+          {[
+            "A new website", "A website redesign", "Product photography", "Video / motion ads", "Run my ads",
+            "Ad content & copy", "Digital marketing / SEO", "Social media posts", "Mobile app", "Branding & logo",
+            "Email marketing", "Something else",
+          ].map((service) => (
             <label key={service} className="cursor-pointer">
               <input type="checkbox" name="need" value={service} defaultChecked={service === "A new website"} className="peer sr-only" />
               <span className="inline-flex rounded-full border border-hairline px-4 py-2 text-[15px] transition peer-checked:border-action-focus peer-checked:bg-action peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-action-focus">

@@ -23,7 +23,7 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     .getAll("need")
     .map((v) => String(v).trim().slice(0, 60))
     .filter(Boolean)
-    .slice(0, 6);
+    .slice(0, 12);
   const about = get("about");
   const fields = {
     businessName,
@@ -43,6 +43,6 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     ok: true,
     message: websiteOnly
       ? "Got it! Your free website preview will land in your inbox within 48 hours."
-      : "Got it! We'll reply within a day with ideas and a fixed quote — and your website preview within 48 hours if you asked for one.",
+      : "Got it! We'll reply within a day with ideas for your free first project — and your website preview within 48 hours if you asked for one.",
   };
 }

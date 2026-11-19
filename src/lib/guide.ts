@@ -122,7 +122,7 @@ export const GUIDE: GuidePhase[] = [
       {
         id: "close-pay",
         title: "Reply within two hours",
-        body: "If they want changes, make them in the workspace and send the same link again — it never changes. Ask for their real photos and swap out the placeholders; the site instantly feels like theirs. If they ask about price: “You choose. Most owners pay between $99 and $199 once it's live on their domain.”",
+        body: "If they want changes, make them in the workspace and send the same link again — it never changes. Ask for their real photos and swap out the placeholders; the site instantly feels like theirs. If they ask about price: “There's no fixed price — the first project is free, and if it helps your business you pay whatever you feel it's worth.”",
       },
       {
         id: "close-deliver",
@@ -131,8 +131,8 @@ export const GUIDE: GuidePhase[] = [
       },
       {
         id: "close-upsell",
-        title: "Offer hosting and edits for $15 a month",
-        body: "Once the site is live, offer hosting plus small changes for $15 a month — this is your recurring income. When the first payment arrives, upgrade Vercel to the Pro plan; the free plan is for non-commercial use only.",
+        title: "Offer the next service (always optional)",
+        body: "Once the site is live, offer what they need next — ads, ad content, social posts, SEO, a mobile app, or ongoing edits — with no compulsory package; agree each project together. This is your repeat income. When the first payment arrives, upgrade Vercel to the Pro plan; the free plan is for non-commercial use only.",
       },
       {
         id: "close-proof",
