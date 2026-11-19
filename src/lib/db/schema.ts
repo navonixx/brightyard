@@ -102,6 +102,58 @@ export const settings = pgTable("settings", {
   value: text("value").notNull(),
 });
 
+// ─── Lead database (bulk harvest) ─────────────────────────────────────
+
+export type EnrichStatus = "pending" | "working" | "done" | "no_site" | "social" | "failed";
+
+/** Every business the harvester found. Promoted to `leads` only when picked. */
+export const prospects = pgTable("prospects", {
+  id: serial("id").primaryKey(),
+  placeId: text("place_id").notNull().unique(),
+  niche: text("niche").notNull(),
+  /** The city that was searched, e.g. "Tulsa, OK". */
+  market: text("market").notNull(),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  website: text("website"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  rating: real("rating"),
+  reviewCount: integer("review_count"),
+  email: text("email"),
+  emails: jsonb("emails").$type<string[] | null>(),
+  siteScore: integer("site_score"),
+  siteIssues: jsonb("site_issues").$type<string[] | null>(),
+  enrichStatus: text("enrich_status").$type<EnrichStatus>().notNull().default("pending"),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  enrichedAt: timestamp("enriched_at", { withTimezone: true }),
+  leadId: text("lead_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type Prospect = typeof prospects.$inferSelect;
+
+export type HarvestJobStatus = "queued" | "done" | "failed";
+
+/** One niche × one city search, worked through page by page. */
+export const harvestJobs = pgTable("harvest_jobs", {
+  id: serial("id").primaryKey(),
+  niche: text("niche").notNull(),
+  market: text("market").notNull(),
+  position: integer("position").notNull().default(0),
+  target: integer("target").notNull().default(100),
+  status: text("status").$type<HarvestJobStatus>().notNull().default("queued"),
+  queryIndex: integer("query_index").notNull().default(0),
+  pageToken: text("page_token"),
+  found: integer("found").notNull().default(0),
+  requests: integer("requests").notNull().default(0),
+  error: text("error"),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type HarvestJob = typeof harvestJobs.$inferSelect;
+
 /** Idempotent bootstrap — keeps the database in sync without a migration step. */
 export const BOOTSTRAP_SQL = `
 CREATE TABLE IF NOT EXISTS leads (
@@ -158,4 +210,46 @@ CREATE TABLE IF NOT EXISTS settings (
   key text PRIMARY KEY,
   value text NOT NULL
 );
+CREATE TABLE IF NOT EXISTS prospects (
+  id serial PRIMARY KEY,
+  place_id text NOT NULL UNIQUE,
+  niche text NOT NULL,
+  market text NOT NULL,
+  name text NOT NULL,
+  phone text,
+  website text,
+  address text,
+  city text,
+  state text,
+  rating real,
+  review_count integer,
+  email text,
+  emails jsonb,
+  site_score integer,
+  site_issues jsonb,
+  enrich_status text NOT NULL DEFAULT 'pending',
+  claimed_at timestamptz,
+  enriched_at timestamptz,
+  lead_id text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS prospects_niche_market_idx ON prospects (niche, market);
+CREATE INDEX IF NOT EXISTS prospects_enrich_idx ON prospects (enrich_status);
+CREATE TABLE IF NOT EXISTS harvest_jobs (
+  id serial PRIMARY KEY,
+  niche text NOT NULL,
+  market text NOT NULL,
+  position integer NOT NULL DEFAULT 0,
+  target integer NOT NULL DEFAULT 100,
+  status text NOT NULL DEFAULT 'queued',
+  query_index integer NOT NULL DEFAULT 0,
+  page_token text,
+  found integer NOT NULL DEFAULT 0,
+  requests integer NOT NULL DEFAULT 0,
+  error text,
+  locked_until timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS harvest_jobs_niche_market_idx ON harvest_jobs (niche, market);
 `;

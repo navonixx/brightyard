@@ -221,6 +221,12 @@ export async function saveSettings(values: Partial<Record<keyof AppSettings, str
   }
 }
 
+/** A single internal setting outside the Settings form (counters, limits). */
+export async function saveSetting(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  await db.insert(settings).values({ key, value }).onConflictDoUpdate({ target: settings.key, set: { value } });
+}
+
 // ─── Follow-ups ────────────────────────────────────────────────────────
 
 export type FollowUp = { lead: Lead; step: 1 | 2; daysSince: number };

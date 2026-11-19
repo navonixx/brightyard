@@ -37,31 +37,45 @@ export function screenshotUrl(site: string): string {
  * mobile support, HTTPS, copyright year, platform, amount of content, contact options, speed.
  */
 export async function checkSite(rawUrl: string, now = Date.now()): Promise<SiteCheck> {
+  const page = await fetchHomepage(rawUrl);
+  if (!page.ok) return { score: 0, issues: [page.error], reachable: false };
+  const result = analyzeSite(page, now);
+  // Ask the screenshot service to start capturing now, so Before & After shows it sooner.
+  void fetch(screenshotUrl(page.finalUrl), { cache: "no-store", signal: AbortSignal.timeout(5000) }).catch(() => {});
+  return result;
+}
+
+export type FetchedPage = { ok: true; url: URL; finalUrl: string; html: string; ms: number } | { ok: false; error: string };
+
+/** Loads a public homepage (never private addresses) and times it. */
+export async function fetchHomepage(rawUrl: string, timeoutMs = 9000): Promise<FetchedPage> {
   let url: URL;
   try {
     url = assertPublicUrl(rawUrl);
   } catch {
-    return { score: 0, issues: ["Not a valid public website address"], reachable: false };
+    return { ok: false, error: "Not a valid public website address" };
   }
-
   const started = performance.now();
-  let html = "";
-  let finalUrl = url.toString();
   try {
     const response = await fetch(url, {
       headers: { "User-Agent": UA, Accept: "text/html" },
-      signal: AbortSignal.timeout(9000),
+      signal: AbortSignal.timeout(timeoutMs),
       redirect: "follow",
       cache: "no-store",
     });
-    finalUrl = response.url || finalUrl;
-    if (!response.ok) return { score: 0, issues: [`Website returned an error (${response.status})`], reachable: false };
-    html = (await response.text()).slice(0, 1_500_000);
+    if (!response.ok) return { ok: false, error: `Website returned an error (${response.status})` };
+    const html = (await response.text()).slice(0, 1_500_000);
+    return { ok: true, url, finalUrl: response.url || url.toString(), html, ms: performance.now() - started };
   } catch {
-    return { score: 0, issues: ["Website didn't load"], reachable: false };
+    return { ok: false, error: "Website didn't load" };
   }
-  const ms = performance.now() - started;
+}
 
+/** Scores an already-fetched homepage. */
+export function analyzeSite(
+  { url, finalUrl, html, ms }: { url: URL; finalUrl: string; html: string; ms: number },
+  now = Date.now(),
+): SiteCheck {
   const found: { points: number; text: string }[] = [];
   const add = (points: number, text: string) => found.push({ points, text });
 
@@ -106,14 +120,12 @@ export async function checkSite(rawUrl: string, now = Date.now()): Promise<SiteC
       /* ignore */
     }
   }
-  if (pages.size <= 3) add(10, `Only ${pages.size || 1} page${pages.size === 1 ? "" : "s"}`);
+  const pageCount = Math.max(1, pages.size);
+  if (pageCount <= 3) add(10, pageCount === 1 ? "Only a single page" : `Only ${pageCount} pages`);
 
   if (ms > 4000) add(10, `Slow to load (${(ms / 1000).toFixed(1)}s)`);
   if (!/<meta[^>]+name=["']description["']/i.test(html)) add(5, "No search description (weak on Google)");
   if (/<font[\s>]|<marquee|<center>|\.swf["']|bgcolor=/i.test(html)) add(15, "Outdated code from an older era of the web");
-
-  // Ask the screenshot service to start capturing now, so Before & After shows it sooner.
-  void fetch(screenshotUrl(finalUrl), { cache: "no-store", signal: AbortSignal.timeout(5000) }).catch(() => {});
 
   found.sort((a, b) => b.points - a.points);
   return {

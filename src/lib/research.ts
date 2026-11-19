@@ -27,11 +27,11 @@ export function assertPublicUrl(raw: string): URL {
   return url;
 }
 
-async function fetchHtml(url: string): Promise<string | null> {
+export async function fetchHtml(url: string, timeoutMs = 9000): Promise<string | null> {
   try {
     const response = await fetch(url, {
       headers: { "User-Agent": UA, Accept: "text/html" },
-      signal: AbortSignal.timeout(9000),
+      signal: AbortSignal.timeout(timeoutMs),
       redirect: "follow",
       cache: "no-store",
     });
@@ -55,7 +55,7 @@ function toText(html: string): string {
     .trim();
 }
 
-function findEmails(html: string): string[] {
+export function findEmails(html: string): string[] {
   const found = new Set<string>();
   // Cloudflare-obfuscated addresses
   for (const [, hex] of html.matchAll(/data-cfemail="([0-9a-f]+)"/g)) {
@@ -99,7 +99,7 @@ export async function researchSite(rawUrl: string): Promise<SiteResearch | null>
     if (links.size >= 3) break;
   }
 
-  const extra = (await Promise.all([...links].map(fetchHtml))).filter((page): page is string => Boolean(page));
+  const extra = (await Promise.all([...links].map((link) => fetchHtml(link)))).filter((page): page is string => Boolean(page));
   const all = [html, ...extra];
   const text = all
     .map(toText)

@@ -20,6 +20,7 @@ type PlacesResponse = {
     rating?: number;
     userRatingCount?: number;
     addressComponents?: { shortText: string; types: string[] }[];
+    formattedAddress?: string;
     businessStatus?: string;
   }[];
   error?: { message: string };
@@ -66,6 +67,58 @@ export async function searchPlaces(query: string): Promise<PlaceResult[]> {
         state: part("administrative_area_level_1"),
       };
     });
+}
+
+export class PlacesNewDisabledError extends Error {
+  constructor() {
+    super(
+      'Your Google key can\'t use "Places API (New)". Turn it on in Google Cloud → APIs & Services → Library → "Places API (New)" → Enable (and allow it on the key if the key is restricted).',
+    );
+  }
+}
+
+export type PlacePage = { places: (PlaceResult & { address: string | null })[]; nextPageToken: string | null };
+
+/**
+ * One page (up to 20) of a Text Search with website and phone included — a single billed request,
+ * no per-place details calls. Google returns at most 3 pages (60 places) per query.
+ */
+export async function searchPlacesPage(query: string, pageToken?: string | null): Promise<PlacePage> {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) throw new Error("GOOGLE_PLACES_API_KEY is not set.");
+  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": key,
+      "X-Goog-FieldMask":
+        "places.id,places.displayName,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.addressComponents,places.formattedAddress,places.businessStatus,nextPageToken",
+    },
+    body: JSON.stringify({ textQuery: query, regionCode: "US", pageSize: 20, ...(pageToken ? { pageToken } : {}) }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = (await response.json().catch(() => ({}))) as PlacesResponse & { nextPageToken?: string };
+  if (response.status === 403) throw new PlacesNewDisabledError();
+  if (!response.ok) throw new Error(data.error?.message || `Places API error ${response.status}`);
+
+  const places = (data.places ?? [])
+    .filter((place) => place.businessStatus !== "CLOSED_PERMANENTLY")
+    .map((place) => {
+      const part = (type: string) => place.addressComponents?.find((c) => c.types.includes(type))?.shortText ?? null;
+      return {
+        placeId: place.id,
+        name: place.displayName?.text ?? "Unknown",
+        phone: place.nationalPhoneNumber ?? null,
+        website: place.websiteUri ?? null,
+        rating: place.rating ?? null,
+        reviewCount: place.userRatingCount ?? null,
+        city: part("locality"),
+        state: part("administrative_area_level_1"),
+        address: place.formattedAddress ?? null,
+      };
+    });
+  return { places, nextPageToken: data.nextPageToken ?? null };
 }
 
 type LegacySearch = {
