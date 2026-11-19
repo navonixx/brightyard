@@ -78,7 +78,13 @@ export async function saveSettingsAction(_: ActionState, form: FormData): Promis
     senderName: String(form.get("senderName") ?? ""),
     senderEmail: String(form.get("senderEmail") ?? "").trim().toLowerCase(),
     businessAddress: String(form.get("businessAddress") ?? ""),
-    paypalLink: String(form.get("paypalLink") ?? ""),
+    paypalLink: (() => {
+      const user = String(form.get("paypalUser") ?? "")
+        .trim()
+        .replace(/^https?:\/\/(www\.)?paypal\.me\//i, "")
+        .replace(/[^A-Za-z0-9_.-]/g, "");
+      return user ? `https://paypal.me/${user}` : "";
+    })(),
   });
   refresh();
   return { ok: true, message: "Saved." };

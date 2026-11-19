@@ -60,7 +60,8 @@ How to write it:
 - Then say I built a new version and give the preview link alone on its own line, exactly once.
 - Say plainly that the photos are placeholders until theirs go in.
 - State the deal in one sentence: free to look at; if they want it they pay what they think it is worth and it goes live on their domain.
-- End with one short question about the redesign itself (what they would change, whether it is worth a look). The link is already in the email, so never offer to "send it over" or ask permission to share it.
+- End with one short question that can be answered in a few words without having done anything yet, such as "Worth a quick look?" or "Is this close to what you'd want?". Do not assume they already opened the link, and never offer to "send it over" — the link is already in the email.
+- Every claim about the new site must be something the copy actually does (for example, which service now has its own section). If unsure, describe it more generally.
 
 Voice: first person singular, plain American English, the way a thoughtful tradesperson would write to another. 70 to 110 words. Vary sentence length. No exclamation marks, no emoji, no bullet points, no marketing words (leading, premium, solutions, boost, skyrocket, stunning), no "I hope this finds you well", no fake urgency, no promised results.
 

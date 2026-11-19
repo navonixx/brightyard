@@ -8,6 +8,7 @@ import { composeEmail, followUpBody, gmailComposeUrl } from "@/lib/email";
 import { markEmailedAction, markFollowUpAction } from "../../actions";
 import { ActionButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
+import { SiteLinks } from "@/components/admin/site-links";
 
 // A fresh Gmail account should stay well under this while it builds a sending history.
 const DAILY_LIMIT = 20;
@@ -36,27 +37,27 @@ async function Outreach() {
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Outreach</h1>
         <p className="mt-1 text-sm text-muted">
-          Gmail se bhejo: &quot;Open in Gmail&quot; dabao → email padho → Send → yahan &quot;Sent&quot;. Preview link ka khulna dashboard par dikhega.
+          Click &quot;Open in Gmail&quot; → read → Send → click &quot;Sent&quot; here. When a prospect opens their link, it shows on the dashboard.
         </p>
       </div>
 
       {setupMissing ? (
         <p className="rounded-xl bg-sun-soft p-4 text-sm">
-          Pehle <Link href="/admin/settings" className="font-semibold underline">Settings</Link> mein sender name, business address aur
-          sending Gmail bharo. Address US email law (CAN-SPAM) ke liye har email ke footer mein zaroori hai.
+          Finish <Link href="/admin/settings" className="font-semibold underline">Settings</Link> first: sender name, sending Gmail and
+          postal address. US law (CAN-SPAM) requires the address in every email footer.
         </p>
       ) : null}
 
       <section className="card p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-muted">Aaj bheje</p>
+            <p className="text-sm text-muted">Sent today</p>
             <p className="font-display text-4xl font-semibold">
               {sentToday} <span className="text-lg font-medium text-muted">/ {DAILY_LIMIT}</span>
             </p>
           </div>
           <p className="max-w-sm text-sm text-muted">
-            Naye Gmail se pehle hafte roz 10, phir 20 tak. Zyada bhejoge to Gmail account block kar sakta hai.
+            New Gmail account: 10 a day in the first week, then up to 20. Sending more can get the account restricted.
           </p>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-line/60">
@@ -69,7 +70,7 @@ async function Outreach() {
           <h2 className="font-semibold">
             Send queue <span className="text-muted">({sendable.length})</span>
           </h2>
-          {left === 0 && sendable.length ? <span className="text-sm text-danger">Aaj ki limit poori — kal bhejo</span> : null}
+          {left === 0 && sendable.length ? <span className="text-sm text-danger">Daily limit reached — send the rest tomorrow</span> : null}
         </div>
         {sendable.length ? (
           <ul className="divide-y divide-line">
@@ -90,6 +91,7 @@ async function Outreach() {
                     <p className="truncate text-sm text-muted">
                       {lead.email} · {lead.city ?? "—"} · <span className="italic">{lead.emailSubject}</span>
                     </p>
+                    <SiteLinks website={lead.website} token={lead.token} className="mt-1" />
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <a href={href} target="_blank" rel="noopener noreferrer" className="btn-primary">
@@ -105,7 +107,7 @@ async function Outreach() {
           </ul>
         ) : (
           <p className="p-6 text-sm text-muted">
-            Queue khaali hai. Leads mein jaakar preview copy aur email draft banao — phir wo yahan aa jayenge.
+            The queue is empty. Use &quot;Find &amp; build&quot; on the Leads page and new leads will appear here.
           </p>
         )}
       </section>
@@ -115,7 +117,7 @@ async function Outreach() {
           <h2 className="font-semibold">
             Follow-ups due <span className="text-muted">({followUps.length})</span>
           </h2>
-          <p className="mt-0.5 text-sm text-muted">Day 3 aur Day 7 par, sirf unko jinhone reply nahi kiya. Gmail mein apne pehle email ke thread mein reply karna sabse achha hai; ye button naya email kholta hai.</p>
+          <p className="mt-0.5 text-sm text-muted">On day 3 and day 7, only for leads that haven&apos;t replied. Best practice: reply to your original email in Gmail so it stays in one thread — this button opens a new email.</p>
         </div>
         {followUps.length ? (
           <ul className="divide-y divide-line">
@@ -154,7 +156,7 @@ async function Outreach() {
             })}
           </ul>
         ) : (
-          <p className="p-6 text-sm text-muted">Abhi koi follow-up due nahi hai.</p>
+          <p className="p-6 text-sm text-muted">No follow-ups due right now.</p>
         )}
       </section>
 
@@ -164,9 +166,9 @@ async function Outreach() {
       </div>
 
       <section className="card p-6">
-        <h2 className="font-semibold">Baad mein: domain + Instantly</h2>
+        <h2 className="font-semibold">Later: own domain + Instantly</h2>
         <p className="mt-1 text-sm text-muted">
-          Jab cold-email domain aur Instantly le loge, tab yahan se CSV export karke bulk sequence chala sakte ho.
+          Once you have a sending domain and Instantly, export a CSV here to run sequences in bulk.
         </p>
         <a href="/admin/export" className="btn-ghost mt-4">
           <Download className="size-4" /> Download CSV

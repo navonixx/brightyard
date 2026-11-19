@@ -9,6 +9,7 @@ import { placesEnabled } from "@/lib/places";
 import { addLeadAction, findAndBuildAction, findLeadsAction, importCsvAction } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
+import { SiteLinks } from "@/components/admin/site-links";
 import { STATUS_META, StatusBadge } from "@/components/admin/status";
 
 // Find & build reads several websites and calls the AI; allow it time on Vercel.
@@ -47,8 +48,8 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
         <section className="card p-5 lg:col-span-2">
           <h2 className="font-semibold">Find &amp; build (automatic)</h2>
           <p className="mt-1 text-sm text-muted">
-            Website wale businesses dhundhta hai, unki site padhta hai, aur har ek ke liye redesign + personal email taiyaar karta hai.
-            30–60 second lagte hain. Bhejne se pehle har lead khud padhna.
+            Finds businesses that already have a website, reads each site, and prepares a redesign and a personal email for every one.
+            Takes 30–60 seconds. Read each lead before sending.
           </p>
           {placesEnabled() ? (
             <>
@@ -65,7 +66,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
                 </div>
               </ActionForm>
               <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-muted">Sirf list chahiye (bina build ke)</summary>
+                <summary className="cursor-pointer text-sm text-muted">Just the list (no build)</summary>
                 <ActionForm action={findLeadsAction} className="mt-3">
                   <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                     <TradeSelect />
@@ -77,7 +78,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
             </>
           ) : (
             <p className="mt-4 rounded-lg bg-sun-soft p-3 text-sm">
-              GOOGLE_PLACES_API_KEY abhi set nahi hai. Tab tak neeche manually ya CSV se leads add karo.
+              GOOGLE_PLACES_API_KEY is not set yet. Add leads manually or by CSV below.
             </p>
           )}
         </section>
@@ -165,6 +166,7 @@ async function Leads({ searchParams }: { searchParams: PageProps<"/admin/leads">
                         {lead.businessName}
                       </Link>
                       <p className="text-xs text-muted">{TRADE_META[lead.trade].label}</p>
+                      {lead.sample ? <SiteLinks website={lead.website} token={lead.token} className="mt-1" /> : null}
                     </td>
                     <td className="px-4 py-3 text-muted">
                       {[lead.city, lead.state].filter(Boolean).join(", ") || "—"}

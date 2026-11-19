@@ -27,6 +27,7 @@ import {
 } from "../../../actions";
 import { ActionButton, ActionForm, CopyButton, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
+import { SiteLinks } from "@/components/admin/site-links";
 import { STATUS_META, StatusBadge, timeAgo } from "@/components/admin/status";
 
 export const maxDuration = 60;
@@ -97,6 +98,8 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
         </div>
       </div>
 
+      <SiteLinks website={lead.website} token={lead.token} size="lg" />
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {/* ── Left: work ── */}
         <div className="space-y-6">
@@ -105,13 +108,13 @@ async function Workspace({ params }: { params: PageProps<"/admin/leads/[id]">["p
               <div className="min-w-0">
                 <h2 className="font-semibold">Auto-build from their website</h2>
                 <p className="mt-0.5 text-sm text-muted">
-                  Unki site padh kar copy, theme, photos aur email ek saath banata hai (purana content badal jayega).
+                  Reads their website and writes the copy, theme, photos and email in one go (replaces what is here now).
                 </p>
               </div>
               <ActionButton
                 action={autoBuildAction.bind(null, lead.id)}
                 pendingText="Reading their site…"
-                confirm={lead.sample ? "Is lead ki copy, photos aur email draft dobara ban jayenge. Chalu karein?" : undefined}
+                confirm={lead.sample ? "This replaces the copy, photos and email draft for this lead. Continue?" : undefined}
               >
                 {lead.sample ? "Rebuild" : "Auto-build"}
               </ActionButton>
@@ -282,7 +285,7 @@ function ImagesSection({ lead }: { lead: Lead }) {
         {imagekitEnabled() ? (
           <input type="file" name="files" accept="image/*" multiple className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:font-semibold file:text-brand" />
         ) : (
-          <p className="rounded-lg bg-sun-soft p-3 text-sm">IMAGEKIT_PRIVATE_KEY set nahi hai — abhi sirf image URL paste kar sakte ho.</p>
+          <p className="rounded-lg bg-sun-soft p-3 text-sm">IMAGEKIT_PRIVATE_KEY is not set — you can only paste image URLs for now.</p>
         )}
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <input name="url" placeholder="…or paste an https:// image URL" className="input" />
@@ -315,7 +318,7 @@ function EmailSection({ lead, footer, full, account }: { lead: Lead; footer: str
 <div key={lead.updatedAt.getTime()} className="space-y-3">
             <Field label="Subject" name="subject" defaultValue={lead.emailSubject} />
             <div>
-              <label className="label" htmlFor="body">Body — {"{me}"} ki jagah Settings ka sender name (pehla shabd) aata hai</label>
+              <label className="label" htmlFor="body">Body — {"{me}"} becomes the first word of your sender name</label>
               <textarea id="body" name="body" rows={9} defaultValue={lead.emailBody} className="input" />
             </div>
             <pre className="whitespace-pre-wrap rounded-lg bg-paper p-3 text-xs text-muted">{footer}</pre>
@@ -341,7 +344,7 @@ function EmailSection({ lead, footer, full, account }: { lead: Lead; footer: str
             )}
           </div>
           {gmail && !lead.emailedAt ? (
-            <p className="mt-2 text-xs text-muted">Gmail khulega sab bhara hua. Padh kar Send dabao, phir yahan &quot;Mark as emailed&quot;.</p>
+            <p className="mt-2 text-xs text-muted">Gmail opens with everything filled in. Send it, then click &quot;Mark as emailed&quot; here.</p>
           ) : null}
         </>
       ) : (

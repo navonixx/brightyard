@@ -14,130 +14,130 @@ export type GuidePhase = {
   steps: GuideStep[];
 };
 
-// Admin ke liye playbook. Tareeka: asli business dhundho → uski purani website ka naya version
-// banao → uska personal link ek personal email mein bhejo. Goal: pehle 30 din mein $100.
+// The playbook: find a real business, rebuild its website, and send the owner a personal
+// email with a link to their new site. Goal: $100 in the first 30 days.
 export const GUIDE: GuidePhase[] = [
   {
     id: "setup",
-    title: "Ek baar ka setup",
+    title: "One-time setup",
     days: "Day 1",
-    goal: "Emails sahi naam aur address ke saath jayein, aur payment lene ka raasta ready ho.",
+    goal: "Every email goes out with the right name and address, and you can take payment.",
     steps: [
       {
         id: "setup-domain",
-        title: "Sending ke liye naya Gmail banao",
-        body: "Ek alag Gmail banao, jaise alderwellcreative@gmail.com. Personal Gmail se mat bhejo — block hua to personal account bhi jayega. Gmail mein naam \"Kunj from Brightyard\" aur ek profile photo lagao: asli chehra dikhne se reply zyada aate hain.",
+        title: "Use a dedicated Gmail account for outreach",
+        body: "Send from alderwellcreative@gmail.com, never from a personal inbox — if Gmail ever restricts the account, nothing personal is affected. In Gmail, set the display name to match your sender name and add a profile photo: a real face next to the name noticeably increases replies.",
       },
       {
         id: "setup-mailbox",
-        title: "Settings bharo (4 cheezein)",
-        body: "1) Sender name — wahi jo Gmail mein hai. 2) Sending Gmail address — isse \"Open in Gmail\" sahi account mein khulta hai. 3) Business postal address — US ke CAN-SPAM law ke liye har email ke footer mein zaroori hai. 4) Sprint start date — dashboard par Day X of 30 isi se chalta hai. Jab tak ye khaali hain, email ke neeche {your name} likha aayega.",
-        link: { label: "Settings kholo", href: "/admin/settings" },
+        title: "Fill in Settings",
+        body: "Pick your sender name, sending Gmail, goal and start date from the dropdowns. The postal address is the one thing you type: US law (CAN-SPAM) requires a real mailing address in every commercial email, and a PO box or virtual mailbox is fine. Until it is filled in, emails show {business address} at the bottom.",
+        link: { label: "Open Settings", href: "/admin/settings" },
       },
       {
         id: "setup-money",
-        title: "PayPal.me link",
-        body: "PayPal business account banao aur PayPal.me link Settings mein daalo. Jab client \"Make it live\" dabakar amount chunta hai, use yahi link dikhta hai.",
+        title: "Add your PayPal.me link",
+        body: "When a prospect clicks “Make it live” and picks an amount, they are shown this link. Create a PayPal Business account, copy your paypal.me link, and paste it into Settings.",
         link: { label: "Settings", href: "/admin/settings" },
       },
       {
         id: "setup-warmup",
-        day: "Day 1–5",
-        title: "Naye Gmail ko 4–5 din normal use karo",
-        body: "Dosto ko 5–10 normal emails bhejo aur unse reply karwao. Naya account seedha anjaan logon ko mail karega to Google shak karega. Is beech neeche wale steps se leads aur sites banate raho.",
+        day: "Days 1–5",
+        title: "Warm up the new Gmail account",
+        body: "For the first four or five days, send 5–10 ordinary emails a day to people you know and get replies back. A brand-new account that immediately emails strangers looks suspicious to Google. Keep building leads in the meantime.",
       },
     ],
   },
   {
     id: "build",
-    title: "Har client ke liye: dhundho aur site banao",
-    days: "Roz 3–5 clients",
-    goal: "Har client ki apni redesigned site ka link ready ho. Ek client par 15–20 minute.",
+    title: "For each prospect: find and build",
+    days: "3–5 prospects a day",
+    goal: "Every prospect has a finished redesign and a personal email ready to send.",
     steps: [
       {
         id: "build-cities",
-        title: "Ek niche + ek city chuno",
-        body: "Abhi niche: lawn care / landscaping. City mid-size lo (Spokane, Tulsa, Knoxville, Boise, Chattanooga) — bade shehron mein competition zyada hai. Ek hi niche par tike raho: har site pichhli se jaldi banegi.",
+        title: "Stick to one niche and one city at a time",
+        body: "Current niche: lawn care and landscaping. Choose mid-size US cities such as Spokane WA, Tulsa OK, Knoxville TN, Boise ID or Chattanooga TN — big cities are crowded with agencies. Always include the state, for example “Spokane, WA”.",
       },
       {
         id: "build-find",
-        title: "Leads → \"Find & build\" dabao",
-        body: "Trade aur city daalo (jaise Landscaping, Spokane, WA), 3 ya 5 leads chuno. App khud website wale businesses dhundhta hai, unki site padhta hai, aur har ek ke liye nayi site, theme, photos aur email draft bana deta hai. 30–60 second lagte hain. Kisi purani lead par yahi kaam uske page ke \"Auto-build\" button se hota hai.",
+        title: "Click “Find & build” on the Leads page",
+        body: "Choose a trade, a city and how many leads (1, 3 or 5). The app finds businesses that already have a website, reads their site, and prepares a redesign, theme, photos and a personal email for each one. It takes 30–60 seconds. For an existing lead, the “Auto-build” button on its page does the same thing.",
         link: { label: "Leads", href: "/admin/leads" },
       },
       {
         id: "build-email",
-        title: "Har lead kholo aur research check karo",
-        body: "Notes mein \"Auto-research\" likha milega: Hook (unki khaas baat) aur Weak spot (unki site ki kamzori). Unki asli site khol kar 1 minute mein milao: owner ka naam sahi hai? saal sahi hai? Email nahi mila to notes mein contact form ka link hoga. AI galti kar sakta hai, aur galat fact client ke saamne sabse bura lagta hai.",
+        title: "Check the research against their real site",
+        body: "Open the lead. At the top you will see two links: their current site and the new one. The Notes field contains the auto-research: the hook (what is distinctive about them) and the weak spot on their current site. Spend one minute confirming the owner's name, the years in business and the services. If no email was found, the notes link to their contact form.",
       },
       {
         id: "build-sample",
-        title: "Copy aur look theek karo",
-        body: "Headline, services aur About padho; jo galat ya bana-banaya lage use badal do aur \"Save copy\". Theme pasand na aaye to Details mein \"Design theme\" badlo. Photos sample hain: client ki apni photos mil jayein to unhe upload karke pehli ko hero banao. Google rating 4.5 se kam ho to app use site par nahi dikhata.",
+        title: "Review the new site",
+        body: "Open the new site while logged in to admin (visits from admin are not counted as prospect views). Check the name, phone number and services, then look at it on your phone. If the look doesn't suit them, choose a different design theme under Details. When the client sends real photos, upload them and make the best one the hero image.",
       },
       {
         id: "build-100",
-        title: "Bhejne se pehle khud dekho",
-        body: "Admin mein login rehte hue \"Open preview\" dabao (login ke bina khologe to wo client ka view gina jayega). Phone par bhi dekho. Check: naam aur phone sahi, koi galat fact nahi, upar \"Redesign concept for …\" likha hai, aur \"Compare with your current site\" link unki asli site kholta hai.",
+        title: "What a good prospect looks like",
+        body: "Best: a small, owner-run business with good reviews and an old or thin website (Wix, Weebly or GoDaddy builder, one or two short pages, hard to read on a phone). Skip companies that already have a large, modern site — they have an agency and won't switch.",
       },
     ],
   },
   {
     id: "outreach",
-    title: "Email: har client ko alag, apne haath ka",
-    days: "Roz 10, baad mein 20",
-    goal: "Padhne wale ko lage ki ek insaan ne unki site dekh kar sirf unhe likha hai — kyunki sach mein aisa hi hai.",
+    title: "Sending: one personal email at a time",
+    days: "10 a day, then up to 20",
+    goal: "The owner can tell a real person looked at their business — because one did.",
     steps: [
       {
         id: "out-first",
-        title: "Email draft padho aur apna banao",
-        body: "Auto-build email draft bhi likh deta hai: unki khaas baat se shuruaat, ek imaandar observation, link akeli line par, \"photos placeholder hain\", aur ek sawaal. Aapka kaam: padhna, jo line aapke bolne jaisi na lage use badalna, aur check karna ki koi galat daava nahi hai. {me} ki jagah aapka naam apne aap aata hai. 110 shabdon se kam rakho.",
+        title: "Read the draft once before sending",
+        body: "Every draft opens with something specific from their own site, makes one honest observation, gives the link to their new site on its own line, says the photos are placeholders, and ends with a question that takes two seconds to answer. Read it once to make sure every fact is right. {me} is replaced with your sender name automatically.",
         link: { label: "Outreach", href: "/admin/outreach" },
       },
       {
         id: "out-scale",
-        title: "Ye cheezein email mein kabhi nahi",
-        body: "\"I hope this email finds you well\", \"We are a leading agency\", \"limited time\", bade vaade (\"double your leads\"), 2 se zyada links, attachments, ALL CAPS, emoji. Jhooth bilkul nahi: ye mat kaho ki tum unke shehar se ho ya unke customer ho. Jo sach hai wahi kaafi hai: \"main chhote businesses ki websites banata hoon, aapki dekhi, naya version bana diya.\"",
+        title: "Never put these in an email",
+        body: "“I hope this email finds you well”, “we are a leading agency”, limited-time offers, promised results such as “double your leads”, more than two links, attachments, banners, ALL CAPS or emoji. Never claim to be local to them or a customer of theirs. What is true is enough: you build websites for small businesses, you looked at theirs, and you built a better one.",
       },
       {
         id: "out-hot",
-        title: "Bhejo: Open in Gmail → Send → Sent",
-        body: "Outreach page par \"Open in Gmail\" dabao: email bhara hua khulega. Ek baar zor se padho — agar ye kisi dost ko bhejne layak nahi lagta to theek karo. Send ke baad yahan \"Sent\" dabao. Jinka email nahi mila unke liye lead par \"Copy email\" dabakar unki site ke contact form mein paste karo. Pehle hafte roz 10, phir roz 20 se zyada nahi. Subah 8–10 baje (unke time se) bhejna sabse achha.",
+        title: "Send: Open in Gmail → Send → Sent",
+        body: "On the Outreach page, click “Open in Gmail” — the email opens fully written. Send it, then click “Sent” here. For leads without an email address, click “Copy email” on the lead and paste it into their website's contact form. Send 10 a day in the first week, never more than 20. Use Gmail's Schedule send to deliver Tuesday–Thursday at 8–10 am in their time zone.",
         link: { label: "Outreach", href: "/admin/outreach" },
       },
       {
         id: "out-reply",
-        title: "Follow-up: Outreach → \"Follow-ups due\"",
-        body: "Day 3 aur Day 7 par jinhone reply nahi kiya wo apne aap is list mein aa jate hain, text ke saath (link khola ya nahi, us hisaab se alag). Sabse achha: Gmail mein apne pehle email par Reply karke wahi text bhejo, phir yahan \"Sent\" dabao. 2 follow-up ke baad chhod do. Koi \"no\" kahe to lead ka status Opted out karo.",
+        title: "Follow up on day 3 and day 7",
+        body: "Leads that haven't replied appear under “Follow-ups due” on the Outreach page with the text already written (it changes depending on whether they opened their link). Reply to your original email in Gmail so it stays in the same thread, then click “Sent”. Stop after two follow-ups. If anyone says no, set the lead's status to Opted out and never email them again.",
         link: { label: "Dashboard", href: "/admin" },
       },
     ],
   },
   {
     id: "close",
-    title: "Reply aaye to: close + deliver",
-    days: "Jab bhi koi jawab de",
-    goal: "Pehle 2–3 paying clients = $100+.",
+    title: "When they reply: close and deliver",
+    days: "Whenever someone answers",
+    goal: "Your first 2–3 paying clients — $100 or more.",
     steps: [
       {
         id: "close-pay",
-        title: "2 ghante ke andar jawab do",
-        body: "Changes maange to workspace mein karo aur wahi link dobara bhejo (link badalta nahi). Unki asli photos maango aur sample photos ki jagah lagao — isse site turant \"unki\" lagti hai. Price pooche: \"You choose. Most owners pay between $99 and $199 once it's live on their domain.\"",
+        title: "Reply within two hours",
+        body: "If they want changes, make them in the workspace and send the same link again — it never changes. Ask for their real photos and swap out the placeholders; the site instantly feels like theirs. If they ask about price: “You choose. Most owners pay between $99 and $199 once it's live on their domain.”",
       },
       {
         id: "close-deliver",
-        title: "Payment lo, phir live karo",
-        body: "Client \"Make it live\" dabaye to chuna hua amount lead par dikhega aur Telegram/dashboard par aayega. PayPal invoice bhejo. Payment aane par lead mein Paid amount bharo aur status Won karo — dashboard ka $100 meter badhega. Phir unka domain hamari site se jodna hai: ye kaam abhi manual hai, us waqt Claude se karwana.",
+        title: "Take payment, then go live",
+        body: "When a prospect clicks “Make it live”, the amount they chose appears on the lead and on the dashboard. Send a PayPal invoice. Once paid, enter the paid amount on the lead and set its status to Won — the $100 goal meter moves. Connecting their domain is still a manual step; ask Claude to do it at that point.",
       },
       {
         id: "close-upsell",
-        title: "Hosting + edits: $15/mahina",
-        body: "Live hone ke baad offer karo: hosting aur chhote badlav $15/month. Yahi recurring income hai. Yaad rahe: pehla payment aate hi Vercel ka Pro plan lena hoga (free plan commercial use ke liye nahi hai).",
+        title: "Offer hosting and edits for $15 a month",
+        body: "Once the site is live, offer hosting plus small changes for $15 a month — this is your recurring income. When the first payment arrives, upgrade Vercel to the Pro plan; the free plan is for non-commercial use only.",
       },
       {
         id: "close-proof",
-        title: "Testimonial + referral maango",
-        body: "2 hafte baad: \"Would you mind writing one line about working with me? And do you know another business owner who needs a site?\" Unki asli site hamare homepage ke concept sites ki jagah lagegi — asli client ka kaam sabse bada proof hai.",
+        title: "Ask for a testimonial and a referral",
+        body: "Two weeks after launch: “Would you mind writing one line about working with me? And do you know another business owner who needs a website?” Put their real site on the homepage in place of a concept site — real client work is the strongest proof you can show.",
       },
     ],
   },
@@ -148,8 +148,8 @@ export const ALL_STEPS = GUIDE.flatMap((phase) => phase.steps);
 // Rough funnel math shown on the guide page (estimates, not promises).
 export const FUNNEL_MATH = [
   { label: "Personal emails", value: "150" },
-  { label: "Link khola (~30–40%)", value: "45–60" },
+  { label: "Open their link (~30–40%)", value: "45–60" },
   { label: "Reply (~5–8%)", value: "8–12" },
-  { label: "Paid (~25%)", value: "2–3" },
-  { label: "$50–100 each", value: "$100–300" },
+  { label: "Pay (~25%)", value: "2–3" },
+  { label: "At $50–100 each", value: "$100–300" },
 ];

@@ -22,14 +22,14 @@ async function Guide() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">30-din ka playbook</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">The 30-day playbook</h1>
         <p className="mt-2 text-muted">
-          Goal: pehle 30 din mein $100. Har step complete karke tick karo — dashboard par progress dikhegi.
+          Goal: $100 in the first 30 days. Tick each step as you finish it — progress shows on the dashboard.
         </p>
       </div>
 
       <section className="card p-6">
-        <h2 className="font-semibold">$100 ka hisaab (andaza, guarantee nahi)</h2>
+        <h2 className="font-semibold">How $100 adds up (estimates, not a promise)</h2>
         <dl className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
           {FUNNEL_MATH.map((row) => (
             <div key={row.label} className="rounded-xl bg-paper p-3">
@@ -39,8 +39,8 @@ async function Guide() {
           ))}
         </dl>
         <p className="mt-4 text-sm text-muted">
-          Asli chaabi: har email mein unka <strong>pehle se bana hua preview link</strong>. Generic &quot;we make websites&quot;
-          email se ye kaafi zyada reply laata hai.
+          What makes it work: every email links to <strong>a website already built for them</strong>. That gets far more replies than a generic
+          &quot;we make websites&quot; pitch.
         </p>
       </section>
 
