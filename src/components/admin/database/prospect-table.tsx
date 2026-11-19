@@ -37,7 +37,7 @@ function SiteCell({ row }: { row: ProspectRow }) {
   }
   return (
     <div className="min-w-0 space-y-1">
-      <a href={row.website} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-[230px] items-center gap-1 text-sm hover:text-brand">
+      <a href={row.website} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-57.5 items-center gap-1 text-sm hover:text-brand">
         <span className="truncate">{short(row.website)}</span> <ExternalLink className="size-3 shrink-0" />
       </a>
       <div className="flex items-center gap-2">
@@ -47,7 +47,7 @@ function SiteCell({ row }: { row: ProspectRow }) {
           <WeaknessBadge score={row.enrichStatus === "failed" ? null : row.siteScore} checked />
         )}
         {row.siteIssues?.[0] ? (
-          <span className="max-w-[200px] truncate text-[11px] text-muted" title={row.siteIssues.join("\n")}>
+          <span className="max-w-50 truncate text-[11px] text-muted" title={row.siteIssues.join("\n")}>
             {row.siteIssues[0]}
           </span>
         ) : null}
@@ -56,7 +56,8 @@ function SiteCell({ row }: { row: ProspectRow }) {
   );
 }
 
-export function ProspectTable({ rows }: { rows: ProspectRow[] }) {
+/** `firstNumber` = number of the first row, so numbering continues across pages. */
+export function ProspectTable({ rows, firstNumber = 1 }: { rows: ProspectRow[]; firstNumber?: number }) {
   const router = useRouter();
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const [pending, start] = useTransition();
@@ -106,16 +107,17 @@ export function ProspectTable({ rows }: { rows: ProspectRow[] }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[980px] text-sm">
+        <table className="w-full min-w-245 text-sm">
           <thead className="border-b border-line bg-paper text-left text-xs text-muted">
             <tr>
+              <th className="w-12 py-3 pl-4 text-right font-medium">#</th>
               <th className="w-10 px-4 py-3">
                 <input
                   type="checkbox"
                   aria-label="Select all on this page"
                   checked={allPicked}
                   onChange={() => setPicked(allPicked ? new Set() : new Set(rows.map((r) => r.id)))}
-                  className="size-4 accent-[var(--color-brand)]"
+                  className="size-4 accent-brand"
                 />
               </th>
               <th className="px-3 py-3 font-medium">Business</th>
@@ -126,15 +128,16 @@ export function ProspectTable({ rows }: { rows: ProspectRow[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <tr key={row.id} className={picked.has(row.id) ? "bg-brand-soft/50" : "hover:bg-paper"}>
+                <td className="py-3 pl-4 text-right align-top text-xs tabular-nums text-muted">{firstNumber + i}</td>
                 <td className="px-4 py-3 align-top">
                   <input
                     type="checkbox"
                     aria-label={`Select ${row.name}`}
                     checked={picked.has(row.id)}
                     onChange={() => toggle(row.id)}
-                    className="size-4 accent-[var(--color-brand)]"
+                    className="size-4 accent-brand"
                   />
                 </td>
                 <td className="px-3 py-3 align-top">

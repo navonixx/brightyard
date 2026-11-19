@@ -256,7 +256,7 @@ async function Database({ searchParams }: { searchParams: PageProps<"/admin/data
         </div>
 
         {tableRows.length ? (
-          <ProspectTable rows={tableRows} />
+          <ProspectTable rows={tableRows} firstNumber={(filter.page! - 1) * PAGE_SIZE + 1} />
         ) : (
           <p className="p-10 text-center text-sm text-muted">
             {progress.prospects ? "No businesses match these filters." : "The database is empty. Pick niches and cities above, then press Start."}
