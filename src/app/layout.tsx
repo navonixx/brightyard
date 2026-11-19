@@ -8,6 +8,8 @@ const serifDisplay = DM_Serif_Display({ variable: "--font-serif-display", subset
 const condensed = Oswald({ variable: "--font-condensed", subsets: ["latin"], weight: ["500", "600"] });
 
 export const metadata: Metadata = {
+  // Absolute URLs for the social image etc. follow the public site address, not the Vercel project name.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: "Alderwell Creative — websites for local businesses, built before you pay",
   description:
     "Alderwell Creative is a web design studio for local businesses. We build your whole website first — you pay only if you love it.",
