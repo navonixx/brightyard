@@ -19,7 +19,12 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     return { message: "Please add your business name and a valid email." };
   }
   const tradeValue = get("trade");
-  const need = get("need");
+  const needs = form
+    .getAll("need")
+    .map((v) => String(v).trim().slice(0, 60))
+    .filter(Boolean)
+    .slice(0, 6);
+  const about = get("about");
   const fields = {
     businessName,
     email,
@@ -27,11 +32,17 @@ export async function submitInquiry(_: InquiryState, form: FormData): Promise<In
     city: get("city"),
     website: get("website"),
     trade: (TRADES.includes(tradeValue as Trade) ? tradeValue : "other") as Trade,
-    notes: need ? `Wants: ${need}` : null,
+    notes: [about && `Business: ${about}`, needs.length && `Wants: ${needs.join(", ")}`].filter(Boolean).join(" · ") || null,
   };
   const id = await createLead({ ...fields, source: "inbound", score: scoreLead(fields) + 50 });
   if (id) await logEvent(id, "inbound");
-  const wants = need ? `\nWants: ${need}` : "";
+  const wants = needs.length ? `\nWants: ${needs.join(", ")}` : "";
   await notify(`📥 New inbound request: ${businessName} (${fields.city ?? "?"}) — ${email}${wants}`);
-  return { ok: true, message: "Got it! Your free website preview will land in your inbox within 48 hours." };
+  const websiteOnly = needs.every((n) => /website/i.test(n));
+  return {
+    ok: true,
+    message: websiteOnly
+      ? "Got it! Your free website preview will land in your inbox within 48 hours."
+      : "Got it! We'll reply within a day with ideas and a fixed quote — and your website preview within 48 hours if you asked for one.",
+  };
 }

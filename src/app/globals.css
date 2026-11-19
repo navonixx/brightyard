@@ -337,3 +337,218 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .autoscroll { animation: none !important; }
 }
+
+/* ═══ Homepage v4: 3D studio ═══════════════════════════════════ */
+@utility btn-glow {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] font-medium text-white transition duration-200 select-none active:scale-95;
+  background: linear-gradient(135deg, #e040fb 0%, #7c3aed 50%, #22d3ee 100%);
+  background-size: 160% 160%;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.12) inset, 0 10px 30px -10px rgb(167 139 250 / 0.7);
+  &:hover { background-position: 100% 0; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.2) inset, 0 14px 40px -10px rgb(224 64 251 / 0.75); }
+  &:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+}
+@utility btn-outline-dark {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-[15px] font-medium text-white/90 transition select-none hover:border-white/50 hover:bg-white/5 active:scale-95;
+}
+@utility eyebrow {
+  @apply text-[12px] font-semibold uppercase tracking-[0.22em] text-white/50;
+}
+@utility h-section {
+  font-family: var(--font-display);
+  @apply text-[38px] font-semibold leading-[1.04] tracking-[-0.03em] text-balance sm:text-[56px] lg:text-[68px];
+}
+.text-aurora {
+  background: linear-gradient(100deg, #f0abfc 0%, #c4b5fd 40%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Tilt cards */
+.tilt {
+  position: relative;
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+.tilt[data-active] { transition: transform 0.08s linear; }
+.tilt-glare {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgb(255 255 255 / 0.22), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  mix-blend-mode: overlay;
+}
+.tilt[data-active] .tilt-glare { opacity: 1; }
+
+/* Hero 3D stage */
+.hero-stage { perspective: 1600px; perspective-origin: 50% 30%; }
+.hero-stage-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(6deg - var(--py, 0) * 4deg)) rotateY(calc(var(--px, 0) * 7deg));
+}
+.stage-layer {
+  position: absolute;
+  transform: translateZ(var(--z, 0px)) rotateY(var(--ry0, 0deg)) rotateX(var(--rx0, 0deg));
+  transform-style: preserve-3d;
+}
+.float-a { animation: float-y 7s ease-in-out infinite; }
+.float-b { animation: float-y 9s ease-in-out infinite reverse; }
+@keyframes float-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+
+/* Perspective grid floor + aurora behind the hero */
+.grid-floor {
+  position: absolute;
+  inset: auto -50% -10% -50%;
+  height: 70%;
+  transform: perspective(500px) rotateX(68deg);
+  transform-origin: 50% 100%;
+  background-image:
+    linear-gradient(to right, rgb(167 139 250 / 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(167 139 250 / 0.22) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to top, black 10%, transparent 75%);
+  animation: grid-run 6s linear infinite;
+}
+@keyframes grid-run { to { background-position: 0 56px; } }
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(110px);
+  opacity: 0.55;
+  animation: aurora 18s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6%, -4%) scale(1.15); }
+  100% { transform: translate(-5%, 3%) scale(0.95); }
+}
+
+/* Phone frame for video reels */
+.phone-frame {
+  position: relative;
+  border-radius: 2.1rem;
+  padding: 7px;
+  background: linear-gradient(145deg, #3a3a40, #121216);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08) inset, 0 30px 60px -20px rgb(0 0 0 / 0.8);
+}
+.phone-frame > .phone-screen { position: relative; overflow: hidden; border-radius: 1.65rem; aspect-ratio: 9 / 16; background: #000; }
+.phone-frame > .phone-screen::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 6px;
+  width: 24%;
+  height: 11px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: #000;
+}
+
+/* Campaign cover ring */
+.ring-scene {
+  --ring-r: 520px;
+  position: relative;
+  height: 360px;
+  perspective: 1500px;
+  perspective-origin: 50% 40%;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.ring-scene:active { cursor: grabbing; }
+.ring { position: absolute; left: 50%; top: 30px; width: 0; height: 0; transform-style: preserve-3d; }
+.ring-card {
+  position: absolute;
+  left: -195px;
+  top: 0;
+  width: 390px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1), 0 25px 50px -20px rgb(0 0 0 / 0.9);
+  backface-visibility: hidden;
+}
+.ring-card-active { box-shadow: 0 0 0 2px #c4b5fd, 0 0 40px -6px rgb(196 181 253 / 0.6); }
+@media (width < 640px) {
+  .ring-scene { --ring-r: 280px; height: 220px; }
+  .ring-card { left: -110px; width: 220px; }
+}
+
+.shot-label {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  padding: 4px 10px;
+  font-size: 11px;
+  color: rgb(255 255 255 / 0.85);
+  backdrop-filter: blur(8px);
+}
+.campaign-swap { animation: swap-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes swap-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* Scroll-driven entrances: CSS only, content is always laid out and visible without support */
+@supports (animation-timeline: view()) {
+  .sd-reveal {
+    animation: sd-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+  @keyframes sd-reveal { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+  .sd-tilt {
+    animation: sd-tilt linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 40%;
+  }
+  @keyframes sd-tilt {
+    from { transform: perspective(1400px) rotateX(22deg) scale(0.92); }
+    to { transform: perspective(1400px) rotateX(0deg) scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt, .hero-stage-inner { transform: none !important; }
+  .float-a, .float-b, .grid-floor, .aurora, .campaign-swap, .sd-reveal, .sd-tilt { animation: none !important; }
+}
+
+.stage-tag {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  translate: -50% 0;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(13 10 36 / 0.7);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.8);
+}
+.stage-layer.stage-tag { bottom: auto; translate: none; }
+@media (width < 640px) { .stage-tag { font-size: 10px; padding: 3px 8px; bottom: -10px; } }
+
+/* Hero stage settles flat as the page scrolls (no fade, so it never looks washed out) */
+@supports (animation-timeline: scroll()) {
+  .sd-flatten {
+    animation: sd-flatten linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0px 520px;
+  }
+  @keyframes sd-flatten {
+    from { transform: perspective(1400px) rotateX(14deg) scale(0.96); }
+    to { transform: perspective(1400px) rotateX(0deg) scale(1); }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .sd-flatten { animation: none !important; } }
