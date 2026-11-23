@@ -6,7 +6,8 @@ import { getSetting, month } from "@/lib/leadengine/db";
 import { ActionButton, ActionForm, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { LeHeader } from "@/components/admin/lead-engine/tabs";
-import { leRescoreAll, leSaveSettings } from "../../../lead-engine-actions";
+import { leCheckSources, leClearHistory, leRescoreAll, leRestartCities, leSaveSettings } from "../../../lead-engine-actions";
+import { LeSourceCheck } from "@/components/admin/lead-engine/source-check";
 
 export default function LeSettingsPage() {
   return (
@@ -60,6 +61,16 @@ async function LeSettings() {
           </div>
         ))}
         <Link href="/admin/settings" className="text-sm text-brand hover:underline">Open main Settings →</Link>
+      </section>
+
+      <LeSourceCheck check={leCheckSources} />
+
+      <section className="card space-y-3 p-6">
+        <h2 className="font-semibold">Housekeeping</h2>
+        <div className="flex flex-wrap gap-3">
+          <ActionButton action={leClearHistory} className="btn-ghost" pendingText="Clearing…" confirm="Clear the list of past searches? Leads stay.">Clear search history</ActionButton>
+          <ActionButton action={leRestartCities} className="btn-ghost" pendingText="Resetting…" confirm="Start the city-by-city run again from the first city?">Restart from the first city</ActionButton>
+        </div>
       </section>
 
       <section className="card space-y-3 p-6">

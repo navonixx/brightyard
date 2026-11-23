@@ -134,3 +134,17 @@ export async function leCheckSources(): Promise<SourceCheck[]> {
   await requireAdmin();
   return checkSources();
 }
+
+export async function leClearHistory(): Promise<ActionState> {
+  await requireAdmin();
+  await q("DELETE FROM le_jobs WHERE status IN ('done','failed','queued')");
+  refresh();
+  return { ok: true, message: "Search history cleared (leads are kept)." };
+}
+
+export async function leRestartCities(): Promise<ActionState> {
+  await requireAdmin();
+  await setSetting("autoCursor", "0");
+  refresh();
+  return { ok: true, message: "Autopilot will start again from the first city (businesses already found are skipped)." };
+}

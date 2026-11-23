@@ -28,7 +28,7 @@ async function Find() {
 
   return (
     <div className="space-y-6">
-      <LeHeader active="/admin/lead-engine/find" title="Find leads" intro="Queue searches on any source, then press Start on the dashboard. The same business found on two sources becomes one lead." />
+      <LeHeader active="/admin/lead-engine/find" title="Custom search (optional)" intro="You don't need this — Start already goes through every city and business type by itself. Use it only to jump to a specific city or business type, or to search YouTube / funded companies. Custom searches run first, then the engine carries on with the next city." />
 
       <section className="card p-6">
         <div className="mb-5 flex items-start gap-3">

@@ -1,5 +1,5 @@
 import "server-only";
-import { one, q } from "./db";
+import { one, pgArray, q } from "./db";
 import { domainOf, formatPhone, isRealSite, phoneKey } from "./web";
 import type { Signal } from "./signals";
 
@@ -33,67 +33,116 @@ export const nameKey = (name: string) =>
     .trim();
 
 /**
- * Saves leads from any source. The same business found on two platforms becomes ONE lead:
+ * Saves leads from any source in bulk. The same business found on two platforms becomes ONE lead:
  * matched by website domain, then phone number, then name in the same state — the missing
  * details (email, website, socials…) are filled in from the newer source.
  */
 export async function saveLeads(list: NewLead[]): Promise<{ added: number; merged: number }> {
-  let added = 0;
-  let merged = 0;
+  type Item = { raw: NewLead; website: string | null; domain: string | null; pk: string | null; nk: string; state: string | null; socials: Record<string, string> };
+  const items: Item[] = [];
   for (const raw of list) {
-    if (!raw.name?.trim()) continue;
+    if (!raw.name?.trim() || !raw.sourceId) continue;
     const socials = { ...(raw.socials ?? {}) };
     let website = raw.website?.trim() || null;
     if (website && !isRealSite(website)) {
-      if (/facebook\.com/i.test(website) && !socials.facebook) socials.facebook = website;
-      if (/instagram\.com/i.test(website) && !socials.instagram) socials.instagram = website;
+      if (/facebook.com/i.test(website) && !socials.facebook) socials.facebook = website;
+      if (/instagram.com/i.test(website) && !socials.instagram) socials.instagram = website;
       website = null;
     }
-    const domain = website ? domainOf(website) : null;
-    const pk = phoneKey(raw.phone);
-    const nk = nameKey(raw.name);
-    const state = raw.state?.toUpperCase().slice(0, 2) || null;
+    items.push({ raw, website, domain: website ? domainOf(website) : null, pk: phoneKey(raw.phone), nk: nameKey(raw.name), state: raw.state?.toUpperCase().slice(0, 2) || null, socials });
+  }
+  if (!items.length) return { added: 0, merged: 0 };
+  const source = items[0].raw.source;
 
-    const same = await one<{ id: number }>("SELECT id FROM le_leads WHERE source = $1 AND source_id = $2", [raw.source, raw.sourceId]);
-    if (same) continue;
+  // Everything already stored that could match, in three queries.
+  const known = new Set(
+    (await q<{ source_id: string }>("SELECT source_id FROM le_leads WHERE source = $1 AND source_id = ANY($2::text[])", [source, pgArray(items.map((i) => i.raw.sourceId))])).map((r) => r.source_id),
+  );
+  const fresh = items.filter((i) => !known.has(i.raw.sourceId));
+  const domains = [...new Set(fresh.map((i) => i.domain).filter(Boolean))] as string[];
+  const phones = [...new Set(fresh.map((i) => i.pk).filter(Boolean))] as string[];
+  const names = [...new Set(fresh.map((i) => i.nk).filter(Boolean))];
+  const existing = fresh.length
+    ? await q<{ id: number; domain: string | null; phone_key: string | null; name_key: string | null; state: string | null }>(
+        "SELECT id, domain, phone_key, name_key, state FROM le_leads WHERE domain = ANY($1::text[]) OR phone_key = ANY($2::text[]) OR name_key = ANY($3::text[])",
+        [pgArray(domains), pgArray(phones), pgArray(names)],
+      )
+    : [];
+  const byDomain = new Map<string, number>();
+  const byPhone = new Map<string, number>();
+  const byName = new Map<string, number>();
+  for (const e of existing) {
+    if (e.domain) byDomain.set(e.domain, e.id);
+    if (e.phone_key) byPhone.set(e.phone_key, e.id);
+    if (e.name_key && e.state) byName.set(`${e.name_key}|${e.state}`, e.id);
+  }
 
-    const match =
-      (domain && (await one<{ id: number }>("SELECT id FROM le_leads WHERE domain = $1 LIMIT 1", [domain]))) ||
-      (pk && (await one<{ id: number }>("SELECT id FROM le_leads WHERE phone_key = $1 LIMIT 1", [pk]))) ||
-      (nk && state && (await one<{ id: number }>("SELECT id FROM le_leads WHERE name_key = $1 AND state = $2 LIMIT 1", [nk, state]))) ||
-      null;
-
-    if (match) {
-      await q(
-        `UPDATE le_leads SET
-           sources = CASE WHEN $2 = ANY(sources) THEN sources ELSE array_append(sources, $2) END,
-           enrich_status = CASE WHEN website IS NULL AND $3::text IS NOT NULL THEN 'pending' ELSE enrich_status END,
-           website = COALESCE(website, $3), domain = COALESCE(domain, $4),
-           phone = COALESCE(phone, $5), phone_key = COALESCE(phone_key, $6),
-           email = COALESCE(email, $7),
-           socials = $8::jsonb || socials,
-           rating = COALESCE(rating, $9), review_count = GREATEST(review_count, $10),
-           extra = extra || $11::jsonb,
-           niche = COALESCE(niche, $12), city = COALESCE(city, $13), address = COALESCE(address, $14),
-           updated_at = now()
-         WHERE id = $1`,
-        [match.id, raw.source, website, domain, formatPhone(raw.phone), pk, raw.email ?? null, JSON.stringify(socials), raw.rating ?? null, raw.reviewCount ?? null, JSON.stringify(raw.extra ?? {}), raw.niche ?? null, raw.city ?? null, raw.address ?? null],
-      );
-      merged++;
+  // Matches inside this batch merge into the first copy (negative ids = not inserted yet).
+  const inserts: Item[] = [];
+  const merges: { id: number; item: Item }[] = [];
+  for (const it of fresh) {
+    const id =
+      (it.domain && byDomain.get(it.domain)) || (it.pk && byPhone.get(it.pk)) || (it.nk && it.state && byName.get(`${it.nk}|${it.state}`)) || null;
+    if (id && id > 0) {
+      merges.push({ id, item: it });
       continue;
     }
+    if (id && id < 0) {
+      const first = inserts[-id - 1];
+      first.website ??= it.website;
+      first.domain ??= it.domain;
+      first.pk ??= it.pk;
+      first.raw = { ...first.raw, email: first.raw.email ?? it.raw.email, phone: first.raw.phone ?? it.raw.phone };
+      first.socials = { ...it.socials, ...first.socials };
+      continue;
+    }
+    inserts.push(it);
+    const ref = -inserts.length;
+    if (it.domain) byDomain.set(it.domain, ref);
+    if (it.pk) byPhone.set(it.pk, ref);
+    if (it.nk && it.state) byName.set(`${it.nk}|${it.state}`, ref);
+  }
 
+  for (let i = 0; i < inserts.length; i += 200) {
+    const chunk = inserts.slice(i, i + 200);
+    const params: unknown[] = [];
+    const rows = chunk.map((it) => {
+      const r = it.raw;
+      const v = [r.source, r.sourceId, r.kind ?? "business", r.name.trim().slice(0, 200), it.nk, r.niche ?? null, r.category ?? null, r.city ?? null, it.state, r.address ?? null,
+        r.lat ?? null, r.lng ?? null, formatPhone(r.phone), it.pk, it.website, it.domain, r.email ?? null, JSON.stringify(r.email ? [r.email] : []), JSON.stringify(it.socials),
+        r.rating ?? null, r.reviewCount ?? null, JSON.stringify(r.extra ?? {})];
+      const b = params.length;
+      params.push(...v);
+      const p = (n: number) => `$${b + n}`;
+      return `(${p(1)},${p(2)},ARRAY[${p(1)}],${p(3)},${p(4)},${p(5)},${p(6)},${p(7)},${p(8)},${p(9)},${p(10)},${p(11)}::float8,${p(12)}::float8,${p(13)},${p(14)},${p(15)},${p(16)},${p(17)},${p(18)}::jsonb,${p(19)}::jsonb,${p(20)}::real,${p(21)}::int,${p(22)}::jsonb)`;
+    });
     await q(
       `INSERT INTO le_leads (source, source_id, sources, kind, name, name_key, niche, category, city, state, address, lat, lng,
          phone, phone_key, website, domain, email, emails, socials, rating, review_count, extra)
-       VALUES ($1,$2,ARRAY[$1],$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19::jsonb,$20,$21,$22::jsonb)
-       ON CONFLICT (source, source_id) DO NOTHING`,
-      [raw.source, raw.sourceId, raw.kind ?? "business", raw.name.trim().slice(0, 200), nk, raw.niche ?? null, raw.category ?? null, raw.city ?? null, state, raw.address ?? null, raw.lat ?? null, raw.lng ?? null,
-        formatPhone(raw.phone), pk, website, domain, raw.email ?? null, JSON.stringify(raw.email ? [raw.email] : []), JSON.stringify(socials), raw.rating ?? null, raw.reviewCount ?? null, JSON.stringify(raw.extra ?? {})],
+       VALUES ${rows.join(",")} ON CONFLICT (source, source_id) DO NOTHING`,
+      params,
     );
-    added++;
   }
-  return { added, merged };
+
+  for (const { id, item } of merges) {
+    const r = item.raw;
+    await q(
+      `UPDATE le_leads SET
+         sources = CASE WHEN $2 = ANY(sources) THEN sources ELSE array_append(sources, $2) END,
+         enrich_status = CASE WHEN website IS NULL AND $3::text IS NOT NULL THEN 'pending' ELSE enrich_status END,
+         website = COALESCE(website, $3), domain = COALESCE(domain, $4),
+         phone = COALESCE(phone, $5), phone_key = COALESCE(phone_key, $6),
+         email = COALESCE(email, $7),
+         socials = $8::jsonb || socials,
+         rating = COALESCE(rating, $9::real), review_count = GREATEST(review_count, $10::int),
+         extra = extra || $11::jsonb,
+         niche = COALESCE(niche, $12), city = COALESCE(city, $13), address = COALESCE(address, $14),
+         updated_at = now()
+       WHERE id = $1`,
+      [id, r.source, item.website, item.domain, formatPhone(r.phone), item.pk, r.email ?? null, JSON.stringify(item.socials), r.rating ?? null, r.reviewCount ?? null, JSON.stringify(r.extra ?? {}), r.niche ?? null, r.city ?? null, r.address ?? null],
+    );
+  }
+  return { added: inserts.length, merged: merges.length };
 }
 
 export type Lead = {

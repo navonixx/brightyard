@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Pause, Play } from "lucide-react";
 import type { EngineStatus } from "@/lib/leadengine/engine";
@@ -17,7 +16,10 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
   );
 }
 
-/** Runs the Lead Engine step by step while this tab is open (searches first, then website checks + scoring). */
+/**
+ * One button. While this tab is open it keeps going: next city → every business type →
+ * check websites → score → next city. Custom searches (if any) run first.
+ */
 export function LeRunner({ initial, step, autoStart = false }: { initial: Stats; step: () => Promise<EngineStatus>; autoStart?: boolean }) {
   const router = useRouter();
   const [stats, setStats] = useState<Stats>(initial);
@@ -27,12 +29,10 @@ export function LeRunner({ initial, step, autoStart = false }: { initial: Stats;
     setStats(initial);
   }
   const [running, setRunning] = useState(false);
-  const [now, setNow] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const stop = useRef(false);
 
-  // Always asks the server (the numbers on screen can be a little old) and only then says there's nothing to do.
   const start = async () => {
     stop.current = false;
     setRunning(true);
@@ -40,38 +40,32 @@ export function LeRunner({ initial, step, autoStart = false }: { initial: Stats;
     let failures = 0;
     let n = 0;
     while (!stop.current) {
-      setNow(stats.queued ? "Running the next search…" : "Checking websites and scoring…");
       try {
         const r = await step();
         failures = 0;
         setStats(r);
         if (r.log.length) {
-          const time = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-          setLog((prev) => [...r.log.map((l) => `${time}  ${l}`), ...prev].slice(0, 50));
+          const time = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+          setLog((prev) => [...r.log.map((l) => `${time}  ${l}`), ...prev].slice(0, 40));
         }
         if (r.idle) {
-          if (n === 0 && !r.log.length) {
-            setError("Nothing to run yet — first choose business types and cities on “Find leads” (the engine starts by itself after that).");
-          } else {
-            setLog((prev) => ["Finished — nothing left to search or check.", ...prev]);
-          }
+          setLog((prev) => ["All cities are done.", ...prev]);
           break;
         }
         if (++n % 3 === 0) router.refresh();
       } catch {
         if (++failures >= 4) {
-          setError("Lost connection to the server several times in a row. Press Start to continue.");
+          setError("Lost connection to the server a few times in a row. Press Start to continue.");
           break;
         }
         await new Promise((r) => setTimeout(r, 4000));
       }
     }
     setRunning(false);
-    setNow(null);
     router.refresh();
   };
 
-  // Arriving from “Find leads” (?run=1): start right away, once.
+  // Arriving from a custom search (?run=1): start right away, once.
   const auto = useRef(false);
   useEffect(() => {
     if (!autoStart || auto.current) return;
@@ -81,41 +75,43 @@ export function LeRunner({ initial, step, autoStart = false }: { initial: Stats;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart]);
 
+  const a = stats.auto;
+  const pct = a.cityTotal ? Math.round((a.citiesDone / a.cityTotal) * 100) : 0;
+
   return (
-    <section className="card space-y-4 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Engine</h2>
-          <p className="text-sm text-muted">
-            {running ? now : stats.queued || stats.pending ? `${stats.queued} searches and ${stats.pending.toLocaleString("en-US")} leads waiting. Keep this tab open while it runs.` : "Nothing waiting. Queue searches on “Find leads”."}
+    <section className="card space-y-5 p-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-muted">{running ? "Running — keep this tab open" : stats.total ? "Paused" : "Ready"}</p>
+          <p className="mt-1 truncate font-display text-2xl font-semibold">
+            {running && a.current ? a.current : a.next ? `Next: ${a.next}` : a.current ?? "All cities done"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            City {Math.max(a.cityIndex, a.citiesDone)} of {a.cityTotal} · every business type in each city, high-value ones first · then the next city by itself
           </p>
         </div>
         {running ? (
-          <button type="button" className="btn-ghost" onClick={() => (stop.current = true)}>
-            <Pause className="size-4" /> Pause
+          <button type="button" className="btn-ghost px-6 py-3 text-base" onClick={() => (stop.current = true)}>
+            <Pause className="size-5" /> Pause
           </button>
         ) : (
-          <button type="button" className="btn-primary" onClick={start}>
-            <Play className="size-4" /> Start
+          <button type="button" className="btn-primary px-8 py-3 text-base" onClick={start}>
+            <Play className="size-5" /> Start
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Leads" value={stats.total} />
-        <Stat label="With email" value={stats.email} />
-        <Stat label="Hot (pay + pain + email)" value={stats.hot} accent="text-brand" />
-        <Stat label="Scored" value={stats.scored} />
-        <Stat label="Waiting to check" value={stats.pending} />
-        <Stat label="Searches waiting" value={stats.queued} />
+      <div className="h-2 overflow-hidden rounded-full bg-line/60">
+        <div className="h-full rounded-full bg-brand transition-all duration-500" style={{ width: `${Math.max(pct, running ? 2 : 0)}%` }} />
       </div>
-      {error ? (
-        <p className="text-sm text-danger">
-          {error}{" "}
-          {!stats.queued && !stats.pending ? <Link href="/admin/lead-engine/find" className="font-medium text-brand underline">Find leads →</Link> : null}
-        </p>
-      ) : null}
-      {log.length ? (
-        <ul className="max-h-56 space-y-1 overflow-y-auto rounded-xl bg-paper p-3 font-mono text-xs">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Leads found" value={stats.total} />
+        <Stat label="With email" value={stats.email} />
+        <Stat label="🔥 Hot leads" value={stats.hot} accent="text-brand" />
+        <Stat label="Websites left to check" value={stats.pending} />
+      </div>
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {log.length || running ? (
+        <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl bg-paper p-3 text-xs">
           {running ? (
             <li className="flex items-center gap-2 text-muted">
               <Loader2 className="size-3 animate-spin" /> working…

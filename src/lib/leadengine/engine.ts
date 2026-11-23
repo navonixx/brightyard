@@ -3,6 +3,7 @@ import { log, one, q } from "./db";
 import { enrichBatch } from "./enrich";
 import { saveLeads } from "./leads";
 import { RUNNERS, type SourceKey } from "./sources";
+import { autoProgress, queueNextAuto } from "./autopilot";
 
 /**
  * One small unit of work, called again and again by the runner on the Lead Engine page
@@ -22,10 +23,12 @@ export type EngineStatus = {
   hot: number;
   idle: boolean;
   did: string | null;
+  auto: Awaited<ReturnType<typeof autoProgress>>;
   log: string[];
 };
 
 export async function engineStatus(): Promise<Omit<EngineStatus, "idle" | "did" | "log">> {
+  const auto = await autoProgress();
   const j = await q<{ status: string; n: number }>("SELECT status, count(*)::int n FROM le_jobs GROUP BY status");
   const c = Object.fromEntries(j.map((x) => [x.status, Number(x.n)])) as Record<string, number>;
   const l = await one<{ total: number; pending: number; scored: number; email: number; hot: number }>(
@@ -45,6 +48,7 @@ export async function engineStatus(): Promise<Omit<EngineStatus, "idle" | "did" 
     scored: Number(l?.scored ?? 0),
     email: Number(l?.email ?? 0),
     hot: Number(l?.hot ?? 0),
+    auto,
   };
 }
 
@@ -56,6 +60,13 @@ export async function engineStep(budgetMs = 30_000): Promise<EngineStatus> {
   // A search that was cut off (server time limit) goes back in the queue.
   await q("UPDATE le_jobs SET status = 'queued' WHERE status = 'running' AND started_at < now() - interval '3 minutes' AND attempts < 3");
   await q("UPDATE le_jobs SET status = 'failed', error = 'Took too long three times' WHERE status = 'running' AND started_at < now() - interval '3 minutes'");
+
+  // Autopilot: nothing queued and the website checks have caught up → queue the next city / business group.
+  let autoDone = false;
+  const waiting = await one<{ queued: number; pending: number }>(
+    "SELECT (SELECT count(*)::int FROM le_jobs WHERE status = 'queued') queued, (SELECT count(*)::int FROM le_leads WHERE enrich_status = 'pending') pending",
+  );
+  if (!Number(waiting?.queued) && Number(waiting?.pending ?? 0) < 150) autoDone = !(await queueNextAuto());
 
   const job = await one<{ id: number; source: SourceKey; label: string; params: Record<string, unknown>; attempts: number }>(
     `UPDATE le_jobs SET status = 'running', attempts = attempts + 1, started_at = now()
@@ -97,5 +108,5 @@ export async function engineStep(budgetMs = 30_000): Promise<EngineStatus> {
   for (const line of lines) await log(line);
 
   const status = await engineStatus();
-  return { ...status, idle: !job && !checked && status.queued === 0, did, log: lines };
+  return { ...status, idle: autoDone && !job && !checked && status.queued === 0, did, log: lines };
 }

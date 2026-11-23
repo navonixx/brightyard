@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const TABS = [
-  { href: "/admin/lead-engine", label: "Dashboard" },
-  { href: "/admin/lead-engine/find", label: "Find leads" },
+  { href: "/admin/lead-engine", label: "Start" },
   { href: "/admin/lead-engine/leads", label: "Leads" },
+  { href: "/admin/lead-engine/find", label: "Custom search (optional)" },
   { href: "/admin/lead-engine/intent", label: "Intent search" },
   { href: "/admin/lead-engine/settings", label: "Settings" },
 ];
