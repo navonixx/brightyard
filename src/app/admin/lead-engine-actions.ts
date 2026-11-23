@@ -148,3 +148,18 @@ export async function leRestartCities(): Promise<ActionState> {
   refresh();
   return { ok: true, message: "Autopilot will start again from the first city (businesses already found are skipped)." };
 }
+
+export async function leBuildPreview(id: number): Promise<ActionState> {
+  await requireAdmin();
+  const { buildPreview } = await import("@/lib/leadengine/preview");
+  const r = await buildPreview(Number(id));
+  refresh();
+  return { ok: r.ok, message: r.message };
+}
+
+export async function leFollowUpSent(id: number) {
+  await requireAdmin();
+  const { markFollowUpSent } = await import("@/lib/leadengine/followups");
+  await markFollowUpSent(Number(id));
+  refresh();
+}

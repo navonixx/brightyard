@@ -8,6 +8,10 @@ import { PageSkeleton } from "@/components/admin/skeleton";
 import { LeHeader } from "@/components/admin/lead-engine/tabs";
 import { LeRunner } from "@/components/admin/lead-engine/runner";
 import { leStep } from "../../lead-engine-actions";
+import { getSettings } from "@/lib/data";
+import { followUpsDue } from "@/lib/leadengine/followups";
+import { followUpDraft } from "@/lib/leadengine/replies";
+import { LeFollowUps, type FollowUpItem } from "@/components/admin/lead-engine/replies";
 
 // Every engine step (one search, or a batch of website checks) runs inside this page's server action.
 export const maxDuration = 60;
@@ -25,7 +29,7 @@ export default function LeadEnginePage({ searchParams }: { searchParams: SP }) {
 async function Dashboard({ searchParams }: { searchParams: SP }) {
   await requireAdmin();
   const autoStart = (await searchParams).run === "1";
-  const [status, hot, jobs] = await Promise.all([
+  const [status, hot, jobs, due, settings] = await Promise.all([
     engineStatus(),
     q<{ id: number; name: string; niche: string | null; city: string | null; state: string | null; pay_score: number; pain_score: number; pain_signals: { label: string }[] }>(
       `SELECT id, name, niche, city, state, pay_score, pain_score, pain_signals FROM le_leads
@@ -35,7 +39,15 @@ async function Dashboard({ searchParams }: { searchParams: SP }) {
     q<{ id: number; label: string; status: string; added: number; error: string | null }>(
       "SELECT id, label, status, added, error FROM le_jobs ORDER BY CASE status WHEN 'running' THEN 0 ELSE 1 END, COALESCE(finished_at, created_at) DESC LIMIT 8",
     ),
+    followUpsDue(),
+    getSettings(),
   ]);
+  const me = { name: settings.senderName, company: "Alderwell Creative", site: "", address: settings.businessAddress };
+  const days = (d: unknown) => Math.max(1, Math.round((Date.now() - new Date(String(d)).getTime()) / 86_400_000));
+  const followUps: FollowUpItem[] = due.map((l) => {
+    const d = followUpDraft(l, l.step, me);
+    return { id: l.id, name: l.name, email: l.email!, step: l.step, subject: d.subject, body: d.body, sentAgo: `${days(l.contacted_at)} days ago` };
+  });
 
   return (
     <div className="space-y-6">
@@ -46,6 +58,12 @@ async function Dashboard({ searchParams }: { searchParams: SP }) {
       />
 
       <LeRunner initial={status} step={leStep} autoStart={autoStart} />
+
+      <section className="card p-5">
+        <h2 className="font-semibold">📬 Follow-ups due today {followUps.length ? `(${followUps.length})` : ""}</h2>
+        <p className="mb-2 text-sm text-muted">People you emailed who haven't replied: a short nudge after 3 days, a last one after 7. Mark a lead “replied” to stop them.</p>
+        <LeFollowUps items={followUps} />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="card p-5">

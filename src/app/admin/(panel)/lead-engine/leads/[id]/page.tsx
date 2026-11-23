@@ -11,7 +11,14 @@ import { SOURCES, type SourceId } from "@/lib/leadengine/sources/meta";
 import { ActionButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { LeEmailDraft } from "@/components/admin/lead-engine/email-draft";
-import { leSendToLeads, leUpdateLead } from "../../../../lead-engine-actions";
+import { LeReplies } from "@/components/admin/lead-engine/replies";
+import { replyTemplates } from "@/lib/leadengine/replies";
+import { previewUrlFor } from "@/lib/leadengine/preview";
+import { CopyButton } from "@/components/admin/ui";
+import { leBuildPreview, leSendToLeads, leUpdateLead } from "../../../../lead-engine-actions";
+
+// “Build preview” reads their site and writes the page with AI inside this page's server action.
+export const maxDuration = 60;
 
 export default function LeLeadPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -36,6 +43,10 @@ async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
     site: (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/^https?:\/\//, ""),
     address: settings.businessAddress,
   });
+  const previewUrl = await previewUrlFor(lead.lead_id);
+  const me = { name: settings.senderName, company: "Alderwell Creative", site: "", address: settings.businessAddress };
+  const replies = replyTemplates(lead, previewUrl, me);
+  const build = leBuildPreview.bind(null, lead.id);
   const solutions = [...new Set(lead.pain_signals.map((p) => p.solution).filter(Boolean))] as string[];
   const extra = lead.extra ?? {};
   const google = `https://www.google.com/search?q=${encodeURIComponent(`${lead.name} ${lead.city ?? ""} ${lead.state ?? ""}`)}`;
@@ -77,6 +88,24 @@ async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
           )}
         </div>
       </div>
+
+      <section className="card flex flex-wrap items-center justify-between gap-3 p-5">
+        <div>
+          <h2 className="font-semibold">Free website preview</h2>
+          <p className="text-sm text-muted">{previewUrl ? "Ready — send this link when they reply “yes”." : "Builds a working homepage for them in about a minute (from their current site, or fresh if they have none)."}</p>
+          {previewUrl ? <p className="mt-1 break-all text-sm text-brand">{previewUrl}</p> : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {previewUrl ? (
+            <>
+              <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">Open preview</a>
+              <CopyButton text={previewUrl} label="Copy link" />
+            </>
+          ) : (
+            <ActionButton action={build} pendingText="Building… (up to a minute)">Build preview</ActionButton>
+          )}
+        </div>
+      </section>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-5">
@@ -177,6 +206,10 @@ async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
             Sent today: <strong>{sentToday}</strong> / 20. {sentToday >= 20 ? "Stop for today — more than this from one Gmail lands in spam." : "A new Gmail should send about 15–20 a day, by hand, a few minutes apart."}
           </p>
           <LeEmailDraft id={lead.id} to={lead.email} subject={draft.subject} body={draft.body} />
+
+          <h2 className="mt-8 font-semibold">When they reply</h2>
+          <p className="mb-3 text-sm text-muted">Pick what they said, copy the answer into your reply in Gmail. Then set the status to “replied” on the left.</p>
+          <LeReplies replies={replies} />
         </section>
       </div>
     </div>
