@@ -40,7 +40,7 @@ export function draftEmail(lead: Lead, me: Sender): { subject: string; body: str
     "",
     "Thanks,",
     me.name || "[your name]",
-    me.company || "",
+    me.company && !me.name.toLowerCase().includes(me.company.toLowerCase()) ? me.company : "",
     "",
     me.address ? me.address : "[your postal address — required by US law]",
     "If you'd rather not hear from me, just reply “no”.",
