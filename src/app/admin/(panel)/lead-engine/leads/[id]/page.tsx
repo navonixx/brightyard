@@ -5,6 +5,7 @@ import { ArrowLeft, ExternalLink, Phone } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { getLead } from "@/lib/leadengine/leads";
+import { one } from "@/lib/leadengine/db";
 import { describe, draftEmail } from "@/lib/leadengine/outreach";
 import { SOURCES, type SourceId } from "@/lib/leadengine/sources/meta";
 import { ActionButton } from "@/components/admin/ui";
@@ -28,6 +29,7 @@ async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
   const lead = Number.isFinite(Number(id)) ? await getLead(Number(id)) : null;
   if (!lead) notFound();
   const settings = await getSettings();
+  const sentToday = Number((await one<{ n: number }>("SELECT count(*)::int n FROM le_leads WHERE contacted_at >= date_trunc('day', now())"))?.n ?? 0);
   const draft = draftEmail(lead, {
     name: settings.senderName,
     company: "Alderwell Creative",
@@ -170,6 +172,9 @@ async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
           <p className="mb-4 text-sm text-muted">
             Written only from what we found. Edit anything, then open it in Gmail.{" "}
             {settings.businessAddress ? "" : <>Add your business address in <Link href="/admin/settings" className="text-brand hover:underline">Settings</Link> — US law requires it in cold emails.</>}
+          </p>
+          <p className={`mb-4 rounded-xl px-3 py-2 text-sm ${sentToday >= 20 ? "bg-red-50 text-danger" : "bg-paper"}`}>
+            Sent today: <strong>{sentToday}</strong> / 20. {sentToday >= 20 ? "Stop for today — more than this from one Gmail lands in spam." : "A new Gmail should send about 15–20 a day, by hand, a few minutes apart."}
           </p>
           <LeEmailDraft id={lead.id} to={lead.email} subject={draft.subject} body={draft.body} />
         </section>
