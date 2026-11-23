@@ -96,13 +96,29 @@ export function LeLeadTable({ rows, firstNumber }: { rows: LeRow[]; firstNumber:
                   <Link href={`/admin/lead-engine/leads/${r.id}`} className="font-semibold hover:text-brand">{r.name}</Link>
                   <p className="truncate text-xs text-muted">{r.sub}</p>
                 </td>
-                <td className="py-3 pr-3">
-                  <div className="flex items-center gap-2.5">
-                    <Phone className={`size-4 ${r.phone ? "text-emerald-600" : "text-line"}`} aria-label={r.phone ?? "no phone"} />
-                    <Mail className={`size-4 ${r.email ? "text-emerald-600" : "text-line"}`} aria-label={r.email ?? "no email"} />
-                    <Globe className={`size-4 ${r.website ? "text-emerald-600" : "text-line"}`} aria-label={r.website ?? "no website"} />
-                  </div>
-                  {r.email ? <p className="mt-1 max-w-[190px] truncate text-xs text-muted">{r.email}</p> : null}
+                <td className="max-w-[230px] space-y-1 py-3 pr-3 text-xs">
+                  {r.website ? (
+                    <a href={r.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-brand hover:underline" title="Open their website">
+                      <Globe className="size-3.5 shrink-0" />
+                      <span className="truncate">{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</span>
+                    </a>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-muted"><Globe className="size-3.5 shrink-0" /> no website</p>
+                  )}
+                  {r.email ? (
+                    <a href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(r.email)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand hover:underline" title="Write in Gmail">
+                      <Mail className="size-3.5 shrink-0 text-emerald-600" />
+                      <span className="truncate">{r.email}</span>
+                    </a>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-muted"><Mail className="size-3.5 shrink-0" /> no email</p>
+                  )}
+                  {r.phone ? (
+                    <a href={`tel:${r.phone}`} className="flex items-center gap-1.5 hover:text-brand hover:underline" title="Call">
+                      <Phone className="size-3.5 shrink-0 text-emerald-600" />
+                      <span className="truncate">{r.phone}</span>
+                    </a>
+                  ) : null}
                 </td>
                 <td className="py-3 pr-3">
                   <div className="flex flex-wrap gap-1">
