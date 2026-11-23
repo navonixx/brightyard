@@ -53,6 +53,7 @@ export async function leQueueYouTube(_: ActionState, form: FormData): Promise<Ac
 
 export async function leQueueSec(_: ActionState, form: FormData): Promise<ActionState> {
   await requireAdmin();
+  if (!process.env.SEC_USER_AGENT?.trim()) return { message: "SEC needs a contact first: add SEC_USER_AGENT (company name + email) in Vercel → Settings → Environment Variables, then redeploy." };
   const days = Math.min(30, Math.max(1, Number(form.get("days") ?? 7)));
   const minAmount = Math.max(0, Number(form.get("minAmount") ?? 100000));
   const states = all(form, "state").filter((s) => /^[A-Z]{2}$/.test(s));

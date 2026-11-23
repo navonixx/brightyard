@@ -8,7 +8,7 @@ import type { NewLead } from "../leads";
  */
 export async function runSec(params: { days: number; states: string[]; minAmount: number }): Promise<{ leads: NewLead[]; note: string }> {
   const ua = process.env.SEC_USER_AGENT?.trim();
-  if (!ua) throw new Error("Set SEC_USER_AGENT in .env.local (your company name + email, e.g. “Alderwell Creative you@example.com”) — SEC requires it");
+  if (!ua) throw new Error("SEC needs a contact: add SEC_USER_AGENT (your company name + email) in Vercel → Settings → Environment Variables, then redeploy");
   const headers = { "User-Agent": ua, Accept: "application/json" };
   const end = new Date();
   const start = new Date(end.getTime() - Math.max(1, Math.min(30, params.days)) * 86_400_000);

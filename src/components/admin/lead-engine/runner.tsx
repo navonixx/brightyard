@@ -32,11 +32,8 @@ export function LeRunner({ initial, step, autoStart = false }: { initial: Stats;
   const [error, setError] = useState<string | null>(null);
   const stop = useRef(false);
 
+  // Always asks the server (the numbers on screen can be a little old) and only then says there's nothing to do.
   const start = async () => {
-    if (!stats.queued && !stats.pending) {
-      setError("Nothing to run yet — first choose business types and cities on “Find leads” (the engine starts by itself after that).");
-      return;
-    }
     stop.current = false;
     setRunning(true);
     setError(null);
@@ -53,7 +50,11 @@ export function LeRunner({ initial, step, autoStart = false }: { initial: Stats;
           setLog((prev) => [...r.log.map((l) => `${time}  ${l}`), ...prev].slice(0, 50));
         }
         if (r.idle) {
-          setLog((prev) => ["Finished — nothing left to search or check.", ...prev]);
+          if (n === 0 && !r.log.length) {
+            setError("Nothing to run yet — first choose business types and cities on “Find leads” (the engine starts by itself after that).");
+          } else {
+            setLog((prev) => ["Finished — nothing left to search or check.", ...prev]);
+          }
           break;
         }
         if (++n % 3 === 0) router.refresh();
