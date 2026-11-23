@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
-    "@duckdb/node-api": "^2.0.1-r.1",
     "@electric-sql/pglite": "^0.5.16",
     "drizzle-orm": "^0.45.4",
+    "hyparquet": "^1.33.1",
+    "hyparquet-compressors": "^1.1.3",
     "lucide-react": "^1.75.0",
     "next": "16.4.6",
     "openai": "^7.59.0",
