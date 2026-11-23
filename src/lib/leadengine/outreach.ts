@@ -28,7 +28,23 @@ export function draftEmail(lead: Lead, me: Sender): { subject: string; body: str
     low_rating: "people compare ratings before choosing",
     launch: "a new company is judged first by what people find online",
   };
-  const finding = top ? lowerFirst(top.label).replace(/\s*—.*$/, "") : null;
+  // Natural wording for each finding (the scorer's labels are written for us, not for the owner).
+  const said: Record<string, string> = {
+    no_website: "you don't seem to have a website yet",
+    facebook_only: "you only have a Facebook page, no website",
+    site_broken: /parked/.test(top?.label ?? "") ? "the web address on your Google listing doesn't show a real website" : "your website is showing an error right now",
+    site_unreachable: "your website didn't load when I tried to open it",
+    not_mobile: "your website doesn't fit well on phones",
+    no_https: "your website shows a “Not secure” warning in the browser",
+    stale: "the footer of your website still shows an old year",
+    slow: "your website takes quite a while to load",
+    missed_leads: "your website only lists a phone number, with no way to book or send a message",
+    no_booking: "there's no way to book online on your website",
+    few_reviews: `you have only ${lead.review_count ?? "a few"} Google reviews`,
+    low_rating: `your Google rating is ${lead.rating ?? "under 4"} stars`,
+    launch: "you're just getting started",
+  };
+  const finding = top ? (said[top.key] ?? "a few small things on your website that could be costing you calls") : null;
   const lines = [
     first ? `Hi ${first},` : "Hi,",
     "",
