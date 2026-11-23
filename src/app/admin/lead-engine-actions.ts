@@ -1,0 +1,131 @@
+"use server";
+
+import { refresh } from "next/cache";
+import { requireAdmin } from "@/lib/auth";
+import { pgArray, q, setSetting } from "@/lib/leadengine/db";
+import { engineStep, type EngineStatus } from "@/lib/leadengine/engine";
+import { nicheLabel } from "@/lib/leadengine/niches";
+import { sendToLeads } from "@/lib/leadengine/promote";
+import type { ActionState } from "./actions";
+
+const all = (form: FormData, name: string) => [...new Set(form.getAll(name).map(String).map((s) => s.trim()).filter(Boolean))].slice(0, 1000);
+
+async function addJobs(jobs: { source: string; label: string; params: unknown }[]) {
+  for (let i = 0; i < jobs.length; i += 200) {
+    const chunk = jobs.slice(i, i + 200);
+    const values = chunk.map((_, j) => `($${j * 3 + 1}, $${j * 3 + 2}, $${j * 3 + 3}::jsonb)`).join(",");
+    await q(`INSERT INTO le_jobs (source, label, params) VALUES ${values}`, chunk.flatMap((x) => [x.source, x.label, JSON.stringify(x.params)]));
+  }
+}
+
+export async function leQueueLocal(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const sources = all(form, "source").filter((s) => ["overture", "osm", "google"].includes(s));
+  const niches = all(form, "niche");
+  const cities = all(form, "city")
+    .map((c) => c.split("|"))
+    .filter(([city, state]) => city && /^[A-Z]{2}$/.test(state ?? ""))
+    .map(([city, state]) => ({ city, state }));
+  if (!sources.length) return { message: "Pick at least one source." };
+  if (!niches.length) return { message: "Pick at least one business type." };
+  if (!cities.length) return { message: "Pick at least one city." };
+  const nicheText = niches.length > 3 ? `${niches.length} business types` : niches.map(nicheLabel).join(", ");
+  const jobs: { source: string; label: string; params: unknown }[] = [];
+  for (const { city, state } of cities) {
+    if (sources.includes("overture")) jobs.push({ source: "overture", label: `Overture · ${nicheText} · ${city}, ${state}`, params: { city, state, niches } });
+    if (sources.includes("osm")) jobs.push({ source: "osm", label: `OpenStreetMap · ${nicheText} · ${city}, ${state}`, params: { city, state, niches } });
+    if (sources.includes("google")) for (const niche of niches) jobs.push({ source: "google", label: `Google · ${nicheLabel(niche)} · ${city}, ${state}`, params: { city, state, niche } });
+  }
+  await addJobs(jobs);
+  refresh();
+  return { ok: true, message: `Queued ${jobs.length} searches. Open the Lead Engine dashboard and press Start.` };
+}
+
+export async function leQueueYouTube(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const topics = String(form.get("topics") ?? "").split("\n").map((t) => t.trim()).filter(Boolean).slice(0, 50);
+  const pages = Math.min(4, Math.max(1, Number(form.get("pages") ?? 2)));
+  if (!topics.length) return { message: "Add at least one topic." };
+  await addJobs(topics.map((query) => ({ source: "youtube", label: `YouTube · “${query}”`, params: { query, pages } })));
+  refresh();
+  return { ok: true, message: `Queued ${topics.length} YouTube searches (${topics.length * pages * 100} of 10,000 daily units). Press Start on the dashboard.` };
+}
+
+export async function leQueueSec(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const days = Math.min(30, Math.max(1, Number(form.get("days") ?? 7)));
+  const minAmount = Math.max(0, Number(form.get("minAmount") ?? 100000));
+  const states = all(form, "state").filter((s) => /^[A-Z]{2}$/.test(s));
+  await addJobs([{ source: "sec", label: `SEC Form D · last ${days} days${states.length ? ` · ${states.join(", ")}` : ""} · ≥ $${minAmount.toLocaleString("en-US")}`, params: { days, states, minAmount } }]);
+  refresh();
+  return { ok: true, message: "Queued the SEC funding search. Press Start on the dashboard." };
+}
+
+export async function leStep(): Promise<EngineStatus> {
+  await requireAdmin();
+  return engineStep();
+}
+
+export async function leClearQueue(): Promise<ActionState> {
+  await requireAdmin();
+  await q("DELETE FROM le_jobs WHERE status = 'queued'");
+  refresh();
+  return { ok: true, message: "Queue cleared." };
+}
+
+export async function leRetryFailed(): Promise<ActionState> {
+  await requireAdmin();
+  await q("UPDATE le_jobs SET status = 'queued', attempts = 0, error = NULL WHERE status = 'failed'");
+  refresh();
+  return { ok: true, message: "Failed searches are queued again." };
+}
+
+export async function leRescoreAll(): Promise<ActionState> {
+  await requireAdmin();
+  await q("UPDATE le_leads SET enrich_status = 'pending' WHERE enrich_status IN ('done','no_site','failed')");
+  refresh();
+  return { ok: true, message: "Every lead will be checked again — press Start on the dashboard." };
+}
+
+export async function leUpdateLead(id: number, form: FormData) {
+  await requireAdmin();
+  const status = String(form.get("status") ?? "new");
+  if (!["new", "contacted", "replied", "won", "lost", "skip"].includes(status)) return;
+  const notes = String(form.get("notes") ?? "").slice(0, 4000) || null;
+  const followUp = /^\d{4}-\d{2}-\d{2}$/.test(String(form.get("follow_up") ?? "")) ? String(form.get("follow_up")) : null;
+  await q(
+    `UPDATE le_leads SET status = $2, notes = $3, follow_up = $4::date, updated_at = now(),
+       contacted_at = CASE WHEN $2 IN ('contacted','replied','won') AND contacted_at IS NULL THEN now() ELSE contacted_at END
+     WHERE id = $1`,
+    [id, status, notes, followUp],
+  );
+  refresh();
+}
+
+export async function leMarkContacted(id: number) {
+  await requireAdmin();
+  await q("UPDATE le_leads SET status = 'contacted', contacted_at = COALESCE(contacted_at, now()), updated_at = now() WHERE id = $1 AND status = 'new'", [id]);
+}
+
+export async function leBulkStatus(ids: number[], status: string): Promise<ActionState> {
+  await requireAdmin();
+  if (!ids.length || !["new", "contacted", "replied", "won", "lost", "skip"].includes(status)) return { message: "Nothing to change." };
+  await q("UPDATE le_leads SET status = $2, updated_at = now() WHERE id = ANY($1::int[])", [pgArray(ids.slice(0, 500).map(Number)), status]);
+  refresh();
+  return { ok: true, message: `${ids.length} marked ${status}.` };
+}
+
+export async function leSendToLeads(ids: number[]): Promise<ActionState> {
+  await requireAdmin();
+  const { created, already } = await sendToLeads(ids.map(Number).filter(Number.isFinite));
+  refresh();
+  return { ok: true, message: `${created} added to Leads${already ? ` · ${already} were already there` : ""}.` };
+}
+
+export async function leSaveSettings(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const cap = Math.max(0, Math.min(100000, Number(form.get("googleLookupCap") ?? 0) || 0));
+  await setSetting("googleLookupCap", String(cap));
+  refresh();
+  return { ok: true, message: cap ? `Google limit: ${cap.toLocaleString("en-US")} paid lookups a month.` : "Google is off." };
+}
