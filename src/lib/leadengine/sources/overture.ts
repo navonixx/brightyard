@@ -1,7 +1,7 @@
 import "server-only";
 import { NICHES, OVERTURE_TO_NICHE, nicheByKey } from "../niches";
 import type { NewLead } from "../leads";
-import { cityBox } from "./geo";
+import { cityBox, type BBox } from "./geo";
 
 /**
  * Overture Maps Places — free open data (Meta, Microsoft, Foursquare…), ~70M places with
@@ -41,10 +41,10 @@ async function latestRelease(): Promise<string> {
 const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
 const SOCIAL = /(facebook|instagram|twitter|x|linkedin|youtube|tiktok)\.com/i;
 
-export async function runOverture(params: { city: string; state: string; niches: string[] }): Promise<{ leads: NewLead[]; note: string }> {
+export async function runOverture(params: { city: string; state: string; niches: string[]; box?: BBox }): Promise<{ leads: NewLead[]; note: string }> {
   const niches = (params.niches.length ? params.niches : NICHES.map((n) => n.key)).map((k) => nicheByKey.get(k)).filter(Boolean);
   const cats = niches.flatMap((n) => n!.overture);
-  const box = await cityBox(params.city, params.state);
+  const box = params.box ?? (await cityBox(params.city, params.state));
   const release = await latestRelease();
   const conn = await duck();
   const result = await conn.runAndReadAll(`

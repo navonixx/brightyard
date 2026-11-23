@@ -94,9 +94,12 @@ export async function fetchSite(raw: string): Promise<(Page & { ok: true; kind: 
 const net = globalThis as unknown as { __online?: { at: number; ok: boolean } };
 export async function online(): Promise<boolean> {
   if (net.__online && Date.now() - net.__online.at < 20000) return net.__online.ok;
-  const ok = await fetch("https://www.google.com/generate_204", { cache: "no-store", signal: AbortSignal.timeout(6000) })
-    .then((r) => r.status === 204 || r.ok)
-    .catch(() => false);
+  const ping = (url: string) =>
+    fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) })
+      .then((r) => r.status < 500)
+      .catch(() => false);
+  // Offline only if two unrelated services both fail to answer.
+  const ok = (await ping("https://www.google.com/generate_204")) || (await ping("https://cloudflare.com/cdn-cgi/trace"));
   net.__online = { at: Date.now(), ok };
   return ok;
 }

@@ -9,23 +9,27 @@ import { ActionButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { LeHeader } from "@/components/admin/lead-engine/tabs";
 import { LeRunner } from "@/components/admin/lead-engine/runner";
-import { leClearQueue, leRetryFailed, leStep } from "../../lead-engine-actions";
+import { LeSourceCheck } from "@/components/admin/lead-engine/source-check";
+import { leCheckSources, leClearQueue, leRetryFailed, leStep } from "../../lead-engine-actions";
 
 // Every engine step (one search, or a batch of website checks) runs inside this page's server action.
 export const maxDuration = 60;
 
-export default function LeadEnginePage() {
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default function LeadEnginePage({ searchParams }: { searchParams: SP }) {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <Dashboard />
+      <Dashboard searchParams={searchParams} />
     </Suspense>
   );
 }
 
 const fmt = (n: number) => Number(n ?? 0).toLocaleString("en-US");
 
-async function Dashboard() {
+async function Dashboard({ searchParams }: { searchParams: SP }) {
   await requireAdmin();
+  const autoStart = (await searchParams).run === "1";
   const [status, s, jobs, logs] = await Promise.all([
     engineStatus(),
     stats(),
@@ -43,7 +47,7 @@ async function Dashboard() {
         intro="Finds US leads on several platforms, merges the same business into one lead, checks every website and scores each lead for “can pay” and “pain” — with a suggested solution and a ready first email."
       />
 
-      <LeRunner initial={status} step={leStep} />
+      <LeRunner initial={status} step={leStep} autoStart={autoStart} />
       {status.failed || status.queued ? (
         <div className="-mt-3 flex flex-wrap gap-3">
           {status.failed ? (
@@ -58,6 +62,8 @@ async function Dashboard() {
           ) : null}
         </div>
       ) : null}
+
+      <LeSourceCheck check={leCheckSources} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <section className="card p-5">

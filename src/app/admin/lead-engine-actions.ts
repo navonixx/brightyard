@@ -1,11 +1,13 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { pgArray, q, setSetting } from "@/lib/leadengine/db";
 import { engineStep, type EngineStatus } from "@/lib/leadengine/engine";
 import { nicheLabel } from "@/lib/leadengine/niches";
 import { sendToLeads } from "@/lib/leadengine/promote";
+import { checkSources, type SourceCheck } from "@/lib/leadengine/diagnose";
 import type { ActionState } from "./actions";
 
 const all = (form: FormData, name: string) => [...new Set(form.getAll(name).map(String).map((s) => s.trim()).filter(Boolean))].slice(0, 1000);
@@ -37,8 +39,7 @@ export async function leQueueLocal(_: ActionState, form: FormData): Promise<Acti
     if (sources.includes("google")) for (const niche of niches) jobs.push({ source: "google", label: `Google · ${nicheLabel(niche)} · ${city}, ${state}`, params: { city, state, niche } });
   }
   await addJobs(jobs);
-  refresh();
-  return { ok: true, message: `Queued ${jobs.length} searches. Open the Lead Engine dashboard and press Start.` };
+  redirect("/admin/lead-engine?run=1");
 }
 
 export async function leQueueYouTube(_: ActionState, form: FormData): Promise<ActionState> {
@@ -47,8 +48,7 @@ export async function leQueueYouTube(_: ActionState, form: FormData): Promise<Ac
   const pages = Math.min(4, Math.max(1, Number(form.get("pages") ?? 2)));
   if (!topics.length) return { message: "Add at least one topic." };
   await addJobs(topics.map((query) => ({ source: "youtube", label: `YouTube · “${query}”`, params: { query, pages } })));
-  refresh();
-  return { ok: true, message: `Queued ${topics.length} YouTube searches (${topics.length * pages * 100} of 10,000 daily units). Press Start on the dashboard.` };
+  redirect("/admin/lead-engine?run=1");
 }
 
 export async function leQueueSec(_: ActionState, form: FormData): Promise<ActionState> {
@@ -57,8 +57,7 @@ export async function leQueueSec(_: ActionState, form: FormData): Promise<Action
   const minAmount = Math.max(0, Number(form.get("minAmount") ?? 100000));
   const states = all(form, "state").filter((s) => /^[A-Z]{2}$/.test(s));
   await addJobs([{ source: "sec", label: `SEC Form D · last ${days} days${states.length ? ` · ${states.join(", ")}` : ""} · ≥ $${minAmount.toLocaleString("en-US")}`, params: { days, states, minAmount } }]);
-  refresh();
-  return { ok: true, message: "Queued the SEC funding search. Press Start on the dashboard." };
+  redirect("/admin/lead-engine?run=1");
 }
 
 export async function leStep(): Promise<EngineStatus> {
@@ -128,4 +127,9 @@ export async function leSaveSettings(_: ActionState, form: FormData): Promise<Ac
   await setSetting("googleLookupCap", String(cap));
   refresh();
   return { ok: true, message: cap ? `Google limit: ${cap.toLocaleString("en-US")} paid lookups a month.` : "Google is off." };
+}
+
+export async function leCheckSources(): Promise<SourceCheck[]> {
+  await requireAdmin();
+  return checkSources();
 }

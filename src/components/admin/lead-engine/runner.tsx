@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Pause, Play } from "lucide-react";
 import type { EngineStatus } from "@/lib/leadengine/engine";
@@ -17,7 +18,7 @@ function Stat({ label, value, accent }: { label: string; value: number; accent?:
 }
 
 /** Runs the Lead Engine step by step while this tab is open (searches first, then website checks + scoring). */
-export function LeRunner({ initial, step }: { initial: Stats; step: () => Promise<EngineStatus> }) {
+export function LeRunner({ initial, step, autoStart = false }: { initial: Stats; step: () => Promise<EngineStatus>; autoStart?: boolean }) {
   const router = useRouter();
   const [stats, setStats] = useState<Stats>(initial);
   const [seen, setSeen] = useState(initial);
@@ -32,6 +33,10 @@ export function LeRunner({ initial, step }: { initial: Stats; step: () => Promis
   const stop = useRef(false);
 
   const start = async () => {
+    if (!stats.queued && !stats.pending) {
+      setError("Nothing to run yet — first choose business types and cities on “Find leads” (the engine starts by itself after that).");
+      return;
+    }
     stop.current = false;
     setRunning(true);
     setError(null);
@@ -65,6 +70,16 @@ export function LeRunner({ initial, step }: { initial: Stats; step: () => Promis
     router.refresh();
   };
 
+  // Arriving from “Find leads” (?run=1): start right away, once.
+  const auto = useRef(false);
+  useEffect(() => {
+    if (!autoStart || auto.current) return;
+    auto.current = true;
+    router.replace("/admin/lead-engine", { scroll: false });
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
+
   return (
     <section className="card space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,7 +107,12 @@ export function LeRunner({ initial, step }: { initial: Stats; step: () => Promis
         <Stat label="Waiting to check" value={stats.pending} />
         <Stat label="Searches waiting" value={stats.queued} />
       </div>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-danger">
+          {error}{" "}
+          {!stats.queued && !stats.pending ? <Link href="/admin/lead-engine/find" className="font-medium text-brand underline">Find leads →</Link> : null}
+        </p>
+      ) : null}
       {log.length ? (
         <ul className="max-h-56 space-y-1 overflow-y-auto rounded-xl bg-paper p-3 font-mono text-xs">
           {running ? (

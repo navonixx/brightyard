@@ -1,24 +1,30 @@
 import "server-only";
 import { NICHES, nicheByKey } from "../niches";
 import type { NewLead } from "../leads";
-import { cityBox } from "./geo";
+import { cityBox, type BBox } from "./geo";
 
 /** OpenStreetMap (Overpass API) — free, community-mapped businesses with tags for phone, website, email, socials. */
-export async function runOsm(params: { city: string; state: string; niches: string[] }): Promise<{ leads: NewLead[]; note: string }> {
+export async function runOsm(params: { city: string; state: string; niches: string[]; box?: BBox }): Promise<{ leads: NewLead[]; note: string }> {
   const niches = (params.niches.length ? params.niches : NICHES.map((n) => n.key)).map((k) => nicheByKey.get(k)!).filter((n) => n?.osm.length);
   if (!niches.length) return { leads: [], note: "None of the chosen business types are tagged in OpenStreetMap" };
-  const box = await cityBox(params.city, params.state);
+  const box = params.box ?? (await cityBox(params.city, params.state));
   const bbox = `(${box.s},${box.w},${box.n},${box.e})`;
   const selectors = niches.flatMap((n) => n.osm.map(([k, v]) => `nwr["${k}"="${v}"]["name"]${bbox};`));
-  const query = `[out:json][timeout:120];(${selectors.join("")});out center tags;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: "data=" + encodeURIComponent(query),
-    headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "LeadEngine/0.1 (local business research tool)" },
-    signal: AbortSignal.timeout(150000),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`OpenStreetMap is busy (${res.status}) — it will retry later`);
+  const query = `[out:json][timeout:25];(${selectors.join("")});out center tags;`;
+  // The main Overpass server is often busy; public mirrors take over.
+  const MIRRORS = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
+  let res: Response | null = null;
+  for (const url of MIRRORS) {
+    res = await fetch(url, {
+      method: "POST",
+      body: "data=" + encodeURIComponent(query),
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "LeadEngine/0.1 (local business research tool)" },
+      signal: AbortSignal.timeout(18000),
+      cache: "no-store",
+    }).catch(() => null);
+    if (res?.ok) break;
+  }
+  if (!res?.ok) throw new Error(`OpenStreetMap is busy (${res?.status ?? "no answer"}) — it will retry later`);
   const data = (await res.json()) as { elements: { type: string; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags: Record<string, string> }[] };
   const leads: NewLead[] = [];
   for (const el of data.elements) {
