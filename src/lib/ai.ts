@@ -91,7 +91,7 @@ function leadFacts(lead: Lead): string {
 }
 
 /** Structured JSON from whichever provider is configured; null when unavailable or refused. */
-async function parse<T extends z.ZodObject>(
+export async function parse<T extends z.ZodObject>(
   schema: T,
   name: string,
   system: string,
