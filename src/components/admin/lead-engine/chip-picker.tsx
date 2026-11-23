@@ -28,7 +28,7 @@ export function LeChipPicker({ name, items, initial = [], placeholder }: { name:
           </button>
         ) : null}
       </div>
-      <div className="mt-3 max-h-[320px] space-y-3 overflow-y-auto pr-1">
+      <div className="relative mt-3 max-h-[320px] space-y-3 overflow-y-auto pr-1">
         {groups.map((g) => {
           const list = items.filter((i) => i.group === g);
           const visible = list.filter(match);
@@ -42,7 +42,7 @@ export function LeChipPicker({ name, items, initial = [], placeholder }: { name:
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {list.map((i) => (
-                  <label key={i.value} className={`cursor-pointer ${match(i) ? "" : "hidden"}`}>
+                  <label key={i.value} className={`relative cursor-pointer ${match(i) ? "" : "hidden"}`}>
                     <input type="checkbox" name={name} value={i.value} checked={selected.has(i.value)} onChange={(e) => toggle([i.value], e.target.checked)} className="peer sr-only" />
                     <span className="inline-flex rounded-full border border-line px-3 py-1 text-[13px] text-ink/80 transition peer-checked:border-brand peer-checked:bg-brand-soft peer-checked:text-brand-strong">
                       {i.label}
