@@ -214,7 +214,7 @@ export function HelpBot() {
                 rows={1}
                 placeholder="Kuch bhi poochho…"
                 title="Enter = bhejo · Shift+Enter = nayi line · Ctrl+V = screenshot paste"
-                className="max-h-40 min-h-10 flex-1 resize-none overflow-y-auto rounded-xl border border-line bg-paper px-3 py-2 text-sm leading-5 outline-none [field-sizing:content] focus:border-brand"
+                className="max-h-40 min-h-10 flex-1 resize-none overflow-y-auto rounded-xl border border-line bg-paper px-3 py-2 text-sm leading-5 outline-none field-sizing-content focus:border-brand"
               />
               <button type="submit" disabled={pending || (!text.trim() && !image)} className="rounded-xl bg-brand p-2.5 text-white disabled:opacity-40" aria-label="Send">
                 <Send className="size-4" />
