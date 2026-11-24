@@ -65,12 +65,13 @@ export function HelpBot() {
   const file = useRef<HTMLInputElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
-  // The message box grows with the text (up to about 6 lines, then it scrolls).
+  // One line when empty; grows with the text up to ~6 lines, then scrolls. Modern browsers do this
+  // with CSS `field-sizing: content`; older ones get the same result from this small fallback.
   useEffect(() => {
     const el = input.current;
-    if (!el) return;
+    if (!el || (typeof CSS !== "undefined" && CSS.supports("field-sizing", "content"))) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
+    if (text) el.style.height = `${Math.min(el.scrollHeight + 2, 160)}px`;
   }, [text, open]);
 
   useEffect(() => {
@@ -210,9 +211,10 @@ export function HelpBot() {
                     ask(text);
                   }
                 }}
-                rows={2}
-                placeholder="Poochho… (Enter = bhejo, Shift+Enter = nayi line, Ctrl+V = screenshot)"
-                className="min-h-[52px] flex-1 resize-none overflow-y-auto rounded-xl border border-line bg-paper px-3 py-2.5 text-sm leading-relaxed outline-none focus:border-brand"
+                rows={1}
+                placeholder="Kuch bhi poochho…"
+                title="Enter = bhejo · Shift+Enter = nayi line · Ctrl+V = screenshot paste"
+                className="max-h-40 min-h-10 flex-1 resize-none overflow-y-auto rounded-xl border border-line bg-paper px-3 py-2 text-sm leading-5 outline-none [field-sizing:content] focus:border-brand"
               />
               <button type="submit" disabled={pending || (!text.trim() && !image)} className="rounded-xl bg-brand p-2.5 text-white disabled:opacity-40" aria-label="Send">
                 <Send className="size-4" />
