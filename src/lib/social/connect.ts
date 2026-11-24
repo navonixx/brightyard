@@ -61,7 +61,10 @@ export async function connectMeta(appId: string, appSecret: string, userToken: s
   for (const [key, value] of Object.entries(values)) {
     await sq("INSERT INTO so_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", [key, value]);
   }
-  return { page: page.name, instagram: ig.username ?? ig.id };
+  // Posting needs these; a token can connect without them (it then fails at publish time).
+  const needed = ["pages_manage_posts", "instagram_basic", "instagram_content_publish"];
+  const missing = scopes.length ? needed.filter((n) => !scopes.includes(n)) : [];
+  return { page: page.name, instagram: ig.username ?? ig.id, missing };
 }
 
 export async function disconnectMeta() {

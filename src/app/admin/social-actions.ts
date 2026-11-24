@@ -112,7 +112,9 @@ export async function soConnectMeta(_: ActionState, form: FormData): Promise<Act
   try {
     const r = await connectMeta(appId, appSecret, userToken);
     refresh();
-    return { ok: true, message: `Connected: Facebook Page “${r.page}” and Instagram @${r.instagram}. Approved posts can now publish automatically.` };
+    if (r.missing.length)
+      return { ok: false, message: `Connected to “${r.page}” / @${r.instagram}, BUT the token is missing: ${r.missing.join(", ")}. Posting there will fail. Add these permissions in Graph API Explorer (and in the app’s use case), generate a new token, tick the Page AND the Instagram account in the popup, then Disconnect and connect again.` };
+    return { ok: true, message: `Connected: Facebook Page “${r.page}” and Instagram @${r.instagram}, with all posting permissions. Approved posts can now publish automatically.` };
   } catch (e) {
     return { message: e instanceof Error ? e.message.slice(0, 300) : String(e) };
   }
