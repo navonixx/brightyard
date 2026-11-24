@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Columns2, Database, LayoutDashboard, LogOut, Megaphone, Radar, Send, Settings, Users } from "lucide-react";
+import { BookOpenCheck, Columns2, Database, LayoutDashboard, LogOut, MailCheck, Megaphone, Radar, Send, Settings, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { logout } from "../actions";
 
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/sites", label: "Before & After", icon: Columns2 },
   { href: "/admin/outreach", label: "Outreach", icon: Send },
+  { href: "/admin/tracker", label: "Email Tracker", icon: MailCheck },
   { href: "/admin/social", label: "Social", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;

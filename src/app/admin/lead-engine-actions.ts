@@ -163,3 +163,12 @@ export async function leFollowUpSent(id: number) {
   await markFollowUpSent(Number(id));
   refresh();
 }
+
+export async function trSetOutcome(kind: "le" | "main", key: string, outcome: "replied" | "won" | "lost" | "contacted"): Promise<ActionState> {
+  await requireAdmin();
+  if (!["le", "main"].includes(kind) || !["replied", "won", "lost", "contacted"].includes(outcome)) return { message: "Not allowed." };
+  const { setOutcome } = await import("@/lib/tracker");
+  await setOutcome(kind, String(key), outcome);
+  refresh();
+  return { ok: true, message: `Marked ${outcome}.` };
+}
