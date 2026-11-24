@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS so_videos (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS so_videos_status ON so_videos (status);
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS not_before timestamptz;
 `;
 
 const g = globalThis as unknown as { __soReady?: Promise<void> };

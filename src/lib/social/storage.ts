@@ -18,6 +18,11 @@ export function storageReady() {
 }
 
 export async function uploadToStorage(file: string | Buffer, fileName: string, folder = "/social/studio"): Promise<string> {
+  return (await uploadWithInfo(file, fileName, folder)).url;
+}
+
+/** Same, plus the width/height ImageKit measured (used to place text around a video). */
+export async function uploadWithInfo(file: string | Buffer, fileName: string, folder = "/social/studio"): Promise<{ url: string; width?: number; height?: number }> {
   const key = process.env.IMAGEKIT_PRIVATE_KEY;
   if (!key) throw new Error("IMAGEKIT_PRIVATE_KEY is not set.");
   const form = new FormData();
@@ -33,9 +38,9 @@ export async function uploadToStorage(file: string | Buffer, fileName: string, f
     cache: "no-store",
     signal: AbortSignal.timeout(50_000),
   });
-  const data = (await res.json().catch(() => ({}))) as { url?: string; message?: string };
+  const data = (await res.json().catch(() => ({}))) as { url?: string; message?: string; width?: number; height?: number };
   if (!res.ok || !data.url) throw new Error(data.message || `ImageKit upload failed (${res.status})`);
-  return data.url;
+  return { url: data.url, width: data.width, height: data.height };
 }
 
 /** A link that makes the browser download the file instead of playing it. */
@@ -57,18 +62,42 @@ export const overlayText = (s: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+export type Layout = "full" | "letterbox" | "pad";
+
+/** Landscape clips get the letterbox layout; tall non-vertical clips are padded with boxed text. */
+export function pickLayout(preferred: "full" | "letterbox", width?: number, height?: number): Layout {
+  if (preferred === "full") return "full";
+  if (!width || !height) return "letterbox";
+  const ratio = height / width;
+  if (ratio <= 0.8) return "letterbox";
+  return ratio >= 1.7 ? "full" : "pad";
+}
+
 /**
- * The clip resized to 1080×1920 with the hook on top for the first seconds and the call to action
- * near the bottom at the end — drawn by ImageKit, so no video editing runs on our server.
- * `ov-redirect_false` makes ImageKit answer 202 until the new video is ready (see `overlayReady`).
+ * The clip as a 1080×1920 reel with the hook and the call to action drawn on it by ImageKit, so no
+ * video editing runs on our server.
+ * - "full": a vertical clip fills the frame; hook (first 3 s) and CTA (last 3 s) sit in dark boxes.
+ * - "letterbox": a landscape clip sits in the middle of a brand-colored frame; the hook stays in the
+ *   top band the whole time and the CTA appears in the bottom band (a common Reels format).
+ * Each text sits inside a transparent full-width strip so it's centred (video layers don't support
+ * centre-x positioning). `ov-redirect_false` makes ImageKit answer 202 until the video is ready.
+ * Reels safe zone: Instagram's caption and buttons cover roughly the bottom quarter.
  */
-export function overlayUrl(videoUrl: string, hook: string, cta: string, seconds: number) {
-  const text = (s: string, from: number, to: number | null, y: number) =>
-    `l-text,ie-${b64(overlayText(s).slice(0, 90))},w-900,lx-90,ly-${y},fs-58,tg-b,co-FFFFFF,bg-00000085,pa-28,r-24,ia-center,lso-${from}${to !== null ? `,leo-${to}` : ""},l-end`;
-  const steps = ["w-1080,h-1920,c-maintain_ratio"];
-  // Reels safe zone: Instagram's caption and buttons cover roughly the bottom quarter.
-  if (overlayText(hook)) steps.push(text(hook, 0, Math.min(3, seconds), 300));
-  if (overlayText(cta)) steps.push(text(cta, Math.max(0, seconds - 3), seconds, 1220));
+export function overlayUrl(videoUrl: string, hook: string, cta: string, seconds: number, layout: Layout = "full") {
+  const strip = (s: string, from: number, to: number, y: number, inner: string) =>
+    `l-image,i-ik_canvas,bg-07051A00,w-1080,h-260,lx-0,ly-${y},lso-${from},leo-${to},l-text,ie-${b64(overlayText(s).slice(0, 90))},w-940,ia-center,tg-b,${inner},l-end,l-end`;
+  const end = Math.max(1, seconds);
+  const steps: string[] = [];
+  if (layout === "letterbox") {
+    steps.push("w-1080,h-1920,cm-pad_resize,bg-07051A");
+    if (overlayText(hook)) steps.push(strip(hook, 0, end, 330, "fs-76,co-FFFFFF"));
+    if (overlayText(cta)) steps.push(strip(cta, Math.min(1.5, end / 2), end, 1290, "fs-52,co-E040FB"));
+  } else {
+    steps.push(layout === "pad" ? "w-1080,h-1920,cm-pad_resize,bg-07051A" : "w-1080,h-1920,c-maintain_ratio");
+    const box = "fs-58,co-FFFFFF,bg-00000085,pa-28,r-24";
+    if (overlayText(hook)) steps.push(strip(hook, 0, Math.min(3, end), 260, box));
+    if (overlayText(cta)) steps.push(strip(cta, Math.max(0, end - 3), end, 1180, box));
+  }
   steps[steps.length - 1] += ",ov-redirect_false";
   return `${videoUrl.split("?")[0]}?tr=${steps.join(":")}`;
 }

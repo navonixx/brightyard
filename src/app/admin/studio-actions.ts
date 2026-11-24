@@ -29,14 +29,14 @@ export async function stPlan(_: ActionState, form: FormData): Promise<ActionStat
 
 export async function stQueue(id: number): Promise<ActionState> {
   await requireAdmin();
-  await sq("UPDATE so_videos SET status = 'queued', error = NULL, updated_at = now() WHERE id = $1 AND status IN ('idea','failed')", [id]);
+  await sq("UPDATE so_videos SET status = 'queued', error = NULL, not_before = NULL, updated_at = now() WHERE id = $1 AND status IN ('idea','failed')", [id]);
   refresh();
   return { ok: true, message: "Queued — the studio is making it." };
 }
 
 export async function stQueueAll(): Promise<ActionState> {
   await requireAdmin();
-  const r = await sq("UPDATE so_videos SET status = 'queued', error = NULL, updated_at = now() WHERE status = 'idea' RETURNING id");
+  const r = await sq("UPDATE so_videos SET status = 'queued', error = NULL, not_before = NULL, updated_at = now() WHERE status = 'idea' RETURNING id");
   refresh();
   return { ok: true, message: `${r.length} queued.` };
 }

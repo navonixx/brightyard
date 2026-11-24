@@ -14,16 +14,26 @@ export type VideoModel = {
   t2v: string;
   i2v: string;
   perSecond: number;
+  /** Flat price per clip (open-source models), instead of per second. */
+  perClip?: number;
   resolution?: string;
   audio?: boolean;
   maxSeconds: number;
+  /** The model always returns this length (duration is ignored). */
+  fixedSeconds?: number;
+  /** Sends portrait: true (wan) — it still returns landscape, so the reel uses the letterbox layout. */
+  portraitFlag?: boolean;
+  layout: "full" | "letterbox";
 };
 
+// Tested 2026-11-24: wan2.2 works on the plan (text and image → video, 832×480, 5 s, 16 fps, silent,
+// ~60–160 s). Seedance/Kling are "third party" models: they need money in the ModelsLab wallet.
 export const VIDEO_MODELS: VideoModel[] = [
-  { key: "seedance-fast", label: "Seedance 2.0 Fast · 720p · with sound (recommended)", t2v: "seedance-2.0-fast-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.18, resolution: "720p", audio: true, maxSeconds: 15 },
-  { key: "seedance-cheap", label: "Seedance 2.0 Fast · 480p · cheaper", t2v: "seedance-2.0-fast-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.08, resolution: "480p", audio: true, maxSeconds: 15 },
-  { key: "seedance-mini", label: "Seedance Mini · 480p · cheapest (drafts)", t2v: "seedance-2-mini-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.05, resolution: "480p", maxSeconds: 15 },
-  { key: "kling-v3", label: "Kling 3.0 · cinematic look", t2v: "kling-v3-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.09, maxSeconds: 10 },
+  { key: "wan-2.2", label: "Wan 2.2 · open-source · 5 s, no sound, text above & below the video", t2v: "wan2.2", i2v: "wan2.2", perSecond: 0, perClip: 0.075, maxSeconds: 5, fixedSeconds: 5, portraitFlag: true, layout: "letterbox" },
+  { key: "seedance-fast", label: "Seedance 2.0 Fast · 720p vertical · with sound (best, needs wallet)", t2v: "seedance-2.0-fast-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.18, resolution: "720p", audio: true, maxSeconds: 15, layout: "full" },
+  { key: "seedance-cheap", label: "Seedance 2.0 Fast · 480p vertical · with sound (needs wallet)", t2v: "seedance-2.0-fast-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.08, resolution: "480p", audio: true, maxSeconds: 15, layout: "full" },
+  { key: "seedance-mini", label: "Seedance Mini · 480p vertical (needs wallet)", t2v: "seedance-2-mini-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.05, resolution: "480p", maxSeconds: 15, layout: "full" },
+  { key: "kling-v3", label: "Kling 3.0 · cinematic (needs wallet)", t2v: "kling-v3-t2v", i2v: "seedance-2.0-fast-i2v", perSecond: 0.09, maxSeconds: 10, layout: "full" },
 ];
 
 export function modelslabReady() {
@@ -31,8 +41,12 @@ export function modelslabReady() {
 }
 
 export function estimateCost(model: VideoModel, seconds: number) {
+  if (model.perClip !== undefined) return model.perClip;
   return Math.round(model.perSecond * seconds * 100) / 100;
 }
+
+/** The real clip length a model will return. */
+export const clipSeconds = (model: VideoModel, wanted: number) => model.fixedSeconds ?? Math.max(4, Math.min(model.maxSeconds, Math.round(wanted)));
 
 type Raw = {
   status?: string;
@@ -63,7 +77,16 @@ const text = (v: unknown) => (typeof v === "string" ? v : v ? JSON.stringify(v) 
 function read(raw: Raw): JobState {
   const s = String(raw.status ?? "").toLowerCase();
   const id = raw.id !== undefined && raw.id !== null ? String(raw.id) : undefined;
-  if (s === "error" || s === "failed") return { status: "error", id, message: text(raw.message ?? raw.messege ?? raw.error).slice(0, 300) || "ModelsLab returned an error" };
+  if (s === "error" || s === "failed") {
+    const message = text(raw.message ?? raw.messege ?? raw.error).slice(0, 300) || "ModelsLab returned an error";
+    return {
+      status: "error",
+      id,
+      message: /exhausted|fund your wallet|insufficient/i.test(message)
+        ? `${message} — add money to your ModelsLab wallet, or switch Studio settings to “Wan 2.2” (works on your plan).`
+        : message,
+    };
+  }
   const url = firstUrl(raw.output, raw.proxy_links);
   if (s === "success" && url) return { status: "success", id, url };
   return { status: "processing", id, fetchUrl: raw.fetch_result, eta: raw.eta };
@@ -90,9 +113,11 @@ export async function submitVideo(opts: { prompt: string; seconds: number; model
   const body: Record<string, unknown> = {
     model_id: opts.modelOverride || (opts.imageUrl ? model.i2v : model.t2v),
     prompt: opts.prompt,
-    duration: Math.max(4, Math.min(model.maxSeconds, Math.round(opts.seconds))),
+    duration: clipSeconds(model, opts.seconds),
     aspect_ratio: "9:16",
   };
+  if (model.portraitFlag) body.portrait = true;
+  body.negative_prompt = "text, letters, words, watermark, logo, morphing, deformed product, changing shape, extra objects, blurry, low quality";
   if (model.resolution) body.resolution = model.resolution;
   if (model.audio) body.generate_audio = true;
   if (opts.imageUrl) body.init_image = [opts.imageUrl];

@@ -36,7 +36,7 @@ export function StudioRunner({ pending, queued, step }: { pending: number; queue
           }
           if (!r.pending && !r.queued) break;
           // Something new is waiting to start → go again quickly; otherwise wait for ModelsLab.
-          await new Promise((res) => setTimeout(res, r.queued ? 1500 : 10_000));
+          await new Promise((res) => setTimeout(res, r.startable ? 1500 : 15_000));
         } catch {
           if (++failures >= 5) break;
           await new Promise((res) => setTimeout(res, 8000));

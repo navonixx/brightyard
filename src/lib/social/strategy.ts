@@ -34,7 +34,7 @@ const Idea = z.object({
   videoPrompt: z
     .string()
     .describe(
-      "For reel/photo_ad only (else empty). A detailed prompt for an AI video model, 60-120 words: subject, action, camera movement (e.g. slow push-in, orbit, macro tracking), lighting, mood, setting, vertical 9:16 framing with the subject centered. Something visually happens in the FIRST second. No text, letters, logos, brand names or real people in the video. For photo_ad: describe how the given still photo should come alive (camera move + motion of elements), keep the product identical.",
+      "For reel/photo_ad only (else empty). A detailed prompt for an AI video model, 60-120 words: subject, action, camera movement (e.g. slow push-in, orbit, macro tracking), lighting, mood, setting, vertical 9:16 framing with the subject centered. Something visually happens in the FIRST second. No text, letters, logos, brand names or real people in the video. For photo_ad: describe how the given still photo should come alive with CAMERA movement (slow push-in, gentle orbit, parallax) and motion AROUND the product (light sweep, steam, particles, fabric, water) — the product itself stays exactly the same shape, material, color and size; it never transforms.",
     ),
   seconds: z.number().int().describe("Clip length 5-10 seconds. Loopable."),
   libraryIds: z.array(z.string()).describe("photo_ad: exactly 1 image id from the library list. collage: exactly 4 image ids from different campaigns. Otherwise empty."),
@@ -71,6 +71,11 @@ const LIBRARY_LIST = LIBRARY.filter((l) => l.kind === "image")
   .map((l) => `${l.id}: ${l.label} (${l.industry})`)
   .join("\n");
 
+// "Commercial ad", "Social post" and hero shots have headline text baked in, which clashes with our
+// on-screen hook and gets mangled by image-to-video. Only clean shots are animated.
+const CLEAN_FOR_VIDEO = LIBRARY.filter((l) => l.kind === "image" && /Lifestyle|Detail study/.test(l.label));
+const CLEAN_LIST = CLEAN_FOR_VIDEO.map((l) => `${l.id}: ${l.label} (${l.industry})`).join("\n");
+
 /** Asks the AI for `count` ready-to-produce pieces in the given mix of formats. */
 export async function planIdeas(mix: Format[], topic: string, recentTitles: string[]): Promise<IdeaT[]> {
   if (!aiEnabled()) throw new Error("No AI key is set (OpenAI or Claude) — the planner needs one.");
@@ -82,7 +87,8 @@ export async function planIdeas(mix: Format[], topic: string, recentTitles: stri
       `Create exactly ${mix.length} pieces in this order of formats: ${mix.join(", ")}.`,
       topic ? `Theme / topic from the owner: ${topic}` : "Pick strong, varied ideas across the pillars.",
       recentTitles.length ? `Already made recently (don't repeat): ${recentTitles.slice(0, 30).join(" | ")}` : null,
-      `Portfolio image library (use ids for photo_ad and collage):\n${LIBRARY_LIST}`,
+      `Images for photo_ad (clean shots without text — use ONLY these ids for photo_ad):\n${CLEAN_LIST}`,
+      `Full portfolio library (ids for collage):\n${LIBRARY_LIST}`,
     ]
       .filter(Boolean)
       .join("\n\n"),
@@ -90,10 +96,15 @@ export async function planIdeas(mix: Format[], topic: string, recentTitles: stri
   if (!r?.ideas?.length) throw new Error("The AI didn't return a plan — try again.");
   const ids = new Set(LIBRARY.filter((l) => l.kind === "image").map((l) => l.id));
   const fallbackImages = LIBRARY.filter((l) => l.kind === "image").map((l) => l.id);
+  const clean = new Set(CLEAN_FOR_VIDEO.map((l) => l.id));
+  const cleanIds = [...clean];
   return r.ideas.slice(0, mix.length).map((idea, i) => {
     const format = mix[i] ?? idea.format;
     let libraryIds = idea.libraryIds.filter((id) => ids.has(id));
-    if (format === "photo_ad" && !libraryIds.length) libraryIds = [fallbackImages[Math.floor(Math.random() * fallbackImages.length)]];
+    if (format === "photo_ad") {
+      const ok = libraryIds.filter((id) => clean.has(id));
+      libraryIds = ok.length ? ok.slice(0, 1) : [cleanIds[Math.floor(Math.random() * cleanIds.length)]];
+    }
     if (format === "collage" && libraryIds.length < 4) libraryIds = [...new Set([...libraryIds, ...fallbackImages.filter((_, j) => j % 5 === 0)])].slice(0, 4);
     return { ...idea, format, libraryIds, seconds: Math.max(5, Math.min(10, idea.seconds || 8)) };
   });

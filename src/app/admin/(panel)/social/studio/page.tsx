@@ -73,7 +73,7 @@ async function Studio() {
         <span className="rounded-full bg-paper px-2.5 py-1 text-xs">
           Budget this month: <strong>{money(spent)}</strong> of {money(settings.cap)}
         </span>
-        <span className="rounded-full bg-paper px-2.5 py-1 text-xs">Video model: {modelFor(settings.model).label.split(" (")[0]}</span>
+        <span className="rounded-full bg-paper px-2.5 py-1 text-xs">Video model: {modelFor(settings.model).label.split(" · ")[0]}</span>
       </div>
 
       {!modelslabReady() ? (
@@ -111,7 +111,7 @@ async function Studio() {
           <SubmitButton pendingText="AI is planning… (~30 s)">Plan with AI</SubmitButton>
         </ActionForm>
         <p className="text-xs text-muted">
-          Ideas cost nothing. Money is only spent when you press “Make it”: a video ≈ {money(estimate({ format: "reel", duration: 8 }, settings))} (8 s clip + cover + thumbnail), a carousel ≈ {money(estimate({ format: "carousel", duration: 0 }, settings))}, a collage is free.
+          Ideas cost nothing. Money is only spent when you press “Make it”: a video ≈ {money(estimate({ format: "reel", duration: 8 }, settings))} (clip + cover + thumbnail), a carousel ≈ {money(estimate({ format: "carousel", duration: 0 }, settings))}, a collage is free.
         </p>
       </section>
 
@@ -347,7 +347,7 @@ function SettingsCard({ s }: { s: StudioSettings }) {
           <label className="label" htmlFor="model">Video model (ModelsLab)</label>
           <select id="model" name="model" defaultValue={s.model} className="input">
             {VIDEO_MODELS.map((m) => (
-              <option key={m.key} value={m.key}>{m.label} — ≈ ${m.perSecond.toFixed(2)}/sec</option>
+              <option key={m.key} value={m.key}>{m.label} — ≈ {m.perClip !== undefined ? `$${m.perClip.toFixed(3)}/clip` : `$${m.perSecond.toFixed(2)}/sec`}</option>
             ))}
           </select>
         </div>

@@ -4,9 +4,9 @@ import { siteUrl } from "@/lib/brand";
 import { sq } from "./db";
 import { IMAGE_COST, coverPrompt, imagesReady, makeCollage, makeImage, slidePrompt, thumbPrompt } from "./images";
 import { libraryById } from "./library";
-import { VIDEO_MODELS, estimateCost, fetchVideo, modelslabReady, submitVideo, type VideoModel } from "./modelslab";
+import { VIDEO_MODELS, clipSeconds, estimateCost, fetchVideo, modelslabReady, submitVideo, type VideoModel } from "./modelslab";
 import { easternToDate, dateToEastern } from "./plan";
-import { overlayReady, overlayUrl, publicUrl, storageReady, uploadToStorage } from "./storage";
+import { overlayReady, overlayUrl, pickLayout, publicUrl, storageReady, uploadWithInfo } from "./storage";
 import { planIdeas, type Format } from "./strategy";
 
 /**
@@ -52,7 +52,8 @@ export type Video = {
 
 export type StudioSettings = { model: string; cap: number; autoSchedule: boolean; autoApprove: boolean; postHour: number; t2vOverride: string; i2vOverride: string };
 
-const DEFAULTS: StudioSettings = { model: "seedance-fast", cap: 15, autoSchedule: true, autoApprove: false, postHour: 10, t2vOverride: "", i2vOverride: "" };
+// Wan 2.2 works on the current ModelsLab plan; Seedance needs wallet credit (switch in Studio settings).
+const DEFAULTS: StudioSettings = { model: "wan-2.2", cap: 15, autoSchedule: true, autoApprove: false, postHour: 10, t2vOverride: "", i2vOverride: "" };
 
 export async function studioSettings(): Promise<StudioSettings> {
   const rows = await sq<{ value: string }>("SELECT value FROM so_settings WHERE key = 'studio'");
@@ -176,14 +177,28 @@ async function produce(v: Video, s: StudioSettings): Promise<string> {
       trackId: `alderwell-${v.id}`,
       modelOverride: v.format === "photo_ad" ? s.i2vOverride : s.t2vOverride,
     });
-    if (job.status === "error") throw new Error(`ModelsLab: ${job.message}`);
-    await sq("UPDATE so_videos SET status = 'rendering', model = $2, ml_id = $3, ml_fetch = $4, raw_url = $5, cost = $6, tries = 0, error = NULL, updated_at = now() WHERE id = $1", [
+    if (job.status === "error") {
+      // Rate limit: not a real failure — put it back in the queue and try again after the wait.
+      const wait = job.message?.match(/rate limit[\s\S]*?(\d+)\s*minute/i);
+      if (wait || /rate limit/i.test(job.message ?? "")) {
+        const minutes = Math.min(60, Number(wait?.[1] ?? 5)) + 0.5;
+        await sq("UPDATE so_videos SET status = 'queued', not_before = now() + make_interval(secs => $2), error = $3, updated_at = now() WHERE id = $1", [
+          v.id,
+          Math.round(minutes * 60),
+          `ModelsLab is busy (rate limit) — trying again in about ${Math.ceil(minutes)} min.`,
+        ]);
+        return `#${v.id}: ModelsLab rate limit — retry in ~${Math.ceil(minutes)} min`;
+      }
+      throw new Error(`ModelsLab: ${job.message}`);
+    }
+    await sq("UPDATE so_videos SET status = 'rendering', model = $2, ml_id = $3, ml_fetch = $4, raw_url = $5, cost = $6, duration = $7, tries = 0, error = NULL, updated_at = now() WHERE id = $1", [
       v.id,
       model.key,
       job.id ?? null,
       job.fetchUrl ?? null,
       job.url ?? null,
       cost,
+      clipSeconds(model, v.duration),
     ]);
     if (imagesReady()) {
       const [cover, thumb] = await Promise.allSettled([
@@ -192,7 +207,7 @@ async function produce(v: Video, s: StudioSettings): Promise<string> {
       ]);
       await sq("UPDATE so_videos SET cover_url = $2, thumb_url = $3 WHERE id = $1", [v.id, cover.status === "fulfilled" ? cover.value : null, thumb.status === "fulfilled" ? thumb.value : null]);
     }
-    return `#${v.id}: video started (${model.label.split(" · ")[0]}, ~${v.duration}s)`;
+    return `#${v.id}: video started (${model.label.split(" · ")[0]}, ${clipSeconds(model, v.duration)}s)`;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await fail(v.id, msg);
@@ -214,6 +229,11 @@ export async function tick(): Promise<string[]> {
             continue;
           }
           const job = await fetchVideo(v.ml_id, v.ml_fetch);
+          if (job.status === "error" && /rate limit/i.test(job.message ?? "")) {
+            // Asking too often — the video is still being made; check again later.
+            await sq("UPDATE so_videos SET updated_at = now() WHERE id = $1", [v.id]);
+            continue;
+          }
           if (job.status === "error") {
             await fail(v.id, `ModelsLab: ${job.message}`);
             log.push(`#${v.id}: failed — ${job.message}`);
@@ -227,8 +247,9 @@ export async function tick(): Promise<string[]> {
           }
           url = job.url;
         }
-        const stored = await uploadToStorage(url, `v${v.id}.mp4`);
-        const final = overlayUrl(stored, v.hook, v.cta, v.duration);
+        const up = await uploadWithInfo(url, `v${v.id}.mp4`);
+        const stored = up.url;
+        const final = overlayUrl(stored, v.hook, v.cta, v.duration, pickLayout(modelFor(v.model ?? "").layout, up.width, up.height));
         await sq("UPDATE so_videos SET status = 'finishing', raw_url = $2, video_url = $3, final_url = $4, tries = 0, updated_at = now() WHERE id = $1", [v.id, url, stored, final]);
         log.push(`#${v.id}: clip done — adding text`);
       } else {
@@ -303,7 +324,7 @@ export async function schedule(id: number, when?: Date | null): Promise<string> 
 
 // ——— One step for the runner / webhook / cron ———
 
-export type StepResult = { log: string[]; pending: number; queued: number };
+export type StepResult = { log: string[]; pending: number; queued: number; startable: number };
 
 export async function studioStep(opts: { produceOne?: boolean } = {}): Promise<StepResult> {
   const s = await studioSettings();
@@ -311,7 +332,7 @@ export async function studioStep(opts: { produceOne?: boolean } = {}): Promise<S
   await sq("UPDATE so_videos SET status = 'queued' WHERE status = 'starting' AND updated_at < now() - interval '5 minutes'");
   const log = await tick();
   if (opts.produceOne !== false) {
-    const [next] = await sq<Video>("SELECT * FROM so_videos WHERE status = 'queued' ORDER BY id LIMIT 1");
+    const [next] = await sq<Video>("SELECT * FROM so_videos WHERE status = 'queued' AND (not_before IS NULL OR not_before <= now()) ORDER BY id LIMIT 1");
     if (next) {
       // Claim it so two tabs don't start the same job twice.
       const claimed = await sq("UPDATE so_videos SET status = 'starting', updated_at = now() WHERE id = $1 AND status = 'queued' RETURNING id", [next.id]);
@@ -322,8 +343,8 @@ export async function studioStep(opts: { produceOne?: boolean } = {}): Promise<S
     const ready = await sq<{ id: number }>("SELECT id FROM so_videos WHERE status = 'ready' ORDER BY id LIMIT 3");
     for (const r of ready) log.push(`#${r.id}: ${await schedule(r.id)}`);
   }
-  const [c] = await sq<{ pending: number; queued: number }>(
-    "SELECT count(*) FILTER (WHERE status IN ('starting','rendering','finishing'))::int pending, count(*) FILTER (WHERE status = 'queued')::int queued FROM so_videos",
+  const [c] = await sq<{ pending: number; queued: number; startable: number }>(
+    "SELECT count(*) FILTER (WHERE status IN ('starting','rendering','finishing'))::int pending, count(*) FILTER (WHERE status = 'queued')::int queued, count(*) FILTER (WHERE status = 'queued' AND (not_before IS NULL OR not_before <= now()))::int startable FROM so_videos",
   );
-  return { log, pending: c?.pending ?? 0, queued: c?.queued ?? 0 };
+  return { log, pending: c?.pending ?? 0, queued: c?.queued ?? 0, startable: c?.startable ?? 0 };
 }
