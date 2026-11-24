@@ -102,7 +102,12 @@ export async function soConnectMeta(_: ActionState, form: FormData): Promise<Act
   const appId = String(form.get("appId") ?? "").trim();
   const appSecret = String(form.get("appSecret") ?? "").trim();
   const userToken = String(form.get("userToken") ?? "").trim();
-  if (!/^\d{6,}$/.test(appId) || appSecret.length < 16 || userToken.length < 50) return { message: "Paste the App ID (numbers), the App Secret and the access token." };
+  const problems = [
+    !/^\d{6,}$/.test(appId) && "App ID (sirf numbers, App settings → Basic)",
+    !/^[a-f0-9]{16,}$/i.test(appSecret) && "App secret (32 letters/numbers — App settings → Basic → Show)",
+    userToken.length < 50 && "Access token (Graph API Explorer → Generate Access Token se milta hai, bahut lamba hota hai)",
+  ].filter(Boolean);
+  if (problems.length) return { message: `Ye box khaali ya galat hai: ${problems.join(" · ")}` };
   const { connectMeta } = await import("@/lib/social/connect");
   try {
     const r = await connectMeta(appId, appSecret, userToken);

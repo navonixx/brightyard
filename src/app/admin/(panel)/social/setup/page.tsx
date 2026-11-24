@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
-import { ActionButton, ActionForm, CopyButton, SubmitButton } from "@/components/admin/ui";
+import { ActionButton, CopyButton } from "@/components/admin/ui";
+import { MetaConnectForm } from "@/components/admin/social/meta-connect";
 import { soConnectMeta, soDisconnectMeta } from "../../../social-actions";
 import { SoHeader } from "@/components/admin/social/header";
 import { metaConfig } from "@/lib/social/publish";
@@ -114,23 +115,7 @@ async function Setup() {
               <li>Open <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="text-brand underline">Graph API Explorer</a> → pick your app (top right) → “User or Page”: <strong>Get User Access Token</strong> → add these permissions: <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>business_management</code> → <strong>Generate Access Token</strong> → in the popup choose the Alderwell Page and the Instagram account → copy the long token.</li>
               <li>Paste all three below and press Connect. The token is converted into one that doesn&apos;t expire; the App secret isn&apos;t stored.</li>
             </ol>
-            <ActionForm action={soConnectMeta} className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
-              <div>
-                <label className="label" htmlFor="appId">App ID</label>
-                <input id="appId" name="appId" inputMode="numeric" autoComplete="off" className="input" />
-              </div>
-              <div>
-                <label className="label" htmlFor="appSecret">App secret</label>
-                <input id="appSecret" name="appSecret" type="password" autoComplete="off" className="input" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="label" htmlFor="userToken">Access token (from Graph API Explorer)</label>
-                <input id="userToken" name="userToken" type="password" autoComplete="off" className="input" />
-              </div>
-              <div className="sm:col-span-2">
-                <SubmitButton pendingText="Connecting…">Connect Instagram &amp; Facebook</SubmitButton>
-              </div>
-            </ActionForm>
+            <MetaConnectForm action={soConnectMeta} />
           </div>
         )}
         <p className="text-sm">YouTube Shorts: post by hand for now (download the reel, upload in the YouTube app). Automatic upload needs Google to verify the app first.</p>
