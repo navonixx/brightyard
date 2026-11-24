@@ -73,6 +73,11 @@ async function Social() {
 
 function PostCard({ post, connected }: { post: Post; connected: boolean }) {
   const text = [post.caption, post.hashtags].filter(Boolean).join("\n\n");
+  // YouTube Shorts: a title (first caption line, max 100 chars) + description with #Shorts.
+  const firstLine = post.caption.split("\n").find((l) => l.trim()) ?? "Alderwell Creative";
+  const ytTitle = `${firstLine.replace(/[.!]$/, "").slice(0, 88)} #Shorts`;
+  const ytText = `TITLE:\n${ytTitle}\n\nDESCRIPTION:\n${post.caption}\n\nStart a project: https://alderwellcreative.vercel.app\n\n${post.hashtags} #Shorts`;
+  const hasReel = post.assets.length === 1 && post.assets[0].kind === "video";
   const id = post.id;
   return (
     <article className="card flex flex-col gap-4 p-4 sm:flex-row">
@@ -116,6 +121,7 @@ function PostCard({ post, connected }: { post: Post; connected: boolean }) {
             </>
           ) : null}
           <CopyButton text={text} label="Copy caption" />
+          {hasReel && post.platforms.includes("youtube") ? <CopyButton text={ytText} label="Copy for YouTube" /> : null}
           {post.assets.map((a, i) => (
             <a key={i} href={a.src} download className="btn-ghost px-3 py-1.5 text-xs">
               <Download className="size-3.5" /> {post.assets.length > 1 ? i + 1 : a.kind === "video" ? "Video" : "Photo"}
