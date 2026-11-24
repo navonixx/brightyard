@@ -86,7 +86,7 @@ function PostCard({ post, connected }: { post: Post; connected: boolean }) {
           <div key={i} className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={a.kind === "video" ? a.poster : a.src} alt={a.label} className={`rounded-lg object-cover ${post.assets.length > 1 ? "size-[104px]" : "h-[200px] w-[160px]"}`} />
-            {a.kind === "video" ? <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 text-[10px] text-white">REEL</span> : null}
+            {post.kind === "story" ? <span className="absolute left-1 top-1 rounded bg-fuchsia-600 px-1.5 text-[10px] text-white">STORY</span> : a.kind === "video" ? <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 text-[10px] text-white">REEL</span> : null}
           </div>
         ))}
         {post.assets.length > 4 ? <span className="self-center text-xs text-muted">+{post.assets.length - 4}</span> : null}

@@ -42,7 +42,7 @@ export async function graph(path: string, params: Record<string, string>, method
 }
 
 async function waitForContainer(id: string) {
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 18; i++) {
     const s = await graph(id, { fields: "status_code" }, "GET");
     if (s.status_code === "FINISHED") return;
     if (s.status_code === "ERROR") throw new Error("Instagram couldn't process the video");
@@ -54,7 +54,12 @@ async function waitForContainer(id: string) {
 async function toInstagram(post: Post, text: string, ig: string) {
   const media = post.assets;
   let creation: string;
-  if (media.length > 1) {
+  if (post.kind === "story") {
+    const a = media[0];
+    if (!a) throw new Error("A story needs a photo or video");
+    creation = String((await graph(`${ig}/media`, a.kind === "video" ? { media_type: "STORIES", video_url: abs(a.src) } : { media_type: "STORIES", image_url: abs(a.src) })).id);
+    if (a.kind === "video") await waitForContainer(creation);
+  } else if (media.length > 1) {
     const children: string[] = [];
     for (const a of media.slice(0, 10)) {
       const c = await graph(`${ig}/media`, a.kind === "video" ? { media_type: "VIDEO", video_url: abs(a.src), is_carousel_item: "true" } : { image_url: abs(a.src), is_carousel_item: "true" });
@@ -63,7 +68,9 @@ async function toInstagram(post: Post, text: string, ig: string) {
     }
     creation = String((await graph(`${ig}/media`, { media_type: "CAROUSEL", children: children.join(","), caption: text })).id);
   } else if (media[0]?.kind === "video") {
-    creation = String((await graph(`${ig}/media`, { media_type: "REELS", video_url: abs(media[0].src), caption: text })).id);
+    // A JPEG cover (the Studio draws one) shows in the profile grid instead of a random frame.
+    const cover = media[0].poster && /\.jpe?g($|\?)/i.test(media[0].poster) ? { cover_url: abs(media[0].poster) } : ({} as Record<string, string>);
+    creation = String((await graph(`${ig}/media`, { media_type: "REELS", video_url: abs(media[0].src), caption: text, ...cover })).id);
     await waitForContainer(creation);
   } else if (media[0]) {
     creation = String((await graph(`${ig}/media`, { image_url: abs(media[0].src), caption: text })).id);
@@ -96,6 +103,7 @@ export async function publishPost(post: Post): Promise<{ ok: boolean; message: s
     if (results[platform]?.id || results[platform]?.manual) continue;
     try {
       if (platform === "instagram") results.instagram = { ...(await toInstagram(post, text, cfg.igId)), at: new Date().toISOString() };
+      else if (platform === "facebook" && post.kind === "story") continue;
       else if (platform === "facebook") results.facebook = { ...(await toFacebook(post, text, cfg.pageId)), at: new Date().toISOString() };
       else errors.push(`${platform}: post by hand for now`);
     } catch (e) {
@@ -114,9 +122,14 @@ export async function publishPost(post: Post): Promise<{ ok: boolean; message: s
 }
 
 /** Approved posts whose time has come (used by the daily cron and the “Publish due posts” button). */
-export async function publishDue(): Promise<string[]> {
-  const due = await sq<Post>("SELECT * FROM so_posts WHERE status = 'approved' AND scheduled_for <= now() ORDER BY scheduled_for LIMIT 5");
+export async function publishDue(budgetMs = 30_000): Promise<string[]> {
+  const due = await sq<Post>("SELECT * FROM so_posts WHERE status = 'approved' AND scheduled_for <= now() ORDER BY scheduled_for, id LIMIT 8");
   const out: string[] = [];
-  for (const p of due) out.push(`#${p.id}: ${(await publishPost(p)).message}`);
+  const started = Date.now();
+  for (const p of due) {
+    // Leave room for Instagram's video processing; whatever is left goes out on the next run.
+    if (Date.now() - started > budgetMs) break;
+    out.push(`#${p.id}: ${(await publishPost(p)).message}`);
+  }
   return out;
 }

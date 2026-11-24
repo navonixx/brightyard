@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 const TABS = [
+  { href: "/admin/social/studio", label: "AI Studio" },
   { href: "/admin/social", label: "Posts" },
   { href: "/admin/social/compose", label: "New post" },
+  { href: "/admin/social/youtube", label: "YouTube" },
   { href: "/admin/social/setup", label: "Account setup" },
 ];
 

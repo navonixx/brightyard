@@ -19,6 +19,45 @@ CREATE TABLE IF NOT EXISTS so_posts (
 );
 CREATE INDEX IF NOT EXISTS so_posts_when ON so_posts (status, scheduled_for);
 CREATE TABLE IF NOT EXISTS so_settings (key text PRIMARY KEY, value text NOT NULL);
+ALTER TABLE so_posts ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'feed';
+ALTER TABLE so_posts ADD COLUMN IF NOT EXISTS video_id int;
+CREATE TABLE IF NOT EXISTS so_videos (
+  id serial PRIMARY KEY,
+  status text NOT NULL DEFAULT 'idea',
+  format text NOT NULL DEFAULT 'reel',
+  pillar text NOT NULL DEFAULT '',
+  title text NOT NULL DEFAULT '',
+  hook text NOT NULL DEFAULT '',
+  cta text NOT NULL DEFAULT '',
+  prompt text NOT NULL DEFAULT '',
+  image_src text,
+  duration int NOT NULL DEFAULT 8,
+  model text,
+  caption text NOT NULL DEFAULT '',
+  hashtags text NOT NULL DEFAULT '',
+  cover_text text NOT NULL DEFAULT '',
+  thumb_prompt text NOT NULL DEFAULT '',
+  slides jsonb NOT NULL DEFAULT '[]',
+  yt_title text NOT NULL DEFAULT '',
+  yt_description text NOT NULL DEFAULT '',
+  yt_tags text NOT NULL DEFAULT '',
+  ml_id text,
+  ml_fetch text,
+  raw_url text,
+  video_url text,
+  final_url text,
+  cover_url text,
+  thumb_url text,
+  media jsonb NOT NULL DEFAULT '[]',
+  cost numeric NOT NULL DEFAULT 0,
+  tries int NOT NULL DEFAULT 0,
+  error text,
+  scheduled_for timestamptz,
+  youtube_url text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS so_videos_status ON so_videos (status);
 `;
 
 const g = globalThis as unknown as { __soReady?: Promise<void> };
@@ -44,6 +83,8 @@ export type Post = {
   platforms: string[];
   scheduled_for: Date | string | null;
   status: "draft" | "approved" | "posted" | "failed";
+  kind?: "feed" | "story";
+  video_id?: number | null;
   results: Record<string, { id?: string; url?: string; at?: string; manual?: boolean }>;
   error: string | null;
   created_at: Date | string;

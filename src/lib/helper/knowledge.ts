@@ -41,6 +41,14 @@ ADMIN MENU (left side) AND WHAT EACH DOES
    - Once connected, approved posts publish automatically every day around 10:00 am US Eastern.
    - YouTube: auto-upload isn't possible yet (YouTube locks API uploads from unverified apps as Private until Google audits the app). Post Shorts by hand: **Download → Video**, **Copy for YouTube** (title + description + #Shorts), upload in the YouTube app or studio.youtube.com → Create → Upload, choose "No, it's not made for kids", then **Mark posted**.
    - Rules: no bought followers, no auto-likes, no automated cold DMs (accounts get banned).
+   - **AI Studio** (/admin/social/studio) — the main content machine:
+     1. **Create content**: choose "A full week (7 mixed pieces)" or one format (AI video reel, Photo → video ad, Tips carousel, Portfolio collage), how many, optional topic → **Plan with AI**. Ideas are free.
+     2. **Ideas to check**: each shows the on-screen hook, caption, estimated cost. **Edit hook, prompt, caption & YouTube text** to change anything → Save. **Make it** (one) or **Make all**.
+     3. Making: videos come from ModelsLab (needs MODELSLAB_API_KEY), take ~1–3 min; ImageKit then adds the hook text (first 3 s) and call to action (last 3 s). OpenAI draws the reel cover, YouTube thumbnail and carousel slides. Collages use portfolio photos (free). Keep the Studio tab open while it works (a webhook and the daily run also help).
+     4. **Ready** pieces get scheduled automatically to the next free day at the post time (Studio settings), as a feed post + the same video as an Instagram Story. They land on the **Posts** tab as drafts → **Approve** (or turn on "Approve them automatically too").
+     - Costs (estimates): 8 s video ≈ $1.54 with Seedance 2.0 Fast 720p (cheaper models in Studio settings), carousel ≈ $0.25, collage free. **Monthly budget** in Studio settings stops spending at the limit. ModelsLab has no free tier — the user tops up their ModelsLab wallet.
+     - Failed piece → read the red error → **Retry**. "MODELSLAB_API_KEY isn't set" → add the key to .env.local and ask Claude to add it on Vercel. A ModelsLab "model not found" error → Studio settings → Advanced → put the right model_id from ModelsLab's model page.
+   - **YouTube** tab (/admin/social/youtube): every finished video with **Download video**, thumbnail 16:9 / cover 9:16 downloads, **Copy** title / description / tags. Upload in YouTube Studio (Create → Upload) or the YouTube app; choose **Yes** for "Altered or synthetic content" (AI video). Paste the Short link → **Mark uploaded**.
 10. **Settings** (/admin/settings): sender name, business postal address (required by US CAN-SPAM in cold emails), goal, etc.
 
 HOW-TO: CONNECT INSTAGRAM & FACEBOOK (Social → Account setup → Automatic posting)
@@ -58,7 +66,7 @@ HOW-TO: GMAIL SENDING (already connected in production)
 - Spam: keep 15–20 emails/day, send a test to a friend first, emails have no links in the first message, reply fast to replies. The real fix later is an own domain + Google Workspace/Zoho mail with SPF, DKIM, DMARC, warmed up over 2–3 weeks; test at mail-tester.com.
 
 DAILY ROUTINE TO SUGGEST
-Morning: **Send emails** → send follow-ups, then 10 new emails. Afternoon: 10 more (20/day limit). Evening: **Check replies**; for each reply open the lead → **Build preview** → copy a reply template → send. Every day: Social posts (approve/post), keep Lead Engine **Start** running sometimes for fresh leads.
+Morning: **Send emails** → send follow-ups, then 10 new emails. Afternoon: 10 more (20/day limit). Evening: **Check replies**; for each reply open the lead → **Build preview** → copy a reply template → send. Once a week: **AI Studio** → Plan a full week → **Make all**. Every day: approve the Social posts, reply to comments/DMs, keep Lead Engine **Start** running sometimes for fresh leads.
 When someone presses "Make it live": send a PayPal invoice for the amount they chose; ask Claude (in VS Code) to connect their domain.
 
 WHEN TO SEND THEM TO CLAUDE (the developer AI in VS Code)
