@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { BookOpenCheck, Columns2, Database, LayoutDashboard, LogOut, MailCheck, Megaphone, Radar, Send, Settings, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { logout } from "../actions";
+import { HelpBot } from "@/components/admin/helper/help-bot";
 
 export const metadata: Metadata = {
   title: "Alderwell Creative Admin",
@@ -59,6 +61,9 @@ export default function PanelLayout({ children }: LayoutProps<"/admin">) {
         </div>
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+      <Suspense fallback={null}>
+        <HelpBot />
+      </Suspense>
     </div>
   );
 }
