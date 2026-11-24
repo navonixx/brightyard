@@ -63,6 +63,15 @@ export function HelpBot() {
   const [pending, start] = useTransition();
   const end = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+
+  // The message box grows with the text (up to about 6 lines, then it scrolls).
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
+  }, [text, open]);
 
   useEffect(() => {
     try {
@@ -115,7 +124,7 @@ export function HelpBot() {
           <MessageCircleQuestion className="size-5" /> Help
         </button>
       ) : (
-        <div className="fixed bottom-4 right-4 z-50 flex h-[min(620px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl">
+        <div className="fixed bottom-4 right-4 z-50 flex h-[min(620px,calc(100dvh-2rem))] w-[min(440px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-line bg-brand px-4 py-3 text-white">
             <div>
               <p className="text-sm font-semibold">Alderwell Helper</p>
@@ -179,12 +188,13 @@ export function HelpBot() {
                 <button type="button" onClick={() => setImage(null)} className="text-xs text-muted hover:text-danger">remove</button>
               </div>
             ) : null}
-            <div className="flex items-end gap-1.5">
+            <div className="flex items-end gap-2">
               <button type="button" onClick={() => file.current?.click()} className="rounded-lg p-2 text-muted hover:bg-paper hover:text-ink" aria-label="Attach screenshot" title="Attach screenshot">
                 <ImagePlus className="size-5" />
               </button>
               <input ref={file} type="file" accept="image/*" className="hidden" onChange={(e) => attach(e.target.files?.[0])} />
               <textarea
+                ref={input}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onPaste={(e) => {
@@ -200,9 +210,9 @@ export function HelpBot() {
                     ask(text);
                   }
                 }}
-                rows={1}
-                placeholder="Poochho… (Ctrl+V se screenshot paste)"
-                className="max-h-28 min-h-[40px] flex-1 resize-none rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-brand"
+                rows={2}
+                placeholder="Poochho… (Enter = bhejo, Shift+Enter = nayi line, Ctrl+V = screenshot)"
+                className="min-h-[52px] flex-1 resize-none overflow-y-auto rounded-xl border border-line bg-paper px-3 py-2.5 text-sm leading-relaxed outline-none focus:border-brand"
               />
               <button type="submit" disabled={pending || (!text.trim() && !image)} className="rounded-xl bg-brand p-2.5 text-white disabled:opacity-40" aria-label="Send">
                 <Send className="size-4" />
