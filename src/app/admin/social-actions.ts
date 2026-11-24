@@ -96,3 +96,27 @@ export async function soPublishDue(): Promise<ActionState> {
   refresh();
   return { ok: true, message: lines.length ? lines.join(" · ") : "Nothing is due right now." };
 }
+
+export async function soConnectMeta(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const appId = String(form.get("appId") ?? "").trim();
+  const appSecret = String(form.get("appSecret") ?? "").trim();
+  const userToken = String(form.get("userToken") ?? "").trim();
+  if (!/^\d{6,}$/.test(appId) || appSecret.length < 16 || userToken.length < 50) return { message: "Paste the App ID (numbers), the App Secret and the access token." };
+  const { connectMeta } = await import("@/lib/social/connect");
+  try {
+    const r = await connectMeta(appId, appSecret, userToken);
+    refresh();
+    return { ok: true, message: `Connected: Facebook Page “${r.page}” and Instagram @${r.instagram}. Approved posts can now publish automatically.` };
+  } catch (e) {
+    return { message: e instanceof Error ? e.message.slice(0, 300) : String(e) };
+  }
+}
+
+export async function soDisconnectMeta(): Promise<ActionState> {
+  await requireAdmin();
+  const { disconnectMeta } = await import("@/lib/social/connect");
+  await disconnectMeta();
+  refresh();
+  return { ok: true, message: "Disconnected." };
+}

@@ -1,7 +1,8 @@
 import { Download } from "lucide-react";
-import { CopyButton } from "@/components/admin/ui";
+import { ActionButton, ActionForm, CopyButton, SubmitButton } from "@/components/admin/ui";
+import { soConnectMeta, soDisconnectMeta } from "../../../social-actions";
 import { SoHeader } from "@/components/admin/social/header";
-import { metaConnected } from "@/lib/social/publish";
+import { metaConfig } from "@/lib/social/publish";
 import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { PageSkeleton } from "@/components/admin/skeleton";
@@ -59,7 +60,8 @@ export default function SetupPage() {
 
 async function Setup() {
   await requireAdmin();
-  const meta = metaConnected();
+  const cfg = await metaConfig();
+  const meta = Boolean(cfg);
   return (
     <div className="space-y-6">
       <SoHeader active="/admin/social/setup" title="Account setup" intro="Everything to create the accounts in about an hour — names, bios, images — and what's needed later to post automatically." />
@@ -97,16 +99,40 @@ async function Setup() {
 
       <section className="card space-y-3 p-5">
         <h2 className="font-semibold">Automatic posting</h2>
-        <p className="text-sm">
-          Instagram + Facebook: {meta ? "✅ connected — approved posts can be published from the Posts page." : "⚪ not connected yet."}
-        </p>
-        {!meta ? (
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-ink/80">
-            <li>Finish the Instagram Business account and the Facebook Page, and link them.</li>
-            <li>Tell Claude — it will walk you through creating a Meta app and a long-lived Page token (about 15 minutes, official API, no passwords shared).</li>
-            <li>The token goes into Vercel as META_PAGE_TOKEN, META_PAGE_ID and META_IG_USER_ID. After that, approved posts publish by themselves at their time.</li>
-          </ol>
-        ) : null}
+        {meta ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50 p-3 text-sm">
+            <span>✅ Connected{cfg?.pageName ? <> — Facebook Page <strong>{cfg.pageName}</strong></> : null}{cfg?.igUsername ? <> and Instagram <strong>@{cfg.igUsername}</strong></> : null}. Approved posts publish by themselves every day at about 10:00 am US Eastern (or press “Publish now” on a post).</span>
+            <ActionButton action={soDisconnectMeta} className="btn-ghost px-3 py-1 text-xs" confirm="Disconnect Instagram and Facebook?">Disconnect</ActionButton>
+          </div>
+        ) : (
+          <div className="space-y-3 text-sm">
+            <p>⚪ Not connected yet. One-time setup, about 15 minutes, all on Meta&apos;s official developer site — no passwords shared. If a screen looks different, send Claude a screenshot.</p>
+            <ol className="list-decimal space-y-2 pl-5 text-ink/80">
+              <li>Make sure Instagram is a <strong>Business</strong> account and is linked to the Facebook Page (Instagram → Settings → Accounts Center).</li>
+              <li>Open <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="text-brand underline">developers.facebook.com/apps</a> (log in with the Facebook account that manages the Page) → <strong>Create app</strong> → name it “Alderwell Publisher”. When asked for a use case pick <strong>“Manage everything on your Page”</strong>; if it offers more, also add <strong>“Manage messaging &amp; content on Instagram”</strong>. Business portfolio: choose yours or skip.</li>
+              <li>In the app: <strong>App settings → Basic</strong> → copy the <strong>App ID</strong> and press Show to copy the <strong>App secret</strong>.</li>
+              <li>Open <a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener noreferrer" className="text-brand underline">Graph API Explorer</a> → pick your app (top right) → “User or Page”: <strong>Get User Access Token</strong> → add these permissions: <code>pages_show_list</code>, <code>pages_read_engagement</code>, <code>pages_manage_posts</code>, <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>business_management</code> → <strong>Generate Access Token</strong> → in the popup choose the Alderwell Page and the Instagram account → copy the long token.</li>
+              <li>Paste all three below and press Connect. The token is converted into one that doesn&apos;t expire; the App secret isn&apos;t stored.</li>
+            </ol>
+            <ActionForm action={soConnectMeta} className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
+              <div>
+                <label className="label" htmlFor="appId">App ID</label>
+                <input id="appId" name="appId" inputMode="numeric" autoComplete="off" className="input" />
+              </div>
+              <div>
+                <label className="label" htmlFor="appSecret">App secret</label>
+                <input id="appSecret" name="appSecret" type="password" autoComplete="off" className="input" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="userToken">Access token (from Graph API Explorer)</label>
+                <input id="userToken" name="userToken" type="password" autoComplete="off" className="input" />
+              </div>
+              <div className="sm:col-span-2">
+                <SubmitButton pendingText="Connecting…">Connect Instagram &amp; Facebook</SubmitButton>
+              </div>
+            </ActionForm>
+          </div>
+        )}
         <p className="text-sm">YouTube Shorts: post by hand for now (download the reel, upload in the YouTube app). Automatic upload needs Google to verify the app first.</p>
         <p className="text-xs text-muted">Rules we keep: no bought followers, no auto-likes or cold DMs (they get accounts banned), and portfolio campaigns are always labelled as concept work made with AI-assisted imaging.</p>
       </section>

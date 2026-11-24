@@ -4,19 +4,32 @@ import { sq, type Post } from "./db";
 
 /**
  * Auto-publishing through Meta's official Graph API (Instagram Business + Facebook Page).
- * Needs META_PAGE_TOKEN (a long-lived Page access token), META_PAGE_ID and META_IG_USER_ID.
+ * Credentials come from Social → Account setup → Connect (saved in so_settings), or from the
+ * META_PAGE_TOKEN / META_PAGE_ID / META_IG_USER_ID environment variables.
  * YouTube Shorts upload needs Google OAuth and is posted by hand for now.
  */
 const GRAPH = "https://graph.facebook.com/v21.0";
 
-export function metaConnected() {
-  return Boolean(process.env.META_PAGE_TOKEN && process.env.META_PAGE_ID && process.env.META_IG_USER_ID);
+export type MetaConfig = { token: string; pageId: string; igId: string; pageName?: string; igUsername?: string };
+
+export async function metaConfig(): Promise<MetaConfig | null> {
+  const { META_PAGE_TOKEN: token, META_PAGE_ID: pageId, META_IG_USER_ID: igId } = process.env;
+  if (token && pageId && igId) return { token, pageId, igId };
+  const rows = await sq<{ key: string; value: string }>("SELECT key, value FROM so_settings WHERE key LIKE 'meta_%'");
+  const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return m.meta_page_token && m.meta_page_id && m.meta_ig_user_id
+    ? { token: m.meta_page_token, pageId: m.meta_page_id, igId: m.meta_ig_user_id, pageName: m.meta_page_name, igUsername: m.meta_ig_username }
+    : null;
+}
+
+export async function metaConnected() {
+  return Boolean(await metaConfig());
 }
 
 const abs = (src: string) => (src.startsWith("http") ? src : `${siteUrl()}${src}`);
 
-async function graph(path: string, params: Record<string, string>, method: "POST" | "GET" = "POST") {
-  const body = new URLSearchParams({ ...params, access_token: process.env.META_PAGE_TOKEN! });
+export async function graph(path: string, params: Record<string, string>, method: "POST" | "GET" = "POST", token?: string) {
+  const body = new URLSearchParams({ ...params, access_token: token ?? (await metaConfig())?.token ?? "" });
   const res = await fetch(method === "GET" ? `${GRAPH}/${path}?${body}` : `${GRAPH}/${path}`, {
     method,
     body: method === "POST" ? body : undefined,
@@ -38,8 +51,7 @@ async function waitForContainer(id: string) {
   throw new Error("Instagram is still processing the video — try again in a minute");
 }
 
-async function toInstagram(post: Post, text: string) {
-  const ig = process.env.META_IG_USER_ID!;
+async function toInstagram(post: Post, text: string, ig: string) {
   const media = post.assets;
   let creation: string;
   if (media.length > 1) {
@@ -63,8 +75,7 @@ async function toInstagram(post: Post, text: string) {
   return { id: String(published.id), url: (info.permalink as string) ?? undefined };
 }
 
-async function toFacebook(post: Post, text: string) {
-  const page = process.env.META_PAGE_ID!;
+async function toFacebook(post: Post, text: string, page: string) {
   const a = post.assets[0];
   const r = !a
     ? await graph(`${page}/feed`, { message: text })
@@ -76,15 +87,16 @@ async function toFacebook(post: Post, text: string) {
 
 /** Publishes one post to its connected platforms; records results and errors. */
 export async function publishPost(post: Post): Promise<{ ok: boolean; message: string }> {
-  if (!metaConnected()) return { ok: false, message: "Instagram/Facebook aren't connected yet — post it by hand (download + copy caption), then press “Mark posted”." };
+  const cfg = await metaConfig();
+  if (!cfg) return { ok: false, message: "Instagram/Facebook aren't connected yet — post it by hand (download + copy caption), then press “Mark posted”." };
   const text = [post.caption, post.hashtags].filter(Boolean).join("\n\n");
   const results = { ...(post.results ?? {}) };
   const errors: string[] = [];
   for (const platform of post.platforms) {
     if (results[platform]?.id || results[platform]?.manual) continue;
     try {
-      if (platform === "instagram") results.instagram = { ...(await toInstagram(post, text)), at: new Date().toISOString() };
-      else if (platform === "facebook") results.facebook = { ...(await toFacebook(post, text)), at: new Date().toISOString() };
+      if (platform === "instagram") results.instagram = { ...(await toInstagram(post, text, cfg.igId)), at: new Date().toISOString() };
+      else if (platform === "facebook") results.facebook = { ...(await toFacebook(post, text, cfg.pageId)), at: new Date().toISOString() };
       else errors.push(`${platform}: post by hand for now`);
     } catch (e) {
       errors.push(`${platform}: ${e instanceof Error ? e.message : String(e)}`);

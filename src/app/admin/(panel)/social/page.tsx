@@ -36,7 +36,7 @@ async function Social() {
     sq<Post>("SELECT * FROM so_posts WHERE status <> 'posted' ORDER BY scheduled_for NULLS LAST, id"),
     sq<Post>("SELECT * FROM so_posts WHERE status = 'posted' ORDER BY updated_at DESC LIMIT 12"),
   ]);
-  const connected = metaConnected();
+  const connected = await metaConnected();
 
   return (
     <div className="space-y-6">
