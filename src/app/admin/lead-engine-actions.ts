@@ -260,3 +260,26 @@ export async function leSetDailyCap(_: ActionState, form: FormData): Promise<Act
   refresh();
   return { ok: true, message: `Daily limit: ${cap} emails.` };
 }
+
+/** Sends one sample (the next draft) to an address you choose — to check it lands in the inbox, not spam. */
+export async function leSendTest(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const to = String(form.get("to") ?? "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(to)) return { message: "Enter a valid email address." };
+  const { sendMail } = await import("@/lib/leadengine/mailer");
+  const { draftEmail } = await import("@/lib/leadengine/outreach");
+  const { getSettings } = await import("@/lib/data");
+  const settings = await getSettings();
+  const [lead] = await q<import("@/lib/leadengine/leads").Lead>(
+    "SELECT * FROM le_leads WHERE status = 'new' AND email IS NOT NULL AND pain_score >= 30 ORDER BY pay_score DESC LIMIT 1",
+  );
+  const d = lead
+    ? draftEmail(lead, { name: settings.senderName, company: "Alderwell Creative", site: "", address: settings.businessAddress })
+    : { subject: "test from Alderwell", body: "Hi,\n\nThis is a test email from the Alderwell admin.\n\nThanks" };
+  try {
+    await sendMail({ to, subject: d.subject, text: d.body, fromName: settings.senderName });
+    return { ok: true, message: `Test sent to ${to}. Check whether it arrived in the Inbox or in Spam (also look at the Promotions tab).` };
+  } catch (e) {
+    return { message: e instanceof Error ? e.message.slice(0, 200) : String(e) };
+  }
+}

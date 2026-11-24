@@ -13,7 +13,7 @@ import { ActionButton, ActionForm, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { LeHeader } from "@/components/admin/lead-engine/tabs";
 import { LeBulkSender, type Draft } from "@/components/admin/lead-engine/bulk-sender";
-import { leCheckReplies, leSendFollowUp, leSendOne, leSetDailyCap } from "../../../lead-engine-actions";
+import { leCheckReplies, leSendFollowUp, leSendOne, leSendTest, leSetDailyCap } from "../../../lead-engine-actions";
 
 // Each send and the inbox check run inside this page's server actions.
 export const maxDuration = 60;
@@ -95,6 +95,15 @@ async function Send({ searchParams }: { searchParams: SP }) {
 
       {ready ? (
         <>
+          <section className="card p-5">
+            <h2 className="font-semibold">Send a test first</h2>
+            <p className="text-sm text-muted">Sends the next email draft to an address you choose (a friend's Gmail or Outlook is best) so you can see whether it lands in the Inbox or Spam.</p>
+            <ActionForm action={leSendTest} className="mt-3 flex flex-wrap items-end gap-2">
+              <input name="to" type="email" required placeholder="friend@gmail.com" className="input max-w-xs" />
+              <SubmitButton className="btn-ghost" pendingText="Sending…">Send test</SubmitButton>
+            </ActionForm>
+          </section>
+
           {followUps.length ? (
             <section className="card p-5">
               <h2 className="mb-3 font-semibold">📬 Follow-ups due ({followUps.length}) — they go in the same Gmail thread</h2>
