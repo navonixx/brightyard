@@ -53,6 +53,7 @@ export type Video = {
 export type StudioSettings = { model: string; cap: number; autoSchedule: boolean; autoApprove: boolean; postHour: number; t2vOverride: string; i2vOverride: string };
 
 // Wan 2.2 works on the current ModelsLab plan; Seedance needs wallet credit (switch in Studio settings).
+export const FALLBACK_MODEL = "wan-2.2";
 const DEFAULTS: StudioSettings = { model: "wan-2.2", cap: 15, autoSchedule: true, autoApprove: false, postHour: 10, t2vOverride: "", i2vOverride: "" };
 
 export async function studioSettings(): Promise<StudioSettings> {
@@ -140,7 +141,7 @@ export function webhookToken() {
 
 /** Starts one queued piece: images (cover, thumbnail, slides, collage) and the ModelsLab job. */
 async function produce(v: Video, s: StudioSettings): Promise<string> {
-  const cost = estimate(v, s);
+  let cost = estimate(v, s);
   const spent = await monthSpent();
   if (cost > 0 && spent + cost > s.cap) {
     await sq("UPDATE so_videos SET status = 'idea', error = $2, updated_at = now() WHERE id = $1", [v.id, `Monthly budget reached ($${spent.toFixed(2)} of $${s.cap}). Raise it in Studio settings.`]);
@@ -167,16 +168,25 @@ async function produce(v: Video, s: StudioSettings): Promise<string> {
 
     // Video: start the clip first (slowest part), then draw the cover and thumbnail meanwhile.
     if (!modelslabReady()) throw new Error("MODELSLAB_API_KEY isn't set yet — add it to .env.local and Vercel.");
-    const model = modelFor(s.model);
-    const job = await submitVideo({
-      prompt: v.prompt,
-      seconds: v.duration,
-      model,
-      imageUrl: v.format === "photo_ad" && v.image_src ? abs(v.image_src) : null,
-      webhook: webhookUrl(),
-      trackId: `alderwell-${v.id}`,
-      modelOverride: v.format === "photo_ad" ? s.i2vOverride : s.t2vOverride,
-    });
+    let model = modelFor(s.model);
+    const submit = (m: VideoModel, override?: string) =>
+      submitVideo({
+        prompt: v.prompt,
+        seconds: v.duration,
+        model: m,
+        imageUrl: v.format === "photo_ad" && v.image_src ? abs(v.image_src) : null,
+        webhook: webhookUrl(),
+        trackId: `alderwell-${v.id}`,
+        modelOverride: override,
+      });
+    let job = await submit(model, v.format === "photo_ad" ? s.i2vOverride : s.t2vOverride);
+    // Paid ("third party") models need ModelsLab wallet credit. When it's empty, fall back to the
+    // open-source model that works on the plan instead of failing.
+    if (job.status === "error" && /exhausted|fund your wallet|insufficient/i.test(job.message ?? "") && model.key !== FALLBACK_MODEL) {
+      model = modelFor(FALLBACK_MODEL);
+      cost = estimate(v, { ...s, model: FALLBACK_MODEL });
+      job = await submit(model);
+    }
     if (job.status === "error") {
       // Rate limit: not a real failure — put it back in the queue and try again after the wait.
       const wait = job.message?.match(/rate limit[\s\S]*?(\d+)\s*minute/i);
