@@ -172,3 +172,91 @@ export async function trSetOutcome(kind: "le" | "main", key: string, outcome: "r
   refresh();
   return { ok: true, message: `Marked ${outcome}.` };
 }
+
+export type SendResult = { ok: boolean; message: string; sentToday: number; stop?: boolean };
+
+async function capAndToday() {
+  const { getSetting } = await import("@/lib/leadengine/db");
+  const { sentToday } = await import("@/lib/leadengine/mailer");
+  return { cap: Number(await getSetting("dailyCap", "20")), today: await sentToday() };
+}
+
+/** Sends one first email from the studio Gmail and marks the lead contacted. */
+export async function leSendOne(id: number, subject: string, body: string): Promise<SendResult> {
+  await requireAdmin();
+  const { sendMail } = await import("@/lib/leadengine/mailer");
+  const { getLead } = await import("@/lib/leadengine/leads");
+  const { getSettings } = await import("@/lib/data");
+  const { cap, today } = await capAndToday();
+  if (today >= cap) return { ok: false, stop: true, sentToday: today, message: `Daily limit reached (${cap}). More from one Gmail in a day lands in spam — continue tomorrow.` };
+  const lead = await getLead(Number(id));
+  if (!lead?.email) return { ok: false, sentToday: today, message: "No email address." };
+  if (lead.status !== "new") return { ok: false, sentToday: today, message: `${lead.name} was already contacted — skipped.` };
+  if (!subject.trim() || !body.trim()) return { ok: false, sentToday: today, message: "Empty subject or email." };
+  try {
+    const settings = await getSettings();
+    const messageId = await sendMail({ to: lead.email, subject: subject.slice(0, 200), text: body.slice(0, 5000), fromName: settings.senderName });
+    await q(
+      `UPDATE le_leads SET status = 'contacted', contacted_at = now(), updated_at = now(),
+         extra = extra || jsonb_build_object('messageId', $2::text, 'subject', $3::text, 'sentVia', 'gmail') WHERE id = $1`,
+      [lead.id, messageId, subject.slice(0, 200)],
+    );
+    return { ok: true, sentToday: today + 1, message: `Sent to ${lead.name}` };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    // Auth problems or Gmail limits: stop the whole run instead of failing 10 times.
+    const stop = /auth|credentials|535|534|limit|quota|421|454|550/i.test(msg);
+    return { ok: false, stop, sentToday: today, message: `${lead.name}: ${msg.slice(0, 200)}` };
+  }
+}
+
+/** Sends the due follow-up as a reply in the same Gmail thread. */
+export async function leSendFollowUp(id: number): Promise<SendResult> {
+  await requireAdmin();
+  const { sendMail } = await import("@/lib/leadengine/mailer");
+  const { getLead } = await import("@/lib/leadengine/leads");
+  const { followUpDraft } = await import("@/lib/leadengine/replies");
+  const { markFollowUpSent } = await import("@/lib/leadengine/followups");
+  const { getSettings } = await import("@/lib/data");
+  const { cap, today } = await capAndToday();
+  if (today >= cap) return { ok: false, stop: true, sentToday: today, message: `Daily limit reached (${cap}) — continue tomorrow.` };
+  const lead = await getLead(Number(id));
+  if (!lead?.email || lead.status !== "contacted") return { ok: false, sentToday: today, message: "Not waiting for a follow-up — skipped." };
+  const step = (Number(lead.extra?.followups ?? 0) + 1) as 1 | 2;
+  if (step > 2) return { ok: false, sentToday: today, message: `${lead.name}: both follow-ups already sent.` };
+  const settings = await getSettings();
+  const draft = followUpDraft(lead, step, { name: settings.senderName, company: "Alderwell Creative", site: "", address: settings.businessAddress });
+  const original = lead.extra?.subject ? `Re: ${String(lead.extra.subject).replace(/^re:\s*/i, "")}` : draft.subject;
+  try {
+    await sendMail({ to: lead.email, subject: original, text: draft.body, fromName: settings.senderName, inReplyTo: (lead.extra?.messageId as string) ?? null });
+    await markFollowUpSent(lead.id);
+    return { ok: true, sentToday: today + 1, message: `Follow-up ${step} sent to ${lead.name}` };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, stop: /auth|credentials|535|534|limit|quota|421|454|550/i.test(msg), sentToday: today, message: `${lead.name}: ${msg.slice(0, 200)}` };
+  }
+}
+
+export async function leCheckReplies(): Promise<ActionState> {
+  await requireAdmin();
+  const { checkReplies } = await import("@/lib/leadengine/mailer");
+  try {
+    const r = await checkReplies();
+    refresh();
+    const parts = [
+      r.replied.length ? `${r.replied.length} replied: ${r.replied.slice(0, 5).join(", ")}` : "No new replies",
+      r.stopped.length ? `${r.stopped.length} asked to stop (marked not interested)` : null,
+    ].filter(Boolean);
+    return { ok: true, message: `${parts.join(" · ")} (${r.checked} inbox emails checked).` };
+  } catch (e) {
+    return { message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function leSetDailyCap(_: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const cap = Math.max(5, Math.min(40, Number(form.get("dailyCap")) || 20));
+  await setSetting("dailyCap", String(cap));
+  refresh();
+  return { ok: true, message: `Daily limit: ${cap} emails.` };
+}

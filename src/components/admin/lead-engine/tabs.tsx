@@ -3,6 +3,7 @@ import Link from "next/link";
 const TABS = [
   { href: "/admin/lead-engine", label: "Start" },
   { href: "/admin/lead-engine/leads", label: "Leads" },
+  { href: "/admin/lead-engine/send", label: "Send emails" },
   { href: "/admin/lead-engine/find", label: "Custom search (optional)" },
   { href: "/admin/lead-engine/intent", label: "Intent search" },
   { href: "/admin/lead-engine/settings", label: "Settings" },

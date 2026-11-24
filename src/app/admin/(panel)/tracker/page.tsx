@@ -4,7 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import { sentPerDay, trackedEmails, type Stage } from "@/lib/tracker";
 import { ActionButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
-import { trSetOutcome } from "../../lead-engine-actions";
+import { leCheckReplies, trSetOutcome } from "../../lead-engine-actions";
+import { mailReady } from "@/lib/leadengine/mailer";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
 
@@ -70,6 +71,11 @@ async function Tracker({ searchParams }: { searchParams: SP }) {
           Everyone you&apos;ve emailed — from the Lead Engine and from Outreach — and what happened next. We can&apos;t see whether an email was opened (Gmail doesn&apos;t tell us,
           and tracking pixels push cold email into spam), but we do see exactly when someone opens the preview link you sent.
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link href="/admin/lead-engine/send" className="btn-primary">Send emails</Link>
+        {mailReady() ? <ActionButton action={leCheckReplies} className="btn-ghost" pendingText="Reading inbox…">Check replies in Gmail</ActionButton> : <span className="text-xs text-muted">Connect Gmail on “Send emails” to send in batches and find replies automatically.</span>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
