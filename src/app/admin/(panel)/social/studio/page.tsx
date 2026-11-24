@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { sq } from "@/lib/social/db";
 import { metaConnected } from "@/lib/social/publish";
 import { modelslabReady, VIDEO_MODELS } from "@/lib/social/modelslab";
-import { imagesReady } from "@/lib/social/images";
+import { imagesReady, sharpWorks } from "@/lib/social/images";
 import { storageReady } from "@/lib/social/storage";
 import { FORMATS, PILLARS } from "@/lib/social/strategy";
 import { estimate, modelFor, monthSpent, studioSettings, type StudioSettings, type Video } from "@/lib/social/studio";
@@ -39,11 +39,12 @@ function Check({ ok, label, hint }: { ok: boolean; label: string; hint?: string 
 
 async function Studio() {
   await requireAdmin();
-  const [rows, settings, spent, meta] = await Promise.all([
+  const [rows, settings, spent, meta, sharpOk] = await Promise.all([
     sq<Video>("SELECT * FROM so_videos ORDER BY id DESC LIMIT 80"),
     studioSettings(),
     monthSpent(),
     metaConnected(),
+    sharpWorks(),
   ]);
   const by = (...s: Video["status"][]) => rows.filter((r) => s.includes(r.status));
   const ideas = by("idea").sort((a, b) => a.id - b.id);
@@ -67,6 +68,7 @@ async function Studio() {
         <Check ok={modelslabReady()} label="ModelsLab (videos)" hint="MODELSLAB_API_KEY in .env.local and Vercel" />
         <Check ok={imagesReady()} label="OpenAI (covers, thumbnails, slides)" />
         <Check ok={storageReady()} label="ImageKit (storage)" />
+        <Check ok={sharpOk} label="Image tools" hint="sharp: crops covers and builds collages" />
         <Check ok={meta} label="Instagram/Facebook connected" />
         <span className="rounded-full bg-paper px-2.5 py-1 text-xs">
           Budget this month: <strong>{money(spent)}</strong> of {money(settings.cap)}
