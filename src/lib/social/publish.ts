@@ -89,7 +89,11 @@ async function toFacebook(post: Post, text: string, page: string) {
     : a.kind === "video"
       ? await graph(`${page}/videos`, { file_url: abs(a.src), description: text })
       : await graph(`${page}/photos`, { url: abs(a.src), caption: text });
-  return { id: String(r.post_id ?? r.id), url: `https://www.facebook.com/${String(r.post_id ?? r.id)}` };
+  const id = String(r.post_id ?? r.id);
+  // Ask Facebook for the real link (videos become Reels at /reel/<id>; a bare id doesn't open).
+  const info = await graph(String(r.id), { fields: "permalink_url" }, "GET").catch(() => ({}) as Record<string, unknown>);
+  const link = typeof info.permalink_url === "string" ? info.permalink_url : a?.kind === "video" ? `/reel/${r.id}/` : `/${id}`;
+  return { id, url: link.startsWith("http") ? link : `https://www.facebook.com${link}` };
 }
 
 /** Publishes one post to its connected platforms; records results and errors. */
