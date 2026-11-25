@@ -102,6 +102,21 @@ export function overlayUrl(videoUrl: string, hook: string, cta: string, seconds:
   return `${videoUrl.split("?")[0]}?tr=${steps.join(":")}`;
 }
 
+/**
+ * A still (e.g. the first scene) cropped to w×h with big centred text — used as the free reel cover
+ * (1080×1920) and YouTube thumbnail (1280×720). ImageKit renders it on request; `.jpg` stays in
+ * the path so Instagram accepts it as a JPEG cover.
+ */
+export function textOnImage(imageUrl: string, text: string, w: number, h: number) {
+  const t = overlayText(text).slice(0, 60);
+  const base = `w-${w},h-${h},c-maintain_ratio,fo-auto`;
+  if (!t) return `${imageUrl.split("?")[0]}?tr=${base}`;
+  const stripH = Math.round(h * 0.3);
+  const y = Math.round(h * (w > h ? 0.35 : 0.16));
+  const fs = w > h ? 86 : 92;
+  return `${imageUrl.split("?")[0]}?tr=${base}:l-image,i-ik_canvas,bg-07051A00,w-${w},h-${stripH},lx-0,ly-${y},l-text,ie-${b64(t)},w-${Math.round(w * 0.86)},ia-center,tg-b,fs-${fs},co-FFFFFF,bg-07051A80,pa-34,r-28,l-end,l-end`;
+}
+
 /** true when ImageKit has finished drawing the overlay (a real MP4 comes back, not "being prepared"). */
 export async function overlayReady(url: string): Promise<"ready" | "processing" | "failed"> {
   const res = await fetch(url, { headers: { Range: "bytes=0-1023" }, cache: "no-store", signal: AbortSignal.timeout(20_000) }).catch(() => null);

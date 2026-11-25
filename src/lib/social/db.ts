@@ -59,6 +59,31 @@ CREATE TABLE IF NOT EXISTS so_videos (
 );
 CREATE INDEX IF NOT EXISTS so_videos_status ON so_videos (status);
 ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS not_before timestamptz;
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS scenes jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS music_mood text;
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS music_url text;
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS slot timestamptz;
+ALTER TABLE so_videos ADD COLUMN IF NOT EXISTS auto boolean NOT NULL DEFAULT false;
+ALTER TABLE so_posts ADD COLUMN IF NOT EXISTS metrics jsonb;
+ALTER TABLE so_posts ADD COLUMN IF NOT EXISTS metrics_at timestamptz;
+CREATE TABLE IF NOT EXISTS so_music (
+  id serial PRIMARY KEY,
+  mood text NOT NULL,
+  prompt text NOT NULL DEFAULT '',
+  status text NOT NULL DEFAULT 'pending',
+  url text,
+  fetch_url text,
+  error text,
+  used int NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS so_stats (
+  day date PRIMARY KEY,
+  followers int,
+  media int,
+  raw jsonb NOT NULL DEFAULT '{}',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 const g = globalThis as unknown as { __soReady?: Promise<void> };

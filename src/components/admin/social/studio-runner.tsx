@@ -59,7 +59,7 @@ export function StudioRunner({ pending, queued, step }: { pending: number; queue
     <div className="card space-y-2 p-4 text-sm">
       <p className="flex items-center gap-2 font-medium">
         {busy ? <Loader2 className="size-4 animate-spin text-brand" /> : "✅"}
-        {busy ? `Studio is working — ${counts.queued} waiting, ${counts.pending} in production. Keep this tab open (a video takes about 1–3 minutes).` : "All done."}
+        {busy ? `Making posts — ${counts.queued} waiting, ${counts.pending} being made (a reel takes about 3–8 minutes). You can close this tab: it also carries on by itself.` : "All done for now."}
       </p>
       {log.length ? (
         <div className="max-h-40 overflow-y-auto rounded-lg bg-paper p-2 font-mono text-[11px] leading-5 text-muted">

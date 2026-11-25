@@ -18,7 +18,8 @@ export const PILLARS = [
 ] as const;
 
 export const FORMATS = [
-  { key: "reel", label: "AI video reel" },
+  { key: "story_reel", label: "Multi-scene reel (3 clips + music)" },
+  { key: "reel", label: "Single-clip AI reel" },
   { key: "photo_ad", label: "Photo → video ad" },
   { key: "carousel", label: "Tips carousel" },
   { key: "collage", label: "Portfolio collage" },
@@ -26,7 +27,7 @@ export const FORMATS = [
 export type Format = (typeof FORMATS)[number]["key"];
 
 const Idea = z.object({
-  format: z.enum(["reel", "photo_ad", "carousel", "collage"]),
+  format: z.enum(["story_reel", "reel", "photo_ad", "carousel", "collage"]),
   pillar: z.string().describe("One of: photo_to_ad, cinematic_product, local_pov, tips, proof, offer"),
   title: z.string().describe("Short internal title for the team"),
   hook: z.string().describe("On-screen hook for the first 2-3 seconds. Max 8 words. Plain text, no emoji, no arrows. Curiosity or bold claim."),
@@ -37,6 +38,12 @@ const Idea = z.object({
       "For reel/photo_ad only (else empty). A detailed prompt for an AI video model, 60-120 words: subject, action, camera movement (e.g. slow push-in, orbit, macro tracking), lighting, mood, setting, vertical 9:16 framing with the subject centered. Something visually happens in the FIRST second. No text, letters, logos, brand names or real people in the video. For photo_ad: describe how the given still photo should come alive with CAMERA movement (slow push-in, gentle orbit, parallax) and motion AROUND the product (light sweep, steam, particles, fabric, water) — the product itself stays exactly the same shape, material, color and size; it never transforms.",
     ),
   seconds: z.number().int().describe("Clip length 5-10 seconds. Loopable."),
+  scenes: z
+    .array(z.object({ still: z.string(), motion: z.string() }))
+    .describe(
+      "story_reel only: exactly 3 scenes that tell a tiny story in ~14 s (scene 1 = the hook moment, scene 2 = the build, scene 3 = the payoff). still = a detailed photographic description of one vertical 9:16 frame (subject, setting, light, lens, mood) — same place, same style and same subject across the 3 scenes so they cut together; no text, logos or real people. motion = what moves in 5 s (camera move + subject motion). Else empty.",
+    ),
+  musicMood: z.enum(["upbeat", "chill", "cinematic", "luxury", "cozy"]).describe("Background music mood for video formats"),
   libraryIds: z.array(z.string()).describe("photo_ad: exactly 1 image id from the library list. collage: exactly 4 image ids from different campaigns. Otherwise empty."),
   slides: z.array(z.object({ headline: z.string(), body: z.string() })).describe("carousel only: 5 slides. Slide 1 = hook (max 8 words). Slides 2-4 = one tip each (headline max 7 words, body max 18 words). Slide 5 = takeaway + 'Save this'. Else empty."),
   coverText: z.string().describe("Cover/thumbnail text, max 5 words, punchy"),
@@ -55,7 +62,7 @@ Goal: grow Instagram, Facebook and YouTube Shorts with content US small-business
 
 What goes viral in this niche (apply it):
 - Hook in the first second: motion or a bold claim on screen. Never start slow.
-- 6-10 second loopable clips beat long ones. Satisfying motion (pours, reveals, slow-mo, macro) gets rewatched.
+- Multi-scene reels (3 quick cuts, ~14 s, with music) hold attention best; 6-10 second loopable clips also work. Satisfying motion (pours, reveals, slow-mo, macro) gets rewatched.
 - Transformations ("this was just a photo"), POV formats, "3 mistakes" lists, before/after.
 - Carousels that teach one useful thing get saved; slide 1 must make people swipe.
 - Speak to the owner: more calls, more bookings, looking premium, standing out locally.
@@ -77,7 +84,7 @@ const CLEAN_FOR_VIDEO = LIBRARY.filter((l) => l.kind === "image" && /Lifestyle|D
 const CLEAN_LIST = CLEAN_FOR_VIDEO.map((l) => `${l.id}: ${l.label} (${l.industry})`).join("\n");
 
 /** Asks the AI for `count` ready-to-produce pieces in the given mix of formats. */
-export async function planIdeas(mix: Format[], topic: string, recentTitles: string[]): Promise<IdeaT[]> {
+export async function planIdeas(mix: Format[], topic: string, recentTitles: string[], learnings = ""): Promise<IdeaT[]> {
   if (!aiEnabled()) throw new Error("No AI key is set (OpenAI or Claude) — the planner needs one.");
   const r = await parse(
     Plan,
@@ -87,6 +94,8 @@ export async function planIdeas(mix: Format[], topic: string, recentTitles: stri
       `Create exactly ${mix.length} pieces in this order of formats: ${mix.join(", ")}.`,
       topic ? `Theme / topic from the owner: ${topic}` : "Pick strong, varied ideas across the pillars.",
       recentTitles.length ? `Already made recently (don't repeat): ${recentTitles.slice(0, 30).join(" | ")}` : null,
+      learnings ? `What our account data says so far (lean into what works):
+${learnings}` : null,
       `Images for photo_ad (clean shots without text — use ONLY these ids for photo_ad):\n${CLEAN_LIST}`,
       `Full portfolio library (ids for collage):\n${LIBRARY_LIST}`,
     ]
@@ -110,5 +119,5 @@ export async function planIdeas(mix: Format[], topic: string, recentTitles: stri
   });
 }
 
-/** One week: 3 AI reels, 2 photo→ad videos, 1 carousel, 1 collage. */
-export const WEEK_MIX: Format[] = ["reel", "photo_ad", "carousel", "reel", "collage", "reel", "photo_ad"];
+/** One week: 3 multi-scene reels, 2 photo→ad videos, 1 carousel, 1 collage. */
+export const WEEK_MIX: Format[] = ["story_reel", "photo_ad", "carousel", "story_reel", "collage", "story_reel", "photo_ad"];

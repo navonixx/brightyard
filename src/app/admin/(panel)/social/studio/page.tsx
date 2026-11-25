@@ -48,11 +48,11 @@ async function Studio() {
   ]);
   const by = (...s: Video["status"][]) => rows.filter((r) => s.includes(r.status));
   const ideas = by("idea").sort((a, b) => a.id - b.id);
-  const working = by("queued", "starting", "rendering", "finishing");
+  const working = by("queued", "starting", "rendering", "stitching", "finishing");
   const ready = by("ready");
   const scheduled = by("scheduled").slice(0, 12);
   const failed = by("failed");
-  const pending = by("starting", "rendering", "finishing").length;
+  const pending = by("starting", "rendering", "stitching", "finishing").length;
   const queued = by("queued").length;
   const ideaCost = ideas.reduce((s, v) => s + estimate(v, settings), 0);
 
@@ -60,8 +60,8 @@ async function Studio() {
     <div className="space-y-6">
       <SoHeader
         active="/admin/social/studio"
-        title="AI Video Studio"
-        intro="The AI plans viral-style content for our accounts, ModelsLab makes the videos, OpenAI draws covers, thumbnails and carousel slides, and finished pieces are scheduled to Instagram, Facebook and Stories automatically. YouTube gets a ready-to-upload package."
+        title="Create"
+        intro="Make content by hand — optional: Autopilot does all of this by itself. Plan ideas with AI, check or edit them, press “Make it”. Finished pieces go to the Calendar (and YouTube tab for videos)."
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +141,9 @@ async function Studio() {
                   <p className="font-medium">{v.title}</p>
                   <p className="text-xs text-muted">{FORMAT_LABEL[v.format]}</p>
                   <p className="mt-1 text-xs text-brand">
-                    {{ queued: "Waiting to start…", starting: "Starting…", rendering: "AI is making the video (1–3 min)…", finishing: "Adding the hook text…" }[v.status as string]}
+                    {v.format === "story_reel" && v.status === "rendering"
+                      ? `Scenes: ${v.scenes.filter((x) => x.image).length}/3 pictures, ${v.scenes.filter((x) => x.clip).length}/3 clips…`
+                      : { queued: "Waiting to start…", starting: "Starting…", rendering: "AI is making the video (1–3 min)…", stitching: "Joining clips + music…", finishing: "Adding the hook text…" }[v.status as string]}
                   </p>
                   {v.error ? <p className="text-xs text-danger">{v.error}</p> : null}
                 </div>
@@ -184,7 +186,7 @@ async function Studio() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Scheduled</h2>
-            <Link href="/admin/social" className="text-sm text-brand hover:underline">See all posts →</Link>
+            <Link href="/admin/social/calendar" className="text-sm text-brand hover:underline">See all posts →</Link>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {scheduled.map((v) => (
@@ -220,7 +222,7 @@ async function Studio() {
 }
 
 function IdeaCard({ v, settings }: { v: Video; settings: StudioSettings }) {
-  const isVideo = v.format === "reel" || v.format === "photo_ad";
+  const isVideo = v.format === "reel" || v.format === "photo_ad" || v.format === "story_reel";
   return (
     <article className="card space-y-3 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -251,6 +253,16 @@ function IdeaCard({ v, settings }: { v: Video; settings: StudioSettings }) {
               <img key={m} src={m} alt="" className="size-20 rounded-lg object-cover" />
             ))
           : null}
+        {v.format === "story_reel" ? (
+          <ol className="list-decimal space-y-0.5 pl-5 text-sm">
+            {v.scenes.map((sc, i) => (
+              <li key={i}>
+                {sc.still.slice(0, 110)}
+                {sc.still.length > 110 ? "…" : ""} <span className="text-muted">— {sc.motion.slice(0, 60)}</span>
+              </li>
+            ))}
+          </ol>
+        ) : null}
         {v.format === "carousel" ? (
           <ol className="list-decimal space-y-0.5 pl-5 text-sm">
             {v.slides.map((s, i) => (
@@ -302,7 +314,7 @@ function Field({ name, label, value, area, wide }: { name: string; label: string
 }
 
 function ReadyCard({ v }: { v: Video }) {
-  const isVideo = v.format === "reel" || v.format === "photo_ad";
+  const isVideo = v.format === "reel" || v.format === "photo_ad" || v.format === "story_reel";
   return (
     <article className="card flex gap-4 p-4">
       <div className="w-36 shrink-0">
@@ -383,7 +395,7 @@ function SettingsCard({ s }: { s: StudioSettings }) {
           </div>
         </details>
         <p className="text-xs text-muted sm:col-span-2">
-          Posts publish once a day at about 10–11 am US Eastern (Vercel&apos;s daily run), or press “Publish now” on the Posts tab. Prices are ModelsLab&apos;s published rates — estimates only.
+          Posts publish at the twice-daily run (about 11 am and 7 pm US Eastern), or press “Publish now” on the Calendar. Prices are ModelsLab&apos;s published rates — estimates only.
         </p>
         <div className="sm:col-span-2">
           <SubmitButton>Save settings</SubmitButton>

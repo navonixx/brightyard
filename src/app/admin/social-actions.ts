@@ -53,7 +53,7 @@ export async function soSavePost(id: number | null, _: ActionState, form: FormDa
   const args = [p.idea, p.caption, p.hashtags, JSON.stringify(p.assets), `{${p.platforms.join(",")}}`, p.when?.toISOString() ?? null, p.status];
   if (id) await sq("UPDATE so_posts SET idea=$1, caption=$2, hashtags=$3, assets=$4::jsonb, platforms=$5::text[], scheduled_for=$6, status=$7, updated_at=now() WHERE id=$8", [...args, id]);
   else await sq("INSERT INTO so_posts (idea, caption, hashtags, assets, platforms, scheduled_for, status) VALUES ($1,$2,$3,$4::jsonb,$5::text[],$6,$7)", args);
-  redirect("/admin/social");
+  redirect("/admin/social/calendar");
 }
 
 export async function soSetStatus(id: number, status: "draft" | "approved"): Promise<ActionState> {

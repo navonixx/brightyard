@@ -21,7 +21,7 @@ export default function YoutubePage() {
 async function Youtube() {
   await requireAdmin();
   const rows = await sq<Video>(
-    "SELECT * FROM so_videos WHERE format IN ('reel','photo_ad') AND status IN ('ready','scheduled') AND coalesce(final_url, video_url) IS NOT NULL ORDER BY (youtube_url IS NOT NULL), id DESC LIMIT 60",
+    "SELECT * FROM so_videos WHERE format IN ('story_reel','reel','photo_ad') AND status IN ('ready','scheduled') AND coalesce(final_url, video_url) IS NOT NULL ORDER BY (youtube_url IS NOT NULL), id DESC LIMIT 60",
   );
   const todo = rows.filter((r) => !r.youtube_url);
   const done = rows.filter((r) => r.youtube_url);

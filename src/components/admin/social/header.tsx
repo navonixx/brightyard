@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 const TABS = [
-  { href: "/admin/social/studio", label: "AI Studio" },
-  { href: "/admin/social", label: "Posts" },
-  { href: "/admin/social/compose", label: "New post" },
+  { href: "/admin/social", label: "Autopilot" },
+  { href: "/admin/social/calendar", label: "Calendar" },
+  { href: "/admin/social/studio", label: "Create" },
+  { href: "/admin/social/insights", label: "Insights" },
   { href: "/admin/social/youtube", label: "YouTube" },
-  { href: "/admin/social/setup", label: "Account setup" },
+  { href: "/admin/social/setup", label: "Setup" },
 ];
 
 export function SoHeader({ active, title, intro }: { active: string; title: string; intro: string }) {

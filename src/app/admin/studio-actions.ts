@@ -19,7 +19,7 @@ export async function stPlan(_: ActionState, form: FormData): Promise<ActionStat
   const count = Math.max(1, Math.min(7, Number(form.get("count")) || 3));
   const mix: Format[] = kind === "week" ? WEEK_MIX : FORMATS.some((f) => f.key === kind) ? Array(count).fill(kind) : WEEK_MIX;
   try {
-    const n = await createIdeas(mix, topic);
+    const n = (await createIdeas(mix, topic)).length;
     refresh();
     return { ok: true, message: `${n} ideas ready. Check them, then press “Make it” (or “Make all”).` };
   } catch (e) {
