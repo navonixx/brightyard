@@ -15,7 +15,7 @@ import { ActionButton, ActionForm, SubmitButton } from "@/components/admin/ui";
 import { PageSkeleton } from "@/components/admin/skeleton";
 import { SoHeader } from "@/components/admin/social/header";
 import { StudioRunner } from "@/components/admin/social/studio-runner";
-import { apNewPlan, apRunNow, apSaveSettings, apStep, apToggle } from "../../autopilot-actions";
+import { apCheckTools, apNewPlan, apRunNow, apSaveSettings, apStep, apToggle } from "../../autopilot-actions";
 
 // Turning Autopilot on plans the first posts with AI and starts making them.
 export const maxDuration = 300;
@@ -279,6 +279,7 @@ async function Autopilot() {
                 <SubmitButton>Save settings</SubmitButton>
               </div>
             </ActionForm>
+            <ActionButton action={apCheckTools} className="text-xs text-muted underline hover:text-ink" pendingText="Checking…">Test video tools</ActionButton>
           </section>
         </div>
       </div>

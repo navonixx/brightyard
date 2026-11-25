@@ -82,3 +82,19 @@ export async function apRefreshInsights(): Promise<ActionState> {
     return { message: err(e) };
   }
 }
+
+/** Health check: can this server download and run ffmpeg (needed to join reel clips)? No data is written. */
+export async function apCheckTools(): Promise<ActionState> {
+  await requireAdmin();
+  const started = Date.now();
+  try {
+    const { ffmpegPath } = await import("@/lib/social/ffmpeg");
+    const { spawnSync } = await import("node:child_process");
+    const bin = await ffmpegPath();
+    const r = spawnSync(bin, ["-hide_banner", "-version"], { encoding: "utf8", timeout: 20_000 });
+    const line = (r.stdout || r.stderr || "").split("\n")[0].slice(0, 80);
+    return { ok: r.status === 0, message: r.status === 0 ? `Video tools OK (${line}, ${((Date.now() - started) / 1000).toFixed(1)} s)` : `ffmpeg didn't run: ${line}` };
+  } catch (e) {
+    return { message: `Video tools problem: ${err(e)}` };
+  }
+}
