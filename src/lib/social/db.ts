@@ -111,7 +111,7 @@ export type Post = {
   status: "draft" | "approved" | "posted" | "failed";
   kind?: "feed" | "story";
   video_id?: number | null;
-  results: Record<string, { id?: string; url?: string; at?: string; manual?: boolean }>;
+  results: Record<string, { id?: string; url?: string; at?: string; manual?: boolean; container?: string }>;
   error: string | null;
   created_at: Date | string;
 };

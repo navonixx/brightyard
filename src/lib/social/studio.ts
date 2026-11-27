@@ -442,8 +442,10 @@ async function nextSlot(hour: number): Promise<Date> {
 
 /** Turns a ready piece into posts (feed + an Instagram story for videos). */
 export async function schedule(id: number, when?: Date | null, approve?: boolean): Promise<string> {
-  const [v] = await sq<Video>("SELECT * FROM so_videos WHERE id = $1", [id]);
-  if (!v || v.status !== "ready") return "Only ready pieces can be scheduled.";
+  // Claim it atomically: the cron, the webhook and an open page can all try to schedule the same
+  // piece at once — only the one that flips ready → scheduled creates posts (no duplicates).
+  const [v] = await sq<Video>("UPDATE so_videos SET status = 'scheduled', updated_at = now() WHERE id = $1 AND status = 'ready' RETURNING *", [id]);
+  if (!v) return "Only ready pieces can be scheduled.";
   const s = await studioSettings();
   // Autopilot pieces keep their planned slot (or go out at the next run if the slot has passed).
   const planned = v.slot ? new Date(v.slot) : null;
@@ -453,7 +455,10 @@ export async function schedule(id: number, when?: Date | null, approve?: boolean
   const assets = isVideo
     ? [{ src: v.final_url ?? v.video_url ?? "", kind: "video", poster: v.cover_url ?? undefined, label: v.title }]
     : (v.media ?? []).map((src, i) => ({ src, kind: "image", label: `${v.title} ${i + 1}` }));
-  if (!assets.length || !assets[0].src) return "This piece has no media yet.";
+  if (!assets.length || !assets[0].src) {
+    await sq("UPDATE so_videos SET status = 'ready' WHERE id = $1", [v.id]);
+    return "This piece has no media yet.";
+  }
   const insert = (kind: "feed" | "story", platforms: string[], whenAt: Date, a: unknown[]) =>
     sq("INSERT INTO so_posts (idea, caption, hashtags, assets, platforms, scheduled_for, status, kind, video_id) VALUES ($1,$2,$3,$4::jsonb,$5::text[],$6,$7,$8,$9)", [
       `${kind === "story" ? "Story" : v.auto ? "Autopilot" : "Studio"}: ${v.title}`,

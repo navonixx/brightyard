@@ -41,20 +41,31 @@ export async function graph(path: string, params: Record<string, string>, method
   return data;
 }
 
-async function waitForContainer(id: string) {
-  for (let i = 0; i < 18; i++) {
-    const s = await graph(id, { fields: "status_code" }, "GET");
-    if (s.status_code === "FINISHED") return;
-    if (s.status_code === "ERROR") throw new Error("Instagram couldn't process the video");
-    await new Promise((r) => setTimeout(r, 2500));
+/** Instagram hasn't finished processing a video yet; the container is kept and published next run. */
+class StillProcessing extends Error {
+  constructor(public container: string) {
+    super("Instagram is still processing the video — it will be published on the next run");
   }
-  throw new Error("Instagram is still processing the video — try again in a minute");
 }
 
-async function toInstagram(post: Post, text: string, ig: string) {
+async function waitForContainer(id: string, tries = 18) {
+  for (let i = 0; i < tries; i++) {
+    const s = await graph(id, { fields: "status_code" }, "GET");
+    if (s.status_code === "FINISHED") return;
+    if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error("Instagram couldn't process the video");
+    await new Promise((r) => setTimeout(r, 2500));
+  }
+  throw new StillProcessing(id);
+}
+
+async function toInstagram(post: Post, text: string, ig: string, pending?: string) {
   const media = post.assets;
   let creation: string;
-  if (post.kind === "story") {
+  if (pending) {
+    // A video container made on an earlier run — publish it once Instagram has finished.
+    creation = pending;
+    await waitForContainer(creation);
+  } else if (post.kind === "story") {
     const a = media[0];
     if (!a) throw new Error("A story needs a photo or video");
     creation = String((await graph(`${ig}/media`, a.kind === "video" ? { media_type: "STORIES", video_url: abs(a.src) } : { media_type: "STORIES", image_url: abs(a.src) })).id);
@@ -103,23 +114,32 @@ export async function publishPost(post: Post): Promise<{ ok: boolean; message: s
   const text = [post.caption, post.hashtags].filter(Boolean).join("\n\n");
   const results = { ...(post.results ?? {}) };
   const errors: string[] = [];
+  let waiting = false;
   for (const platform of post.platforms) {
     if (results[platform]?.id || results[platform]?.manual) continue;
     try {
-      if (platform === "instagram") results.instagram = { ...(await toInstagram(post, text, cfg.igId)), at: new Date().toISOString() };
+      if (platform === "instagram") results.instagram = { ...(await toInstagram(post, text, cfg.igId, results.instagram?.container)), at: new Date().toISOString() };
       else if (platform === "facebook" && post.kind === "story") continue;
       else if (platform === "facebook") results.facebook = { ...(await toFacebook(post, text, cfg.pageId)), at: new Date().toISOString() };
-      else errors.push(`${platform}: post by hand for now`);
+      else if (platform !== "youtube") errors.push(`${platform}: post by hand for now`);
     } catch (e) {
-      errors.push(`${platform}: ${e instanceof Error ? e.message : String(e)}`);
+      if (e instanceof StillProcessing && platform === "instagram") {
+        results.instagram = { ...(results.instagram ?? {}), container: e.container };
+        waiting = true;
+        errors.push(`instagram: ${e.message}`);
+      } else {
+        errors.push(`${platform}: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
   }
   const auto = post.platforms.filter((p) => p !== "youtube");
   const allDone = auto.every((p) => results[p]?.id || results[p]?.manual);
+  // Still processing → stays approved, so the next run publishes the saved container.
+  const failedNow = errors.length && !(waiting && errors.length === 1);
   await sq("UPDATE so_posts SET results = $2::jsonb, status = $3, error = $4, updated_at = now() WHERE id = $1", [
     post.id,
     JSON.stringify(results),
-    allDone ? "posted" : errors.length ? "failed" : post.status,
+    allDone ? "posted" : failedNow ? "failed" : post.status,
     errors.join(" · ") || null,
   ]);
   return { ok: allDone, message: allDone ? "Posted." : errors.join(" · ") };

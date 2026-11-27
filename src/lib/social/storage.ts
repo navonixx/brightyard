@@ -98,7 +98,8 @@ export function overlayUrl(videoUrl: string, hook: string, cta: string, seconds:
     if (overlayText(hook)) steps.push(strip(hook, 0, Math.min(3, end), 260, box));
     if (overlayText(cta)) steps.push(strip(cta, Math.max(0, end - 3), end, 1180, box));
   }
-  steps[steps.length - 1] += ",ov-redirect_false";
+  // f-mp4: one MP4 for every browser (Firefox otherwise gets a WebM variant that starts processing on first view).
+  steps[steps.length - 1] += ",f-mp4,ov-redirect_false";
   return `${videoUrl.split("?")[0]}?tr=${steps.join(":")}`;
 }
 
