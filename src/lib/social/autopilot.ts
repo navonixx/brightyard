@@ -144,6 +144,6 @@ export async function autopilotStep(budgetMs = 200_000): Promise<AutopilotResult
       log.push(`Planning failed: ${e instanceof Error ? e.message : e}`);
     }
   }
-  const step = await studioStep({ budgetMs: Math.max(30_000, budgetMs - (Date.now() - started)), approve: s.autoApprove });
+  const step = await studioStep({ budgetMs: Math.max(30_000, budgetMs - (Date.now() - started)), approve: s.autoApprove, poll: true });
   return { ...step, log: [...log, ...step.log], added, on: s.on };
 }

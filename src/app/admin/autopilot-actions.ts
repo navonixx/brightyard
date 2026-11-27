@@ -64,8 +64,10 @@ export async function apSaveSettings(_: ActionState, form: FormData): Promise<Ac
   const hours = [Number(form.get("h1")) || 11, Number(form.get("h2")) || 19, Number(form.get("h3")) || 15].slice(0, perDay);
   await saveAutopilotSettings({ hours, autoApprove: form.get("autoApprove") === "on" });
   const model = String(form.get("model") ?? "");
+  const stills = form.get("stills") === "openai" ? "openai" : "flux";
   await saveStudioSettings({
     cap: Math.max(0, Math.min(500, Number(form.get("cap")) || 0)),
+    stills,
     ...(VIDEO_MODELS.some((m) => m.key === model) ? { model } : {}),
   });
   refresh();

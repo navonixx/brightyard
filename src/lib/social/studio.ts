@@ -8,7 +8,7 @@ import { libraryById } from "./library";
 import { isRateLimit, stillImage, trackFor } from "./mlmedia";
 import { VIDEO_MODELS, clipSeconds, estimateCost, fetchVideo, modelslabReady, submitVideo, type JobState, type VideoModel } from "./modelslab";
 import { easternToDate, dateToEastern } from "./plan";
-import { overlayReady, overlayUrl, pickLayout, publicUrl, storageReady, textOnImage, uploadWithInfo } from "./storage";
+import { overlayReady, overlayUrl, pickLayout, publicUrl, storageReady, textOnImage, uploadToStorage, uploadWithInfo } from "./storage";
 import { planIdeas, type Format } from "./strategy";
 
 /**
@@ -61,11 +61,11 @@ export type Video = {
   created_at: Date | string;
 };
 
-export type StudioSettings = { model: string; cap: number; autoSchedule: boolean; autoApprove: boolean; postHour: number; t2vOverride: string; i2vOverride: string };
+export type StudioSettings = { model: string; cap: number; autoSchedule: boolean; autoApprove: boolean; postHour: number; t2vOverride: string; i2vOverride: string; stills: "flux" | "openai" };
 
 // Wan 2.2 works on the current ModelsLab plan; Seedance needs wallet credit (switch in Studio settings).
 export const FALLBACK_MODEL = "wan-2.2";
-const DEFAULTS: StudioSettings = { model: "wan-2.2", cap: 15, autoSchedule: true, autoApprove: false, postHour: 10, t2vOverride: "", i2vOverride: "" };
+const DEFAULTS: StudioSettings = { model: "wan-2.2", cap: 15, autoSchedule: true, autoApprove: false, postHour: 10, t2vOverride: "", i2vOverride: "", stills: "flux" };
 const STILL_COST = 0.005;
 export const VIDEO_FORMATS: Format[] = ["story_reel", "reel", "photo_ad"];
 export const isVideoFormat = (f: string) => (VIDEO_FORMATS as string[]).includes(f);
@@ -97,7 +97,7 @@ export function estimate(v: Pick<Video, "format" | "duration">, s: StudioSetting
   if (v.format === "carousel") return 5 * IMAGE_COST;
   if (v.format === "collage") return 0;
   const model = modelFor(s.model);
-  if (v.format === "story_reel") return Math.round(3 * (STILL_COST + estimateCost(model, 5)) * 100) / 100;
+  if (v.format === "story_reel") return Math.round(3 * ((s.stills === "openai" ? IMAGE_COST : STILL_COST) + estimateCost(model, 5)) * 100) / 100;
   return estimateCost(model, v.duration) + 2 * IMAGE_COST;
 }
 
@@ -158,24 +158,31 @@ async function fail(id: number, message: string) {
   await sq("UPDATE so_videos SET status = 'failed', error = $2, updated_at = now() WHERE id = $1", [id, message.slice(0, 400)]);
 }
 
+/**
+ * No webhook by default: ModelsLab shows the webhook URL in its dashboard, and the owner doesn't want
+ * our site address there. Jobs are polled instead (cron runs wait for them; the open page polls).
+ * Set STUDIO_WEBHOOK=on to send it again.
+ */
 function webhookUrl() {
   const secret = process.env.CRON_SECRET;
   const site = siteUrl();
-  if (!secret || !site.startsWith("https://")) return undefined;
+  if (process.env.STUDIO_WEBHOOK !== "on" || !secret || !site.startsWith("https://")) return undefined;
   return `${site}/api/social/studio/webhook?t=${webhookToken()}`;
 }
 
 export function webhookToken() {
-  return createHmac("sha256", process.env.CRON_SECRET ?? "none").update("studio-webhook").digest("hex").slice(0, 32);
+  // v2: the old token (visible in the ModelsLab dashboard) no longer works.
+  return createHmac("sha256", process.env.CRON_SECRET ?? "none").update("studio-webhook-v2").digest("hex").slice(0, 32);
 }
 
 const isWallet = (m?: string) => /exhausted|fund your wallet|insufficient/i.test(m ?? "");
 
 /** Submits a clip; paid models fall back to the plan's open-source model when the wallet is empty. */
-async function submitClip(v: Video, s: StudioSettings, opts: { prompt: string; seconds: number; imageUrl: string | null; track: string }): Promise<{ job: JobState; model: VideoModel }> {
+async function submitClip(v: Video, s: StudioSettings, opts: { prompt: string; seconds: number; imageUrl: string | null }): Promise<{ job: JobState; model: VideoModel }> {
   let model = modelFor(s.model);
+  // No track_id: it would show our name in the ModelsLab dashboard.
   const send = (m: VideoModel, override?: string) =>
-    submitVideo({ prompt: opts.prompt, seconds: opts.seconds, model: m, imageUrl: opts.imageUrl, webhook: webhookUrl(), trackId: opts.track, modelOverride: override });
+    submitVideo({ prompt: opts.prompt, seconds: opts.seconds, model: m, imageUrl: opts.imageUrl, webhook: webhookUrl(), modelOverride: override });
   let job = await send(model, opts.imageUrl ? s.i2vOverride : s.t2vOverride);
   if (job.status === "error" && isWallet(job.message) && model.key !== FALLBACK_MODEL) {
     model = modelFor(FALLBACK_MODEL);
@@ -235,8 +242,8 @@ async function produce(v: Video, s: StudioSettings, deadline: number): Promise<s
     const { job, model } = await submitClip(v, s, {
       prompt: v.prompt,
       seconds: v.duration,
-      imageUrl: v.format === "photo_ad" && v.image_src ? abs(v.image_src) : null,
-      track: `alderwell-${v.id}`,
+      // Portfolio photos are copied to ImageKit first, so ModelsLab only ever sees CDN links.
+      imageUrl: v.format === "photo_ad" && v.image_src ? await uploadToStorage(abs(v.image_src), `${name}-src.jpg`) : null,
     });
     if (job.status === "error") {
       if (isRateLimit(job.message)) return requeueLater(v, job.message ?? "");
@@ -279,12 +286,15 @@ async function advanceScenes(v: Video, s: StudioSettings, deadline: number): Pro
     if (Date.now() > deadline - 20_000) break;
     try {
       if (!sc.image) {
-        sc.image = await stillImage(sc.still, `v${v.id}-s${i + 1}`);
+        sc.image =
+          s.stills === "openai" && imagesReady()
+            ? await makeImage(`Vertical 9:16 photorealistic cinematic photo, no text, no logos: ${sc.still}`, "cover", `v${v.id}-s${i + 1}`)
+            : await stillImage(sc.still, `v${v.id}-s${i + 1}`);
         notes.push(`scene ${i + 1} picture`);
         await save();
       }
       if (sc.image && !sc.ml_id && !sc.clip) {
-        const { job } = await submitClip(v, s, { prompt: `${sc.motion}. ${sc.still}`.slice(0, 900), seconds: 5, imageUrl: sc.image, track: `alderwell-${v.id}-${i + 1}` });
+        const { job } = await submitClip(v, s, { prompt: `${sc.motion}. ${sc.still}`.slice(0, 900), seconds: 5, imageUrl: sc.image });
         if (job.status === "error") {
           if (isRateLimit(job.message)) {
             notes.push("ModelsLab busy, will continue");
@@ -482,7 +492,7 @@ export async function schedule(id: number, when?: Date | null, approve?: boolean
 
 export type StepResult = { log: string[]; pending: number; queued: number; startable: number };
 
-export async function studioStep(opts: { produceOne?: boolean; budgetMs?: number; approve?: boolean } = {}): Promise<StepResult> {
+export async function studioStep(opts: { produceOne?: boolean; budgetMs?: number; approve?: boolean; poll?: boolean } = {}): Promise<StepResult> {
   const deadline = Date.now() + (opts.budgetMs ?? 150_000);
   const s = await studioSettings();
   // A start that crashed mid-way (timeout) goes back to the queue after 5 minutes.
@@ -498,6 +508,16 @@ export async function studioStep(opts: { produceOne?: boolean; budgetMs?: number
       // Claim it so two tabs don't start the same job twice.
       const claimed = await sq("UPDATE so_videos SET status = 'starting', updated_at = now() WHERE id = $1 AND status = 'queued' RETURNING id", [next.id]);
       if (claimed.length) log.push(await produce(next, s, deadline));
+    }
+  }
+  // Without a webhook nobody tells us when ModelsLab is done, so a cron run waits for its own jobs
+  // (checking every ~25 s) and joins/finishes them while time is left.
+  if (opts.poll) {
+    while (Date.now() < deadline - 110_000) {
+      const [w] = await sq<{ n: number }>("SELECT count(*)::int n FROM so_videos WHERE status IN ('rendering','finishing')");
+      if (!w?.n) break;
+      await new Promise((r) => setTimeout(r, 25_000));
+      log.push(...(await tick(deadline)));
     }
   }
   // Autopilot pieces always get scheduled into their slot, approved per the Autopilot setting.

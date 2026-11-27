@@ -269,6 +269,13 @@ async function Autopilot() {
                   ))}
                 </select>
               </div>
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="stills">Pictures for reels</label>
+                <select id="stills" name="stills" defaultValue={studio.stills} className="input">
+                  <option value="flux">ModelsLab Flux — cheapest (~$0.005 a picture)</option>
+                  <option value="openai">OpenAI — ~$0.05 a picture</option>
+                </select>
+              </div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2">
                 <input type="checkbox" name="autoApprove" defaultChecked={s.autoApprove} /> Publish automatically (no approval needed)
               </label>
